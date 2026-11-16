@@ -81,8 +81,8 @@ export function TermsOfService() {
         </List>
         <p>
           These services and models are provided under their own terms and licenses, which we don’t control. Some models carry restrictions. In particular, the
-          Background Remover’s model is licensed for non-commercial use only, and commercial use requires a separate agreement with its author. See{' '}
-          <DocLink doc="privacy">Privacy &amp; Models</DocLink> for details. We aren’t responsible for third-party services, and their availability may affect
+          Background Remover’s model is licensed for non-commercial use only, and commercial use requires a separate agreement with its author. See the AI models section of the{' '}
+          <DocLink doc="privacy-policy">Privacy Policy</DocLink> for details. We aren’t responsible for third-party services, and their availability may affect
           CleanShot.
         </p>
       </Section>

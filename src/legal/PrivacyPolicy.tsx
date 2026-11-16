@@ -1,3 +1,4 @@
+import { ModelsTable, StorageControls } from './ModelsAndStorage';
 import { ContactBlock, DocLink, List, MinimumAge, Section, Strong } from './blocks';
 
 /*
@@ -69,9 +70,10 @@ export function PrivacyPolicy() {
           </li>
         </List>
         <p>
-          You can clear recent sessions and downloaded models on the <DocLink doc="privacy">Privacy &amp; Models</DocLink> page, or remove everything by clearing this
-          site’s data in your browser settings. Anyone with access to your browser profile may be able to see recent sessions, so clear them on shared computers.
+          You can clear recent sessions and downloaded models with the buttons below, or remove everything by clearing this site’s data in your browser settings.
+          Anyone with access to your browser profile may be able to see recent sessions, so clear them on shared computers.
         </p>
+        <StorageControls />
       </Section>
 
       <Section id="cookies" title="Cookies">
@@ -111,11 +113,33 @@ export function PrivacyPolicy() {
         </p>
       </Section>
 
-      <Section id="models" title="Model downloads from Hugging Face">
+      <Section id="models" title="AI tools and model downloads">
         <p>
-          The Background Remover and Image Upscaler need model files. When you confirm the download, your browser fetches them from <Strong>Hugging Face</Strong>{' '}
-          (huggingface.co) and its content delivery providers. Like any website, Hugging Face receives your IP address and standard request details when it serves the
-          files, and handles them under its own privacy policy. These requests download files only; they don’t contain your images.
+          Two tools use small, task-specific neural networks. Nothing in CleanShot generates images from a prompt or generates text; every other tool uses standard image
+          processing.
+        </p>
+        <List>
+          <li>
+            <Strong>Background Remover</Strong> uses a segmentation model. It only decides, pixel by pixel, what belongs to the subject and what belongs to the
+            background. It never adds or changes pixels; it only makes the background transparent.
+          </li>
+          <li>
+            <Strong>Image Upscaler</Strong> uses a super-resolution model. It rebuilds edges and fine texture from the pixels already in your image, so its added detail
+            is an estimate based on your image, not new content.
+          </li>
+        </List>
+        <p>
+          Both models run on your device. Nothing downloads until you open one of these tools and confirm. Your browser then fetches the model from{' '}
+          <Strong>Hugging Face</Strong> (huggingface.co) and its content delivery providers, and keeps it cached so the tool works offline afterwards. Like any website,
+          Hugging Face receives your IP address and standard request details when it serves the files, and handles them under its own privacy policy. These requests
+          download files only; they don’t contain your images. The engine that runs the models (ONNX Runtime, about 21 MB) is served by CleanShot itself.
+        </p>
+        <ModelsTable />
+        <p>
+          <Strong>Limitations.</Strong> The Background Remover predicts its cut-out at 1024 px and scales it up, so edges can look soft on very large photos, and it can
+          struggle with glass, thin structures and hair against a similar background. The Image Upscaler can invent texture, sharpen noise, or reshape small text and
+          faces, so don’t rely on an upscaled image as evidence or for identification. To keep processing reasonable, 2× works on images up to 1280 px and 4× up to
+          640 px; larger images are reduced first. Both run on your processor, so a large image can take a minute.
         </p>
       </Section>
 

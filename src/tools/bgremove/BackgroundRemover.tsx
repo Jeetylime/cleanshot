@@ -6,7 +6,7 @@ import { Kbd } from '../../components/ui/Kbd';
 import { createCanvas, ctx2d } from '../../engine/images';
 import { isEditableTarget, modKey } from '../../lib/utils';
 import { openImageBlob, showToast } from '../../store/actions';
-import { goAbout, goEditor } from '../../app/route';
+import { goPrivacy, goEditor } from '../../app/route';
 import type { Point } from '../../types';
 import { encodeCanvas } from '../shared/encode';
 import { baseName } from '../shared/files';
@@ -458,12 +458,9 @@ export default function BackgroundRemover() {
               edit.
             </p>
             <div className="flex flex-wrap gap-x-3 gap-y-1">
-              <button type="button" onClick={goAbout} className="text-xs text-accent hover:underline">
-                About the model
+              <button type="button" onClick={goPrivacy} className="text-xs text-accent hover:underline">
+                Model and privacy
               </button>
-              <a href="#privacy-policy" className="text-xs text-accent hover:underline">
-                Privacy Policy
-              </a>
               <a href="#acceptable-use" className="text-xs text-accent hover:underline">
                 Acceptable Use
               </a>

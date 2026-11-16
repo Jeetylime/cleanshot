@@ -31,7 +31,7 @@ export function Placeholder({ children }: { children: ReactNode }) {
   );
 }
 
-export function DocLink({ doc, children }: { doc: LegalDoc | 'privacy'; children: ReactNode }) {
+export function DocLink({ doc, children }: { doc: LegalDoc; children: ReactNode }) {
   return (
     <a href={`#${doc}`} className="text-accent hover:underline">
       {children}

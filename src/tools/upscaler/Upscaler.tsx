@@ -9,7 +9,7 @@ import { baseName } from '../shared/files';
 import { renderResized } from '../shared/geometry';
 import { OutputOptions, type OutChoice } from '../shared/OutputOptions';
 import { errorMessage } from '../shared/batch';
-import { goAbout } from '../../app/route';
+import { goPrivacy } from '../../app/route';
 import { CompareSlider, copyImage, Dropzone, Notice, PanelSection, saveBlob, ToolLayout, useBlobUrl, useFileSink, useImageList } from '../shared/ui';
 import { describeAiError, isModelCached, type DownloadProgress } from '../ai/runtime';
 import { ModelStatus, type AiPhase } from '../ai/ModelStatus';
@@ -243,7 +243,7 @@ export default function Upscaler() {
             {!cached[scale] && !readyModels.has(scale) && (
               <p className="text-xs leading-[16px] text-subtle">
                 Needs a {formatBytes(model.bytes)} model the first time.{' '}
-                <button type="button" onClick={goAbout} className="text-accent hover:underline">
+                <button type="button" onClick={goPrivacy} className="text-accent hover:underline">
                   Details
                 </button>
               </p>

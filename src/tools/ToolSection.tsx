@@ -1,7 +1,7 @@
 import { Component, Suspense, useRef, useState, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react';
 import { Check, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Popover } from '../components/ui/Popover';
-import { goAbout } from '../app/route';
+import { goPrivacy } from '../app/route';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { Spinner } from './shared/ui';
 import { LegalFooter } from '../components/LegalFooter';
@@ -155,8 +155,8 @@ function Landing({ config }: { config: SectionConfig }) {
             <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-fg">{config.label}</h1>
             <p className="mt-1 text-sm text-muted">{config.subtitle}</p>
           </div>
-          <button type="button" onClick={goAbout} className="text-xs text-subtle hover:text-fg hover:underline">
-            Privacy & Models
+          <button type="button" onClick={goPrivacy} className="text-xs text-subtle hover:text-fg hover:underline">
+            Privacy
           </button>
         </div>
         {config.groups.map((g) => (

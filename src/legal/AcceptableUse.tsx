@@ -61,7 +61,7 @@ export function AcceptableUse() {
       <Section id="third-party" title="Third-party models and licenses">
         <p>
           Some tools use models published by third parties under their own licenses. Your use of those tools must follow those licenses. For example, the Background
-          Remover model is licensed for non-commercial use only. See <DocLink doc="privacy">Privacy &amp; Models</DocLink> for each model’s license.
+          Remover model is licensed for non-commercial use only. See the AI models section of the <DocLink doc="privacy-policy">Privacy Policy</DocLink> for each model’s license.
         </p>
       </Section>
 

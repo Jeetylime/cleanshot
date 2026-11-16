@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Cpu, HardDriveDownload, RotateCcw } from 'lucide-react';
-import { goAbout } from '../../app/route';
+import { goPrivacy } from '../../app/route';
 import { getBundledManifest } from './bundled';
 import { formatBytes } from '../../lib/utils';
 import { Button } from '../../components/ui/controls';
@@ -60,13 +60,9 @@ export function ModelStatus({
             </Button>
             <p className="text-2xs leading-[15px] text-subtle">
               The model downloads from Hugging Face, which sees your IP address. Your images aren’t sent anywhere.{' '}
-              <button type="button" onClick={goAbout} className="hover:text-fg hover:underline">
-                Model details and license
+              <button type="button" onClick={goPrivacy} className="hover:text-fg hover:underline">
+                Model details, license and privacy
               </button>
-              {' · '}
-              <a href="#privacy-policy" className="hover:text-fg hover:underline">
-                Privacy Policy
-              </a>
             </p>
           </>
         )}

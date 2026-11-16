@@ -8,7 +8,6 @@ const LINKS = [
   { href: '#terms', label: 'Terms of Service' },
   { href: '#privacy-policy', label: 'Privacy Policy' },
   { href: '#acceptable-use', label: 'Acceptable Use' },
-  { href: '#privacy', label: 'Privacy & Models' },
 ];
 
 export function LegalFooter({ className = '' }: { className?: string }) {
