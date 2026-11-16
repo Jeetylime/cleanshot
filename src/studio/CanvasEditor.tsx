@@ -121,24 +121,21 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
       <div className="flex min-w-0 items-center gap-1">
         <HomeLogo hideWordmarkOnMobile />
         <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
-        <span className="px-1.5 text-sm font-semibold text-fg max-sm:hidden" aria-current="page">
+        <button type="button" onClick={A.closeProject} className="shrink-0 rounded-[6px] px-1.5 py-1 text-sm text-muted transition-colors hover:bg-hover hover:text-fg max-sm:hidden" title="Your designs">
           Canvas
-        </span>
-        <span className="mx-1 h-4 w-px bg-line max-sm:hidden" />
+        </button>
+        <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
+        <DesignNameMenu onShortcuts={onShortcuts} />
+        <SaveState />
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
         <IconButton label="Undo" shortcut={[modKey, 'Z']} onClick={undo} disabled={!canUndo}>
           <Undo2 size={16} />
         </IconButton>
         <IconButton label="Redo" shortcut={[modKey, '⇧', 'Z']} onClick={redo} disabled={!canRedo}>
           <Redo2 size={16} />
         </IconButton>
-      </div>
-      <div className="flex min-w-0 items-center gap-1.5 md:pointer-events-none md:absolute md:inset-y-0 md:left-1/2 md:max-w-[34vw] md:-translate-x-1/2">
-        <div className="flex min-w-0 items-center gap-2 md:pointer-events-auto">
-          <DesignNameMenu onShortcuts={onShortcuts} />
-          <SaveState />
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-1.5">
+        <span className="mx-1 h-4 w-px bg-line" />
         <button
           type="button"
           onClick={() => studio.set({ exportOpen: true })}
@@ -207,7 +204,7 @@ function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
           if (e.key === 'Escape') setRenaming(false);
         }}
-        className="h-7 w-[min(240px,50vw)] rounded-[7px] bg-control px-2 text-center text-[13px] font-medium text-fg outline-none ring-1 ring-accent"
+        className="h-7 w-[min(240px,50vw)] rounded-[7px] bg-control px-2 text-sm font-semibold text-fg outline-none ring-1 ring-accent"
       />
     );
   return (
@@ -222,15 +219,16 @@ function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
         }}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-7 min-w-0 items-center gap-1 rounded-[7px] px-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
+        aria-current="page"
+        className={`flex min-w-0 items-center gap-1 rounded-[6px] px-1.5 py-1 text-sm font-semibold text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
         data-testid="design-menu"
       >
-        <span className="truncate" data-testid="project-name">
+        <span className="max-w-[min(260px,40vw)] truncate" data-testid="project-name">
           {name}
         </span>
         <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="center" width={240} label="Design">
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={240} label="Design">
         <div className="p-1" role="menu">
           <MenuItem icon={<PencilLine size={14} />} onClick={run(() => setRenaming(true))}>
             Rename

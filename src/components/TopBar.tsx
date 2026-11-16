@@ -482,33 +482,29 @@ export function TopBar() {
       <div className="flex min-w-0 items-center gap-1">
         <HomeLogo hideWordmarkOnMobile />
         <ChevronRight size={14} className="shrink-0 text-subtle" />
-        <span className="px-1.5 text-sm font-semibold text-fg" aria-current="page">
+        <span className={`px-1.5 text-sm ${hasDoc ? 'text-muted max-sm:hidden' : 'font-semibold text-fg'}`} aria-current={hasDoc ? undefined : 'page'}>
           Edit
         </span>
         {hasDoc && (
           <>
-            <Divider />
+            <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
+            <div className="min-w-0 max-sm:hidden" aria-current="page">
+              <DocTitle />
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="flex shrink-0 items-center justify-end gap-1.5">
+        {hasDoc && (
+          <>
             <IconButton label="Undo" shortcut={[modKey, 'Z']} onClick={undo} disabled={!canUndo}>
               <Undo2 size={16} />
             </IconButton>
             <IconButton label="Redo" shortcut={[modKey, '⇧', 'Z']} onClick={redo} disabled={!canRedo}>
               <Redo2 size={16} />
             </IconButton>
-          </>
-        )}
-      </div>
-
-      {hasDoc && (
-        <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden max-w-[34vw] -translate-x-1/2 items-center md:flex">
-          <div className="pointer-events-auto min-w-0">
-            <DocTitle />
-          </div>
-        </div>
-      )}
-
-      <div className="flex shrink-0 items-center justify-end gap-1.5">
-        {hasDoc && (
-          <>
+            <Divider />
             <div className="hidden sm:block">
               <ZoomControl />
             </div>
