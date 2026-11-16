@@ -9,6 +9,7 @@ import { goTools } from '../app/route';
 import { CACHE_NAME } from './ai/runtime';
 import { RMBG } from './bgremove/segment';
 import { SR_MODELS } from './upscaler/sr';
+import { LegalFooter } from '../components/LegalFooter';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -102,11 +103,11 @@ export default function AboutPage() {
 
           <Section title="Your images stay in this tab">
             <p>
-              CleanShot is a set of static files with no server behind it, so there is nowhere for an image to be sent. Editing, compression, conversion and both models
+              CleanShot is a set of static files with no upload or processing server behind it, so there is nowhere for an image to be sent. Editing, compression, conversion and both models
               all run in your browser using Canvas and WebAssembly. Closing the tab ends all processing.
             </p>
             <p>
-              The only network requests after the page loads are model downloads, described below. Those requests fetch files; they contain none of your image data.
+              After the page loads, the only network requests CleanShot makes are model downloads, described below, and the site’s own files as you open tools. Those requests fetch files; they contain none of your image data.
             </p>
           </Section>
 
@@ -197,7 +198,15 @@ export default function AboutPage() {
               {usage !== null && <span className="ml-auto text-xs text-subtle tabular-nums">Using {formatBytes(usage)} of browser storage</span>}
             </div>
           </Section>
+          <p className="text-sm text-muted">
+            For the full details, including what Cloudflare and Hugging Face receive when you load the site or a model, read the{' '}
+            <a href="#privacy-policy" className="text-accent hover:underline">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </article>
+        <LegalFooter className="mx-auto mt-10 w-full max-w-[680px]" />
       </main>
     </div>
   );

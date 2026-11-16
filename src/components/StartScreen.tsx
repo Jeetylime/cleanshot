@@ -1,12 +1,13 @@
 import { ArrowRight, ImagePlus, Sparkles } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
-import { goAbout, goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
+import { goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
 import { PDF_TOOLS } from '../pdf/registry';
 import { TOOLS } from '../tools/registry';
 import { HomeLogo, SettingsMenu } from './TopBar';
 import { Illustration } from './EmptyState';
 import { Kbd } from './ui/Kbd';
+import { LegalFooter } from './LegalFooter';
 import { modKey, timeAgo } from '../lib/utils';
 import { openFilePicker } from '../lib/filePicker';
 
@@ -203,11 +204,7 @@ export function StartScreen() {
             </section>
           )}
 
-          <p className="text-center">
-            <button type="button" onClick={goAbout} className="text-xs text-subtle hover:text-fg hover:underline">
-              Privacy & Models
-            </button>
-          </p>
+          <LegalFooter className="mt-2" />
         </div>
       </main>
     </div>

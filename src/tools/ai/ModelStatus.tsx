@@ -58,9 +58,16 @@ export function ModelStatus({
             <Button variant="primary" className="h-8" onClick={onStart}>
               {bundled ? 'Load model and continue' : 'Download model and continue'}
             </Button>
-            <button type="button" onClick={goAbout} className="self-start text-2xs text-subtle hover:text-fg hover:underline">
-              Model details and license
-            </button>
+            <p className="text-2xs leading-[15px] text-subtle">
+              The model downloads from Hugging Face, which sees your IP address. Your images aren’t sent anywhere.{' '}
+              <button type="button" onClick={goAbout} className="hover:text-fg hover:underline">
+                Model details and license
+              </button>
+              {' · '}
+              <a href="#privacy-policy" className="hover:text-fg hover:underline">
+                Privacy Policy
+              </a>
+            </p>
           </>
         )}
         {phase === 'downloading' && (

@@ -4,6 +4,7 @@ import { Popover } from '../components/ui/Popover';
 import { goAbout } from '../app/route';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { Spinner } from './shared/ui';
+import { LegalFooter } from '../components/LegalFooter';
 
 /**
  * Shared shell for tool collections (Image Tools, PDF Tools): breadcrumb with
@@ -188,6 +189,7 @@ function Landing({ config }: { config: SectionConfig }) {
             </div>
           </section>
         ))}
+        <LegalFooter className="mt-3" />
       </div>
     </main>
   );

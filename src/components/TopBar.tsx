@@ -23,6 +23,9 @@ import {
   Trash2,
   Undo2,
   X,
+  Scale,
+  Lock,
+  FileCheck,
 } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
@@ -36,7 +39,7 @@ import { ExportPanel } from './ExportPanel';
 import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, Theme } from '../types';
-import { goAbout, goEditor, goHome, goPdf, goTools, useRoute } from '../app/route';
+import { goAbout, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -305,6 +308,15 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
           <MenuSeparator />
           <MenuItem icon={<ShieldCheck size={14} />} onClick={run(goAbout)}>
             Privacy & Models
+          </MenuItem>
+          <MenuItem icon={<Scale size={14} />} onClick={run(() => goLegal('terms'))}>
+            Terms of Service
+          </MenuItem>
+          <MenuItem icon={<Lock size={14} />} onClick={run(() => goLegal('privacy-policy'))}>
+            Privacy Policy
+          </MenuItem>
+          <MenuItem icon={<FileCheck size={14} />} onClick={run(() => goLegal('acceptable-use'))}>
+            Acceptable Use Policy
           </MenuItem>
           {editorItems && (
             <>

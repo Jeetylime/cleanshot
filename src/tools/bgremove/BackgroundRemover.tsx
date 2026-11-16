@@ -453,9 +453,21 @@ export default function BackgroundRemover() {
             <p className="text-xs leading-[17px] text-muted">
               Drop a photo and the subject is cut out automatically. Clean up edges with the Erase and Restore brushes, then download it transparent or on a new background.
             </p>
-            <button type="button" onClick={goAbout} className="self-start text-xs text-accent hover:underline">
-              About the model
-            </button>
+            <p className="text-xs leading-[17px] text-muted">
+              Your photo is processed on this device. The model is licensed for non-commercial use, and you’re responsible for having the rights to the images you
+              edit.
+            </p>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              <button type="button" onClick={goAbout} className="text-xs text-accent hover:underline">
+                About the model
+              </button>
+              <a href="#privacy-policy" className="text-xs text-accent hover:underline">
+                Privacy Policy
+              </a>
+              <a href="#acceptable-use" className="text-xs text-accent hover:underline">
+                Acceptable Use
+              </a>
+            </div>
           </PanelSection>
         }
       />

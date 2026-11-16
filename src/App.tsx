@@ -14,6 +14,7 @@ import { getRoute, goEditor, useRoute } from './app/route';
 const ToolsApp = lazy(() => import('./tools/ToolsApp'));
 const AboutPage = lazy(() => import('./tools/AboutPage'));
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
+const LegalPage = lazy(() => import('./legal/LegalPage'));
 
 let booted = false;
 
@@ -69,6 +70,11 @@ export default function App() {
       {route.section === 'about' && (
         <Suspense fallback={<div className="flex-1" />}>
           <AboutPage />
+        </Suspense>
+      )}
+      {route.section === 'legal' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <LegalPage doc={route.doc} />
         </Suspense>
       )}
       {route.section === 'pdf' && (
