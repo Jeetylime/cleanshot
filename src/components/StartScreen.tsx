@@ -1,4 +1,4 @@
-import { ArrowRight, ImagePlus, LayoutTemplate, Sparkles } from 'lucide-react';
+import { ArrowRight, ImagePlus, LayoutTemplate } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
 import { goCanvas, goStudio, goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
@@ -81,17 +81,6 @@ export function StartScreen() {
                 >
                   <LayoutTemplate size={13} />
                   New design
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    goEditor();
-                    actions.openSample();
-                  }}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-xs font-medium text-muted hover:bg-hover hover:text-fg"
-                >
-                  <Sparkles size={13} />
-                  Try a sample
                 </button>
                 <span className="ml-auto hidden items-center gap-1 text-xs text-subtle sm:flex">
                   or paste <Kbd>{modKey}</Kbd>

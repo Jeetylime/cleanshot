@@ -1,4 +1,5 @@
-import { ArrowRight, ChevronRight, ImagePlus, LayoutTemplate, SquarePen } from 'lucide-react';
+import { ArrowRight, ChevronRight, ImagePlus, LayoutTemplate, Sparkles, SquarePen } from 'lucide-react';
+import { openSample } from '../store/actions';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { Illustration } from '../components/EmptyState';
 import { Kbd } from '../components/ui/Kbd';
@@ -55,6 +56,16 @@ export default function StudioHub() {
                   className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
                 >
                   <ImagePlus size={14} /> Upload image
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    goEditor();
+                    openSample();
+                  }}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-xs font-medium text-muted hover:bg-hover hover:text-fg"
+                >
+                  <Sparkles size={13} /> Try a sample
                 </button>
                 <span className="ml-auto hidden items-center gap-1 text-xs text-subtle sm:flex">
                   or paste <Kbd>{modKey}</Kbd>

@@ -142,6 +142,10 @@ export function EmptyState() {
               <ImagePlus size={14} strokeWidth={2.2} />
               Choose image
             </Button>
+            <Button variant="ghost" onClick={actions.openSample} className="h-8 px-3" disabled={!!busy}>
+              <Sparkles size={14} />
+              Try a sample
+            </Button>
             <Button onClick={() => void pasteFromClipboard()} className="h-8 px-3" disabled={!!busy}>
               <Clipboard size={14} />
               Paste
@@ -149,10 +153,6 @@ export function EmptyState() {
                 <Kbd>{modKey}</Kbd>
                 <Kbd>V</Kbd>
               </span>
-            </Button>
-            <Button variant="ghost" onClick={actions.openSample} className="h-8 px-3" disabled={!!busy}>
-              <Sparkles size={14} />
-              Try a sample
             </Button>
           </div>
           <p className="text-xs text-subtle">PNG, JPG or WebP · any size</p>
