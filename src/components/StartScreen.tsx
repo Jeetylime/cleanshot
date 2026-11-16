@@ -3,7 +3,7 @@ import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
 import { goAbout, goEditor, goTools } from '../app/route';
 import { TOOLS } from '../tools/registry';
-import { Logo, SettingsMenu } from './TopBar';
+import { HomeLogo, SettingsMenu } from './TopBar';
 import { Illustration } from './EmptyState';
 import { Kbd } from './ui/Kbd';
 import { modKey, timeAgo } from '../lib/utils';
@@ -16,7 +16,7 @@ export function StartScreen() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex h-[46px] shrink-0 items-center justify-between border-b border-line bg-panel px-2.5">
-        <Logo />
+        <HomeLogo />
         <SettingsMenu editorItems={false} />
       </header>
 

@@ -16,18 +16,14 @@ export default function ToolsApp({ tool }: { tool: ToolKey | null }) {
         <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1">
           <HomeLogo hideWordmarkOnMobile={!!meta} />
           <ChevronRight size={14} className="shrink-0 text-subtle" />
-          <button
-            type="button"
-            onClick={() => goTools()}
-            className={`shrink-0 rounded-[6px] px-1.5 py-1 text-sm transition-colors hover:bg-hover ${meta ? 'text-muted hover:text-fg' : 'font-semibold text-fg'}`}
-            aria-current={meta ? undefined : 'page'}
-          >
-            Image Tools
-          </button>
+          <ToolSwitcher current={meta} />
           {meta && (
             <>
               <ChevronRight size={14} className="shrink-0 text-subtle" />
-              <ToolSwitcher current={meta} />
+              <span className="flex min-w-0 items-center gap-1.5 px-1.5 text-sm font-semibold text-fg" aria-current="page">
+                <meta.icon size={14} className="shrink-0 text-muted" />
+                <span className="truncate">{meta.name}</span>
+              </span>
             </>
           )}
         </nav>
@@ -55,7 +51,7 @@ export default function ToolsApp({ tool }: { tool: ToolKey | null }) {
 }
 
 /** Breadcrumb button that opens a menu of every tool. */
-function ToolSwitcher({ current }: { current: ToolMeta }) {
+function ToolSwitcher({ current }: { current: ToolMeta | null }) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   return (
@@ -66,12 +62,13 @@ function ToolSwitcher({ current }: { current: ToolMeta }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-current="page"
+        aria-current={current ? undefined : 'page'}
         data-testid="tool-switcher"
-        className={`flex min-w-0 items-center gap-1.5 rounded-[6px] px-1.5 py-1 text-sm font-semibold text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
+        className={`flex shrink-0 items-center gap-1 rounded-[6px] px-1.5 py-1 text-sm transition-colors hover:bg-hover ${open ? 'bg-hover' : ''} ${
+          current ? 'text-muted hover:text-fg' : 'font-semibold text-fg'
+        }`}
       >
-        <current.icon size={14} className="shrink-0 text-muted" />
-        <span className="truncate">{current.name}</span>
+        <span>Image Tools</span>
         <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
       <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={300} label="Switch tool">
@@ -80,7 +77,7 @@ function ToolSwitcher({ current }: { current: ToolMeta }) {
             <div key={g.id} className="pb-1">
               <div className="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">{g.label}</div>
               {TOOLS.filter((t) => t.group === g.id).map((t) => {
-                const active = t.key === current.key;
+                const active = t.key === current?.key;
                 return (
                   <button
                     key={t.key}
@@ -122,7 +119,7 @@ function ToolSwitcher({ current }: { current: ToolMeta }) {
               }}
               className="flex w-full items-center justify-between rounded-[6px] px-0.5 py-1 text-xs text-muted hover:text-fg"
             >
-              All tools <ChevronRight size={13} />
+              All tools overview <ChevronRight size={13} />
             </button>
           </div>
         </div>
