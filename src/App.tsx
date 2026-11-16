@@ -13,6 +13,7 @@ import { getRoute, goEditor, useRoute } from './app/route';
 
 const ToolsApp = lazy(() => import('./tools/ToolsApp'));
 const AboutPage = lazy(() => import('./tools/AboutPage'));
+const PdfApp = lazy(() => import('./pdf/PdfApp'));
 
 let booted = false;
 
@@ -52,13 +53,13 @@ export default function App() {
     let lastId = store.get().doc?.id;
     store.subscribe(() => {
       const id = store.get().doc?.id;
-      if (id && id !== lastId && getRoute().section !== 'tools') goEditor();
+      if (id && id !== lastId && getRoute().section !== 'tools' && getRoute().section !== 'pdf') goEditor();
       lastId = id;
     });
   }, []);
 
   useEffect(() => {
-    if (route.section !== 'tools') void refreshRecents();
+    if (route.section !== 'tools' && route.section !== 'pdf') void refreshRecents();
   }, [route.section]);
 
   return (
@@ -68,6 +69,11 @@ export default function App() {
       {route.section === 'about' && (
         <Suspense fallback={<div className="flex-1" />}>
           <AboutPage />
+        </Suspense>
+      )}
+      {route.section === 'pdf' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <PdfApp tool={route.tool} />
         </Suspense>
       )}
       {route.section === 'tools' && (

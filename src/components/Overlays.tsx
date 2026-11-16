@@ -5,6 +5,7 @@ import { useEditor } from '../store/store';
 import * as actions from '../store/actions';
 import { Kbd } from './ui/Kbd';
 import { modKey } from '../lib/utils';
+import { getRoute } from '../app/route';
 
 export function Toasts() {
   const toast = useEditor((s) => s.toast);
@@ -47,7 +48,7 @@ export function DropOverlay({ active }: { active: boolean }) {
         </div>
         <div className="text-center">
           <p className="text-[13px] font-semibold text-fg">Drop to open</p>
-          <p className="mt-0.5 text-xs text-muted">PNG, JPG or WebP</p>
+          <p className="mt-0.5 text-xs text-muted">{getRoute().section === 'pdf' ? 'PDF files or images' : 'PNG, JPG or WebP'}</p>
         </div>
       </div>
     </div>

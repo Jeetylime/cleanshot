@@ -27,13 +27,24 @@ export const TOOL_KEYS: ToolKey[] = [
   'color-picker',
 ];
 
-export type Route = { section: 'home' } | { section: 'editor' } | { section: 'about' } | { section: 'tools'; tool: ToolKey | null };
+export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign';
+
+export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign'];
+
+export type Route =
+  | { section: 'home' }
+  | { section: 'editor' }
+  | { section: 'about' }
+  | { section: 'tools'; tool: ToolKey | null }
+  | { section: 'pdf'; tool: PdfToolKey | null };
 
 function parse(hash: string): Route {
   const h = hash.replace(/^#/, '');
   if (h === 'editor') return { section: 'editor' };
   if (h === 'privacy') return { section: 'about' };
   if (h === 'tools') return { section: 'tools', tool: null };
+  if (h === 'pdf') return { section: 'pdf', tool: null };
+  if ((PDF_TOOL_KEYS as string[]).includes(h)) return { section: 'pdf', tool: h as PdfToolKey };
   if ((TOOL_KEYS as string[]).includes(h)) return { section: 'tools', tool: h as ToolKey };
   return { section: 'home' };
 }
@@ -60,6 +71,7 @@ function toHash(r: Route): string {
   if (r.section === 'home') return 'home';
   if (r.section === 'editor') return 'editor';
   if (r.section === 'about') return 'privacy';
+  if (r.section === 'pdf') return r.tool ?? 'pdf';
   return r.tool ?? 'tools';
 }
 
@@ -73,6 +85,7 @@ export function navigate(r: Route) {
 export const goHome = () => navigate({ section: 'home' });
 export const goEditor = () => navigate({ section: 'editor' });
 export const goAbout = () => navigate({ section: 'about' });
+export const goPdf = (tool: PdfToolKey | null = null) => navigate({ section: 'pdf', tool });
 export const goTools = (tool: ToolKey | null = null) => navigate({ section: 'tools', tool });
 
 export function useRoute(): Route {
@@ -97,5 +110,5 @@ export function setToolFileSink(sink: FileSink | null) {
 }
 
 export function getToolFileSink(): FileSink | null {
-  return current.section === 'tools' ? toolSink : null;
+  return current.section === 'tools' || current.section === 'pdf' ? toolSink : null;
 }

@@ -183,14 +183,14 @@ export function usePasteAndDrop(): boolean {
       if (isEditableTarget(e.target)) return;
       const sink = getToolFileSink();
       if (sink) {
-        const files = allImageFiles(e.clipboardData);
+        const files = getRoute().section === 'pdf' ? Array.from(e.clipboardData?.files ?? []) : allImageFiles(e.clipboardData);
         if (files.length) {
           e.preventDefault();
           sink(files);
         }
         return;
       }
-      if (getRoute().section === 'tools') return;
+      if (getRoute().section === 'tools' || getRoute().section === 'pdf') return;
       const file = firstImageFile(e.clipboardData);
       if (file) {
         e.preventDefault();
@@ -213,7 +213,7 @@ export function usePasteAndDrop(): boolean {
 
     const onEnter = (e: DragEvent) => {
       if (!hasFiles(e)) return;
-      if (getRoute().section === 'tools' && !getToolFileSink()) return;
+      if ((getRoute().section === 'tools' || getRoute().section === 'pdf') && !getToolFileSink()) return;
       e.preventDefault();
       depth.current++;
       setDragging(true);
@@ -235,12 +235,13 @@ export function usePasteAndDrop(): boolean {
       setDragging(false);
       const sink = getToolFileSink();
       if (sink) {
-        const files = allImageFiles(e.dataTransfer);
+        const pdf = getRoute().section === 'pdf';
+        const files = pdf ? Array.from(e.dataTransfer?.files ?? []) : allImageFiles(e.dataTransfer);
         if (files.length) sink(files);
-        else actions.showToast('Those files aren’t supported images.', 'error');
+        else actions.showToast(pdf ? 'Drop PDF files here.' : 'Those files aren’t supported images.', 'error');
         return;
       }
-      if (getRoute().section === 'tools') return;
+      if (getRoute().section === 'tools' || getRoute().section === 'pdf') return;
       const file = firstImageFile(e.dataTransfer);
       if (file) {
         goEditor();

@@ -1,7 +1,8 @@
 import { ArrowRight, ImagePlus, Sparkles } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
-import { goAbout, goEditor, goTools } from '../app/route';
+import { goAbout, goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
+import { PDF_TOOLS } from '../pdf/registry';
 import { TOOLS } from '../tools/registry';
 import { HomeLogo, SettingsMenu } from './TopBar';
 import { Illustration } from './EmptyState';
@@ -21,13 +22,13 @@ export function StartScreen() {
       </header>
 
       <main className="scroll-thin flex flex-1 justify-center overflow-y-auto px-5 py-10 sm:items-center">
-        <div className="flex w-full max-w-[880px] flex-col gap-8 animate-rise">
+        <div className="flex w-full max-w-[1180px] flex-col gap-8 animate-rise">
           <div className="text-center">
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-balance text-fg">What are you working on?</h1>
-            <p className="mt-1.5 text-sm text-muted">Polish a screenshot, or reach for a quick image utility.</p>
+            <p className="mt-1.5 text-sm text-muted">Polish a screenshot, or reach for a quick image or PDF utility.</p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {/* Screenshot editor */}
             <section className="group flex flex-col overflow-hidden rounded-[16px] border border-line bg-panel transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-pop">
               <button
@@ -131,6 +132,44 @@ export function StartScreen() {
                   >
                     <t.icon size={13} />
                     {t.name.replace('Image ', '')}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* PDF tools */}
+            <section className="group flex flex-col overflow-hidden rounded-[16px] border border-line bg-panel transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-pop">
+              <button type="button" onClick={() => goPdf()} className="flex flex-col text-left" data-testid="open-pdf" aria-label="Open PDF Tools">
+                <div className="flex h-[176px] items-center justify-center bg-window px-8">
+                  <div className="grid grid-cols-4 gap-2.5 transition-transform duration-300 group-hover:scale-[1.02]">
+                    {PDF_TOOLS.map((t) => (
+                      <span key={t.key} className="relative flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-line bg-panel text-muted shadow-soft">
+                        <t.icon size={19} strokeWidth={1.8} />
+                      </span>
+                    ))}
+                    <span className="flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-dashed border-line text-[10px] font-bold tracking-wide text-subtle">
+                      PDF
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5 px-5 pt-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-[15px] font-semibold text-fg">PDF Tools</h2>
+                    <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
+                  </div>
+                  <p className="text-sm text-muted">Merge, split, organize, sign, compress and convert PDFs without uploading them.</p>
+                </div>
+              </button>
+              <div className="mt-auto flex flex-wrap gap-1.5 px-5 pt-4 pb-5">
+                {PDF_TOOLS.filter((t) => ['pdf-merge', 'pdf-split', 'pdf-sign', 'pdf-compress'].includes(t.key)).map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => goPdf(t.key as PdfToolKey)}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-control px-2.5 text-xs font-medium text-muted transition-colors hover:bg-active hover:text-fg"
+                  >
+                    <t.icon size={13} />
+                    {t.name.replace(/ PDFs?$/, '').replace('PDF ', '')}
                   </button>
                 ))}
               </div>

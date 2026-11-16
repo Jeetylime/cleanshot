@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import {
+  FileText,
   House,
   LayoutGrid,
   SquarePen,
@@ -35,7 +36,7 @@ import { ExportPanel } from './ExportPanel';
 import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, Theme } from '../types';
-import { goAbout, goEditor, goHome, goTools, useRoute } from '../app/route';
+import { goAbout, goEditor, goHome, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -64,6 +65,7 @@ const SECTIONS = [
   { id: 'home', label: 'Home', hint: 'Start screen', icon: House, go: goHome },
   { id: 'editor', label: 'Screenshot Editor', hint: 'Annotate, redact and frame', icon: SquarePen, go: goEditor },
   { id: 'tools', label: 'Image Tools', hint: 'Resize, compress, convert and more', icon: LayoutGrid, go: () => goTools() },
+  { id: 'pdf', label: 'PDF Tools', hint: 'Merge, split, sign and convert', icon: FileText, go: () => goPdf() },
   { id: 'about', label: 'Privacy & Models', hint: 'What’s stored and downloaded', icon: ShieldCheck, go: goAbout },
 ] as const;
 

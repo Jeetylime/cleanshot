@@ -86,10 +86,10 @@ export function useFileSink(handler: (files: File[]) => void) {
   }, []);
 }
 
-export function pickFiles(multiple: boolean, onFiles: (files: File[]) => void) {
+export function pickFiles(multiple: boolean, onFiles: (files: File[]) => void, accept: string = ACCEPT) {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = ACCEPT;
+  input.accept = accept;
   input.multiple = multiple;
   input.style.display = 'none';
   input.addEventListener('change', () => {
@@ -107,12 +107,14 @@ export function Dropzone({
   title,
   hint,
   icon,
+  accept,
 }: {
   onFiles: (files: File[]) => void;
   multiple?: boolean;
   title?: string;
   hint?: string;
   icon?: ReactNode;
+  accept?: string;
 }) {
   const [over, setOver] = useState(false);
   return (
@@ -121,11 +123,11 @@ export function Dropzone({
         role="button"
         tabIndex={0}
         data-testid="tool-dropzone"
-        onClick={() => pickFiles(multiple, onFiles)}
+        onClick={() => pickFiles(multiple, onFiles, accept)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            pickFiles(multiple, onFiles);
+            pickFiles(multiple, onFiles, accept);
           }
         }}
         onDragOver={(e) => {
