@@ -14,6 +14,11 @@ import {
   Maximize,
   Minimize,
   Minus,
+  PencilLine,
+  LayoutTemplate,
+  Type,
+  Shapes,
+  ImagePlus,
   Plus,
   Redo2,
   Scan,
@@ -21,7 +26,6 @@ import {
   X,
 } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
-import { StudioSwitch } from '../components/StudioSwitch';
 import { IconButton } from '../components/ui/IconButton';
 import { Popover, MenuItem, MenuSeparator } from '../components/ui/Popover';
 import { Tooltip } from '../components/ui/Tooltip';
@@ -98,6 +102,7 @@ export function CanvasEditor() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
           <div className="relative flex min-h-0 min-w-0 flex-1">
             <Stage />
+            <EmptyCanvasHint />
             <ZoomBar />
           </div>
           {!fullscreen && <div className={`contents ${hasSelection ? '' : 'max-lg:hidden'}`}><Properties /></div>}
@@ -115,10 +120,10 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
     <header className="relative z-20 flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2.5">
       <div className="flex min-w-0 items-center gap-1">
         <HomeLogo hideWordmarkOnMobile />
-        <ChevronRight size={14} className="shrink-0 text-subtle" />
-        <DesignMenu onShortcuts={onShortcuts} />
-        <span className="mx-1 h-4 w-px bg-line max-sm:hidden" />
-        <StudioSwitch />
+        <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
+        <span className="px-1.5 text-sm font-semibold text-fg max-sm:hidden" aria-current="page">
+          Canvas
+        </span>
         <span className="mx-1 h-4 w-px bg-line max-sm:hidden" />
         <IconButton label="Undo" shortcut={[modKey, 'Z']} onClick={undo} disabled={!canUndo}>
           <Undo2 size={16} />
@@ -127,9 +132,9 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
           <Redo2 size={16} />
         </IconButton>
       </div>
-      <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden max-w-[30vw] -translate-x-1/2 items-center md:flex">
-        <div className="pointer-events-auto flex min-w-0 items-center gap-1.5">
-          <ProjectTitle />
+      <div className="flex min-w-0 items-center gap-1.5 md:pointer-events-none md:absolute md:inset-y-0 md:left-1/2 md:max-w-[34vw] md:-translate-x-1/2">
+        <div className="flex min-w-0 items-center gap-2 md:pointer-events-auto">
+          <DesignNameMenu onShortcuts={onShortcuts} />
           <SaveState />
         </div>
       </div>
@@ -149,86 +154,88 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
   );
 }
 
-function ProjectTitle() {
-  const name = useStudio((s) => s.doc?.name ?? '');
-  const [editing, setEditing] = useState(false);
-  if (editing)
-    return (
-      <input
-        autoFocus
-        defaultValue={name}
-        aria-label="Design name"
-        onBlur={(e) => {
-          A.renameProject(e.target.value);
-          setEditing(false);
-        }}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          if (e.key === 'Escape') setEditing(false);
-        }}
-        className="h-7 w-[220px] rounded-[7px] bg-control px-2 text-center text-[13px] font-medium text-fg outline-none ring-1 ring-accent"
-      />
-    );
-  return (
-    <Tooltip label="Rename">
-      <button type="button" onClick={() => setEditing(true)} className="h-7 max-w-[260px] truncate rounded-[7px] px-2 text-[13px] font-medium text-fg hover:bg-hover" data-testid="project-name">
-        {name}
-      </button>
-    </Tooltip>
-  );
-}
-
 function SaveState() {
   const state = useStudio((s) => s.saveState);
   if (state === 'saving')
     return (
-      <span className="flex items-center gap-1 text-2xs text-subtle">
-        <Loader2 size={11} className="animate-spin" /> Saving
+      <span className="flex shrink-0 items-center gap-1 text-xs text-muted">
+        <Loader2 size={12} className="animate-spin" /> <span className="max-lg:hidden">Saving…</span>
       </span>
     );
   if (state === 'error')
     return (
       <Tooltip label="Not saved in this browser. Download a project file to keep a copy.">
-        <span className="flex items-center gap-1 text-2xs text-danger">
-          <CloudOff size={11} /> Not saved
+        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-danger">
+          <CloudOff size={12} /> <span className="max-lg:hidden">Not saved</span>
         </span>
       </Tooltip>
     );
   if (state === 'saved')
     return (
       <Tooltip label="Saved in this browser">
-        <span className="flex items-center gap-1 text-2xs text-subtle">
-          <Check size={11} /> Saved
+        <span className="flex shrink-0 items-center gap-1 text-xs text-muted" data-testid="save-state">
+          <Check size={12} strokeWidth={2.5} className="text-success" /> <span className="max-lg:hidden">Saved</span>
         </span>
       </Tooltip>
     );
   return null;
 }
 
-function DesignMenu({ onShortcuts }: { onShortcuts: () => void }) {
+/** The design's name doubles as its file menu, like a document title in a desktop app. */
+function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
+  const name = useStudio((s) => s.doc?.name ?? '');
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const run = (fn: () => void) => () => {
     setOpen(false);
     fn();
   };
+  if (renaming)
+    return (
+      <input
+        autoFocus
+        defaultValue={name}
+        aria-label="Design name"
+        onFocus={(e) => e.target.select()}
+        onBlur={(e) => {
+          A.renameProject(e.target.value);
+          setRenaming(false);
+        }}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          if (e.key === 'Escape') setRenaming(false);
+        }}
+        className="h-7 w-[min(240px,50vw)] rounded-[7px] bg-control px-2 text-center text-[13px] font-medium text-fg outline-none ring-1 ring-accent"
+      />
+    );
   return (
     <>
       <button
         ref={anchor}
         type="button"
         onClick={() => setOpen((o) => !o)}
+        onDoubleClick={() => {
+          setOpen(false);
+          setRenaming(true);
+        }}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex shrink-0 items-center gap-1 rounded-[6px] px-1.5 py-1 text-sm font-semibold text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
+        className={`flex h-7 min-w-0 items-center gap-1 rounded-[7px] px-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
         data-testid="design-menu"
       >
-        <span>Design</span>
+        <span className="truncate" data-testid="project-name">
+          {name}
+        </span>
         <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={240} label="Design">
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="center" width={240} label="Design">
         <div className="p-1" role="menu">
+          <MenuItem icon={<PencilLine size={14} />} onClick={run(() => setRenaming(true))}>
+            Rename
+          </MenuItem>
+          <MenuSeparator />
           <MenuItem icon={<Plus size={14} />} onClick={run(A.closeProject)}>
             New design…
           </MenuItem>
@@ -249,6 +256,36 @@ function DesignMenu({ onShortcuts }: { onShortcuts: () => void }) {
         </div>
       </Popover>
     </>
+  );
+}
+
+/** Shown on a blank design so the first step is obvious. */
+function EmptyCanvasHint() {
+  const show = useStudio((s) => s.doc?.elements.length === 0 && !s.panel);
+  if (!show) return null;
+  const items = [
+    { id: 'templates', label: 'Templates', icon: LayoutTemplate },
+    { id: 'text', label: 'Text', icon: Type },
+    { id: 'elements', label: 'Shapes & icons', icon: Shapes },
+    { id: 'uploads', label: 'Images', icon: ImagePlus },
+  ] as const;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-16 z-10 flex justify-center px-4 animate-fade-in">
+      <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-1 rounded-[12px] border border-line bg-elevated/95 p-1 shadow-pop backdrop-blur" data-testid="empty-hint">
+        <span className="px-2 text-xs text-muted">Start with</span>
+        {items.map((it) => (
+          <button
+            key={it.id}
+            type="button"
+            onClick={() => studio.set({ panel: it.id })}
+            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-xs font-medium text-fg hover:bg-hover"
+          >
+            <it.icon size={14} className="text-accent" />
+            {it.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -278,7 +315,7 @@ function ZoomBar() {
       <IconButton label="Fit to screen" shortcut={[modKey, '0']} onClick={A.fitView} tooltipSide="top">
         <Scan size={14} />
       </IconButton>
-      <IconButton label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'} shortcut="F" onClick={() => studio.set({ fullscreen: !fullscreen })} tooltipSide="top">
+      <IconButton label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'} onClick={() => studio.set({ fullscreen: !fullscreen })} tooltipSide="top">
         {fullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
       </IconButton>
     </div>

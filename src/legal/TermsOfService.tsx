@@ -19,8 +19,10 @@ export function TermsOfService() {
         <p>CleanShot is a free, browser-based set of tools for working with images and PDFs. It currently includes:</p>
         <List>
           <li>
-            <Strong>Studio</Strong>: Create, for annotating, redacting, cropping and framing images and screenshots, and Canvas, for designing graphics from scratch
-            or from templates.
+            <Strong>Edit</Strong>: annotate, redact, crop and frame images and screenshots.
+          </li>
+          <li>
+            <Strong>Canvas</Strong>: design graphics from scratch or from templates.
           </li>
           <li>
             <Strong>Image Tools</Strong>: background removal, upscaling, resizing, cropping, compression, format conversion, metadata viewing and removal, and color

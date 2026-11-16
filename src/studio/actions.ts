@@ -68,6 +68,8 @@ export function select(ids: string[], additive = false) {
     next = (s.doc?.elements ?? []).filter((e) => cur.has(e.id)).map((e) => e.id);
   } else next = expanded;
   studio.set({ selection: next, cropId: s.cropId && next.includes(s.cropId) ? s.cropId : null, editingTextId: null });
+  // On phones the drawer and the properties sheet compete for the same space.
+  if (next.length && window.innerWidth < 768) studio.set({ panel: null });
 }
 
 export function selectAll() {
@@ -582,7 +584,8 @@ export function setPanel(panel: LeftPanel | null) {
 
 export async function openDoc(doc: StudioDoc, opts: { save?: boolean } = {}) {
   resetHistory(doc);
-  studio.set({ saveState: 'idle', view: { ...studio.get().view, mode: 'fit' } });
+  // Open with the canvas front and center; panels open on demand.
+  studio.set({ saveState: 'idle', view: { ...studio.get().view, mode: 'fit' }, panel: null });
   requestFit();
   ensureDocFonts(doc);
   const ids = [...new Set(doc.elements.filter((e): e is ImageElement => e.type === 'image').map((e) => e.assetId))];
@@ -629,6 +632,7 @@ export function applyTemplate(templateId: string, resize: boolean) {
   }
   commit((doc) => ({ ...doc, width, height, background: structuredClone(t.background), elements }));
   studio.set({ selection: [] });
+  if (window.innerWidth < 768) studio.set({ panel: null });
   ensureDocFonts(studio.get().doc!);
   requestFit();
 }
@@ -776,7 +780,7 @@ export async function importProjectFile(file: Blob) {
   }
 }
 
-/** Open an image (from another tool or from Create) on a canvas: the current design, or a new one sized to it. */
+/** Open an image (from another tool or from Edit) on a canvas: the current design, or a new one sized to it. */
 export async function openImageInCanvas(blob: Blob, name = 'Image', opts: { newDesign?: boolean } = {}) {
   try {
     if (opts.newDesign || !studio.get().doc) {

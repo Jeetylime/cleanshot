@@ -48,7 +48,10 @@ import * as editorActions from '../store/actions';
 import { useStudio, shallowEqual, selectedElements, studio } from './store';
 import * as A from './actions';
 import { FONTS, fontOf } from './fonts';
-import { BackgroundPanel, SOLIDS } from './LeftPanel';
+import { SOLIDS } from './LeftPanel';
+import { studioFillCss } from './render';
+
+const BG_LABEL = { transparent: 'Transparent', solid: 'Solid color', gradient: 'Gradient', pattern: 'Pattern' } as const;
 import { SIZE_PRESETS, MAX_CANVAS_SIDE } from './templates';
 import { aabb, unionBounds } from './geometry';
 import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, StudioElement, TextElement } from './types';
@@ -124,7 +127,16 @@ function CanvasProps() {
         </label>
       </Section>
       <Section title="Background">
-        <BackgroundPanel />
+        <button
+          type="button"
+          onClick={() => studio.set({ panel: 'backgrounds' })}
+          className="flex h-8 items-center gap-2 rounded-[7px] bg-control px-1.5 text-xs text-fg hover:bg-hover"
+          data-testid="change-background"
+        >
+          <span className="h-5 w-5 shrink-0 rounded-[5px]" style={{ background: studioFillCss(doc.background), boxShadow: 'inset 0 0 0 1px var(--border-strong)' }} />
+          <span className="flex-1 text-left">{BG_LABEL[doc.background.kind]}</span>
+          <span className="text-subtle">Change</span>
+        </button>
       </Section>
       <Section>
         <p className="text-xs leading-[17px] text-subtle">Select something on the canvas to edit it. Double-click text to type, or an image to crop it.</p>
@@ -393,12 +405,12 @@ function IconProps({ e }: { e: IconElement }) {
 function ImageProps({ e }: { e: ImageElement }) {
   const cropping = useStudio((s) => s.cropId === e.id);
   const up = (p: Partial<ImageElement>, key?: string) => A.updateElements<ImageElement>([e.id], p, key);
-  const editInCreate = async () => {
+  const annotate = async () => {
     try {
       const blob = await getImageBlob(e.assetId);
       goEditor();
       await editorActions.openImageBlob(blob, `${e.name}.png`);
-      editorActions.showToast('Opened in Create. Use “Send to Canvas” to bring it back.', 'info');
+      editorActions.showToast('Opened in Edit. Use “Send to Canvas” to bring it back.', 'info');
     } catch {
       editorActions.showToast('Couldn’t open this image.', 'error');
     }
@@ -439,8 +451,8 @@ function ImageProps({ e }: { e: ImageElement }) {
           <Button onClick={() => pickFiles(false, (f) => f[0] && void A.replaceImage(e.id, f[0]))}>
             <RefreshCw size={12} /> Replace
           </Button>
-          <Button onClick={() => void editInCreate()} title="Annotate, blur or redact this image in Create">
-            <SquarePen size={12} /> Edit in Create
+          <Button onClick={() => void annotate()} title="Annotate, blur or redact this image in Edit, then send it back">
+            <SquarePen size={12} /> Annotate
           </Button>
         </div>
       </Section>

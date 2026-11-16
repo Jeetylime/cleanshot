@@ -37,7 +37,6 @@ import * as actions from '../store/actions';
 import { undo, redo } from '../store/history';
 import { fitView, zoomStep, zoomToCenter } from '../store/view';
 import { computeLayout } from '../engine/render';
-import { StudioSwitch } from './StudioSwitch';
 import { sendToCanvas } from '../studio/handoff';
 import { exportDocument, outputSize } from '../engine/export';
 import { store } from '../store/store';
@@ -76,8 +75,8 @@ export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compac
 
 const SECTIONS = [
   { id: 'home', label: 'Home', hint: 'Start screen', icon: House, go: goHome },
-  { id: 'editor', label: 'Studio · Create', hint: 'Edit an image or screenshot', icon: SquarePen, go: goEditor },
-  { id: 'canvas', label: 'Studio · Canvas', hint: 'Design from scratch or a template', icon: LayoutTemplate, go: goCanvas },
+  { id: 'editor', label: 'Edit', hint: 'Annotate, blur and frame an image', icon: SquarePen, go: goEditor },
+  { id: 'canvas', label: 'Canvas', hint: 'Design from scratch or a template', icon: LayoutTemplate, go: goCanvas },
   { id: 'tools', label: 'Image Tools', hint: 'Resize, compress, convert and more', icon: LayoutGrid, go: () => goTools() },
   { id: 'pdf', label: 'PDF Tools', hint: 'Merge, split, sign and convert', icon: FileText, go: () => goPdf() },
 ] as const;
@@ -412,7 +411,7 @@ function SendToCanvasButton() {
       const { width, height } = outputSize(doc);
       const { blob } = await exportDocument(doc, { format: 'png', quality: 100, width, height });
       sendToCanvas(blob, `${doc.name}.png`);
-      actions.showToast('Added to Canvas. Your screenshot is still open in Create.', 'success');
+      actions.showToast('Added to Canvas. Your image is still open in Edit.', 'success');
     } catch {
       actions.showToast('Couldn’t send this image to Canvas.', 'error');
     } finally {
@@ -478,8 +477,10 @@ export function TopBar() {
     <header className="relative z-20 flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2.5">
       <div className="flex min-w-0 items-center gap-1">
         <HomeLogo hideWordmarkOnMobile />
-        <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
-        <StudioSwitch />
+        <ChevronRight size={14} className="shrink-0 text-subtle" />
+        <span className="px-1.5 text-sm font-semibold text-fg" aria-current="page">
+          Edit
+        </span>
         {hasDoc && (
           <>
             <Divider />

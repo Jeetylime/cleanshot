@@ -14,7 +14,6 @@ import { getRoute, goEditor, useRoute } from './app/route';
 const ToolsApp = lazy(() => import('./tools/ToolsApp'));
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
 const LegalPage = lazy(() => import('./legal/LegalPage'));
-const StudioHub = lazy(() => import('./studio/StudioHub'));
 const CanvasApp = lazy(() => import('./studio/StudioApp'));
 
 let booted = false;
@@ -68,11 +67,6 @@ export default function App() {
     <div className="flex h-full flex-col bg-window text-fg">
       {route.section === 'home' && <StartScreen />}
       {route.section === 'editor' && <Editor />}
-      {route.section === 'studio' && (
-        <Suspense fallback={<div className="flex-1" />}>
-          <StudioHub />
-        </Suspense>
-      )}
       {route.section === 'canvas' && (
         <Suspense fallback={<div className="flex-1" />}>
           <CanvasApp />

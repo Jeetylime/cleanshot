@@ -14,7 +14,7 @@ import { ContextMenu, type ContextMenuState } from './ContextMenu';
 type Handle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rot';
 
 const HANDLE = 9;
-const ROT_OFFSET = 26;
+const ROT_OFFSET = 30;
 
 /** Which resize handles an element offers. */
 function handlesFor(els: StudioElement[]): Handle[] {
@@ -23,6 +23,12 @@ function handlesFor(els: StudioElement[]): Handle[] {
   if (e.type === 'line') return ['w', 'e', 'rot'];
   if (e.type === 'text') return ['nw', 'ne', 'se', 'sw', 'e', 'w', 'rot'];
   return ['nw', 'ne', 'se', 'sw', 'n', 'e', 's', 'w', 'rot'];
+}
+
+/** Drop edge handles when the frame is small on screen, so corners stay grabbable. */
+function fitHandles(hs: Handle[], f: Frame, zoom: number): Handle[] {
+  if (Math.min(f.w, f.h) * zoom >= 44) return hs;
+  return hs.filter((h) => h.length === 2 || h === 'rot' || ((h === 'e' || h === 'w') && hs.length <= 3));
 }
 
 const LOCAL: Record<Exclude<Handle, 'rot'>, [number, number]> = {
@@ -215,12 +221,19 @@ export function Stage() {
           const locked = sel.every((e) => e.locked);
           poly(pts, locked ? '#ff9f0a' : col, 1.5);
           if (!locked && !s.gesturing) {
-            const hs = s.cropId ? (['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as Handle[]) : handlesFor(sel);
+            const hs = fitHandles(s.cropId ? (['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as Handle[]) : handlesFor(sel), f, zoom);
             for (const h of hs) {
               if (h === 'rot') {
                 const bc = toS(frameCorner(f, 0.5, 1));
                 const a = (f.rotation * Math.PI) / 180;
                 const rp = { x: bc.x - Math.sin(a) * ROT_OFFSET, y: bc.y + Math.cos(a) * ROT_OFFSET };
+                // Stem from the frame to the handle, so it reads as part of the selection
+                ctx.beginPath();
+                ctx.moveTo(bc.x - Math.sin(a) * 2, bc.y + Math.cos(a) * 2);
+                ctx.lineTo(rp.x + Math.sin(a) * 8, rp.y - Math.cos(a) * 8);
+                ctx.strokeStyle = col;
+                ctx.lineWidth = 1;
+                ctx.stroke();
                 ctx.beginPath();
                 ctx.arc(rp.x, rp.y, 7, 0, Math.PI * 2);
                 ctx.fillStyle = '#ffffff';
@@ -348,7 +361,7 @@ export function Stage() {
     if (!f) return null;
     const { zoom, x, y } = s.view;
     const toS = (p: Point) => ({ x: x + p.x * zoom, y: y + p.y * zoom });
-    const hs = cropEl ? (['nw', 'ne', 'se', 'sw', 'n', 'e', 's', 'w'] as Handle[]) : handlesFor(sel);
+    const hs = fitHandles(cropEl ? (['nw', 'ne', 'se', 'sw', 'n', 'e', 's', 'w'] as Handle[]) : handlesFor(sel), f, zoom);
     const touch = matchMedia('(pointer: coarse)').matches ? 14 : 8;
     for (const h of hs) {
       let p: Point;

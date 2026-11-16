@@ -2,8 +2,8 @@
 
 A local-first image workspace for the browser with two sections:
 
-- **Studio**, with two workspaces you can switch between without losing work:
-  - **Create**: drop, paste or open an image or screenshot, then annotate it, redact sensitive details, frame it on a background, and export a clean PNG, JPEG or WebP.
+- **Edit** and **Canvas**, two workspaces that can pass images back and forth without losing work:
+  - **Edit**: drop, paste or open an image or screenshot, then annotate it, redact sensitive details, frame it on a background, and export a clean PNG, JPEG or WebP.
   - **Canvas**: a lightweight design editor. Start blank, from a preset size or from a template, then add text, shapes, lines, icons and images, arrange them on layers and export.
 - **Image Tools**: eight focused utilities, including AI background removal and AI upscaling that run on your device.
 
@@ -30,7 +30,7 @@ npm run preview   # serve the production build
 
 **Workflow**: full undo/redo history, keyboard shortcuts (press `?`), drag-and-drop anywhere, `⌘V` paste, zoom and pan (pinch, `⌘`+scroll, space-drag), recent-session recovery via IndexedDB, dark and light UI themes, and Auto/dark/light/checker canvas backdrops.
 
-## Studio Canvas
+## Canvas
 
 **Start**: preset sizes (square, portrait and story posts, YouTube thumbnail, presentation, web banner, US Letter, A4), custom width and height with ratio shortcuts, white/transparent/solid backgrounds, eight editable templates, starting from an image, and reopening saved designs.
 
@@ -40,7 +40,7 @@ npm run preview   # serve the production build
 
 **Text**: ten self-hosted fonts (no third-party font requests), size, bold, italic, underline, uppercase, alignment, color, letter spacing, line height, outline and shadow. Text stays editable; double-click or press Enter to type.
 
-**Images**: crop in place (drag edges to trim, drag inside to reposition), fill/fit/cover page, flip, rotate, corner radius, border, shadow (follows transparency), opacity, replace, and “Edit in Create” for annotation or redaction.
+**Images**: crop in place (drag edges to trim, drag inside to reposition), fill/fit/cover page, flip, rotate, corner radius, border, shadow (follows transparency), opacity, replace, and “Annotate” to open an image in Edit for annotation or redaction.
 
 **Backgrounds**: transparent, solid colors, custom color, gradients with angle, and dot/grid/stripe/check patterns.
 
@@ -50,7 +50,7 @@ npm run preview   # serve the production build
 
 **Export**: PNG, JPEG, WebP or PDF (single page; paper presets export at real US Letter/A4 size), transparent background for PNG/WebP, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
 
-**Integration**: Create's “Send to Canvas” places the edited screenshot on the current design; Canvas's “Edit in Create” opens an image in Create; the Cropper, Background Remover and Upscaler have a “Design” button that opens the result on Canvas.
+**Integration**: Edit's “Send to Canvas” places the edited image on the current design; Canvas's “Annotate” opens an image in Edit; the Cropper, Background Remover and Upscaler have a “Design” button that opens the result on Canvas.
 
 ## Image Tools
 
@@ -89,7 +89,7 @@ src/
     view.ts             Zoom/pan/fit with animation
     factory.ts          Annotation construction from tool styles
   canvas/controller.ts  Imperative canvas: pointer gestures, render loop, overlays
-  studio/               Studio Canvas (lazy-loaded)
+  studio/               Canvas design editor (lazy-loaded)
     types.ts            Design document: elements with box + rotation, fills, assets
     render.ts           Scene renderer shared by screen, thumbnails and export; text layout
     geometry.ts         Transforms, hit-testing, bounds, snapping
@@ -101,7 +101,7 @@ src/
   persistence/          IndexedDB session recovery
   components/           React UI (toolbar, tool rail, properties panels, dialogs, start screen)
   hooks/                Global keyboard, paste/drop and theme handling
-  app/route.ts          Hash routing (#home, #studio, #editor, #canvas, #tools, #<tool>) + paste/drop routing
+  app/route.ts          Hash routing (#home, #editor, #canvas, #tools, #<tool>) + paste/drop routing
   tools/                Image Tools (each tool is lazy-loaded)
     registry.ts         Tool metadata, groups and lazy components
     ToolsApp.tsx        Tools header, landing grid, error boundary

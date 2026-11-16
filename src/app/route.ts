@@ -38,7 +38,6 @@ export const LEGAL_DOCS: LegalDoc[] = ['terms', 'privacy-policy', 'acceptable-us
 export type Route =
   | { section: 'home' }
   | { section: 'editor' }
-  | { section: 'studio' }
   | { section: 'canvas' }
   | { section: 'legal'; doc: LegalDoc }
   | { section: 'tools'; tool: ToolKey | null }
@@ -46,8 +45,7 @@ export type Route =
 
 function parse(hash: string): Route {
   const h = hash.replace(/^#/, '');
-  if (h === 'editor' || h === 'create') return { section: 'editor' };
-  if (h === 'studio') return { section: 'studio' };
+  if (h === 'editor' || h === 'edit' || h === 'create') return { section: 'editor' };
   if (h === 'canvas') return { section: 'canvas' };
   if (h === 'privacy') return { section: 'legal', doc: 'privacy-policy' }; // old Privacy & Models link
   if ((LEGAL_DOCS as string[]).includes(h)) return { section: 'legal', doc: h as LegalDoc };
@@ -79,7 +77,6 @@ export function getRoute(): Route {
 function toHash(r: Route): string {
   if (r.section === 'home') return 'home';
   if (r.section === 'editor') return 'editor';
-  if (r.section === 'studio') return 'studio';
   if (r.section === 'canvas') return 'canvas';
   if (r.section === 'legal') return r.doc;
   if (r.section === 'pdf') return r.tool ?? 'pdf';
@@ -95,7 +92,6 @@ export function navigate(r: Route) {
 
 export const goHome = () => navigate({ section: 'home' });
 export const goEditor = () => navigate({ section: 'editor' });
-export const goStudio = () => navigate({ section: 'studio' });
 export const goCanvas = () => navigate({ section: 'canvas' });
 export const goLegal = (doc: LegalDoc) => navigate({ section: 'legal', doc });
 export const goPrivacy = () => goLegal('privacy-policy');

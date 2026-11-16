@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Copy, FileUp, ImagePlus, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
-import { StudioSwitch } from '../components/StudioSwitch';
 import { ColorWell, NumberInput, Button } from '../components/ui/controls';
 import { Popover, MenuItem } from '../components/ui/Popover';
 import { formatBytes, timeAgo } from '../lib/utils';
@@ -56,9 +55,11 @@ export function CanvasStart() {
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2.5">
         <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1">
-          <HomeLogo hideWordmarkOnMobile />
+          <HomeLogo />
           <ChevronRight size={14} className="shrink-0 text-subtle" />
-          <StudioSwitch />
+          <span className="px-1.5 text-sm font-semibold text-fg" aria-current="page">
+            Canvas
+          </span>
         </nav>
         <SettingsMenu editorItems={false} />
       </header>

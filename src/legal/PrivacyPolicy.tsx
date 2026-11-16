@@ -51,11 +51,11 @@ export function PrivacyPolicy() {
         <p>To work properly, CleanShot keeps some data on your device. It stays in your browser and isn’t sent to us.</p>
         <List>
           <li>
-            <Strong>Studio designs</Strong> (IndexedDB): designs you make on Canvas, including the images you add to them and a thumbnail, so you can reopen them
+            <Strong>Canvas designs</Strong> (IndexedDB): designs you make on Canvas, including the images you add to them and a thumbnail, so you can reopen them
             later. They stay until you delete them from “Your designs” or clear this site’s data.
           </li>
           <li>
-            <Strong>Recent Create sessions</Strong> (IndexedDB): up to 10 recent sessions from Studio’s Create workspace, including the image, your edits and a thumbnail, so you can
+            <Strong>Recent Edit sessions</Strong> (IndexedDB): up to 10 recent sessions from Edit, including the image, your edits and a thumbnail, so you can
             pick up where you left off. Older sessions are removed automatically.
           </li>
           <li>
@@ -74,7 +74,7 @@ export function PrivacyPolicy() {
           </li>
         </List>
         <p>
-          You can clear recent sessions and downloaded models with the buttons below, delete designs from “Your designs” in Studio Canvas, or remove everything by
+          You can clear recent sessions and downloaded models with the buttons below, delete designs from “Your designs” in Canvas, or remove everything by
           clearing this site’s data in your browser settings. Anyone with access to your browser profile may be able to see recent sessions and designs, so clear them
           on shared computers. If you download a design as a project file, that file contains the design and its images; keep it somewhere safe.
         </p>

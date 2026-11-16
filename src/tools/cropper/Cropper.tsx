@@ -363,7 +363,7 @@ export default function Cropper() {
             <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('copy')}>
               <Copy size={13} /> Copy
             </Button>
-            <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('editor')} title="Open the result in Studio Create">
+            <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('editor')} title="Annotate the result in Edit">
               <PenTool size={13} /> Annotate
             </Button>
             <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('canvas')} title="Use the result in a Studio Canvas design">

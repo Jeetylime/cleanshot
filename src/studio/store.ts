@@ -61,7 +61,7 @@ export const studio = createStore({
   viewport: { w: 800, h: 600 },
   guides: [],
   marquee: null,
-  panel: typeof window !== 'undefined' && window.innerWidth < 900 ? null : 'templates',
+  panel: null,
   assets: [],
   exportOpen: false,
   saveState: 'idle',

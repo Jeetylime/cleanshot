@@ -121,26 +121,6 @@ export function useStudioShortcuts(openShortcuts: () => void) {
         case '?':
           openShortcuts();
           break;
-        case 't':
-        case 'T':
-          A.addText('body');
-          break;
-        case 'r':
-        case 'R':
-          A.addShape('rect');
-          break;
-        case 'o':
-        case 'O':
-          A.addShape('ellipse');
-          break;
-        case 'l':
-        case 'L':
-          A.addLine(false);
-          break;
-        case 'f':
-        case 'F':
-          studio.set({ fullscreen: !s.fullscreen });
-          break;
         default:
           handled = false;
       }
@@ -175,22 +155,12 @@ export const STUDIO_SHORTCUTS: { group: string; items: [string, string][] }[] = 
     ],
   },
   {
-    group: 'Add',
-    items: [
-      ['Text', 'T'],
-      ['Rectangle', 'R'],
-      ['Circle', 'O'],
-      ['Line', 'L'],
-    ],
-  },
-  {
     group: 'Canvas',
     items: [
       ['Edit text / crop image', 'Enter or double-click'],
       ['Zoom in / out', '⌘+ / ⌘−'],
       ['Fit / 100%', '⌘0 / ⌘1'],
       ['Pan', 'Space + drag'],
-      ['Fullscreen', 'F'],
       ['Export', '⌘E'],
       ['Keep proportions / free resize', '⇧ while resizing'],
       ['Turn off snapping', 'Alt while dragging'],

@@ -46,7 +46,7 @@ export function Rail() {
   return (
     <nav
       aria-label="Add and organize"
-      className="flex shrink-0 gap-0.5 border-line bg-panel p-1 max-md:order-last max-md:justify-around max-md:border-t md:w-[68px] md:flex-col md:border-r md:py-2"
+      className="flex shrink-0 gap-0.5 border-line bg-panel p-1 max-md:order-last max-md:h-[58px] max-md:justify-around max-md:border-t md:w-[68px] md:flex-col md:border-r md:py-2"
     >
       {RAIL.map((r) => {
         const active = panel === r.id;
@@ -77,7 +77,7 @@ export function LeftDrawer() {
   return (
     <aside
       aria-label={title}
-      className="flex shrink-0 flex-col border-line bg-panel animate-fade-in max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:h-[52vh] max-md:rounded-t-[16px] max-md:border-t max-md:shadow-pop md:w-[272px] md:border-r"
+      className="flex shrink-0 flex-col border-line bg-panel animate-fade-in max-md:absolute max-md:inset-x-0 max-md:bottom-[58px] max-md:z-30 max-md:h-[min(52vh,calc(100%-120px))] max-md:rounded-t-[16px] max-md:border-t max-md:shadow-pop md:w-[252px] md:border-r"
     >
       <header className="flex h-11 shrink-0 items-center justify-between px-3.5">
         <h2 className="text-[13px] font-semibold text-fg">{title}</h2>
