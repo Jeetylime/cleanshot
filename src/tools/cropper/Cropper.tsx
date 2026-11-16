@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Crop, Download, FlipHorizontal2, FlipVertical2, PenTool, RotateCcw, RotateCw } from 'lucide-react';
+import { Copy, Crop, Download, FlipHorizontal2, FlipVertical2, PenTool, RotateCcw, RotateCw, LayoutTemplate } from 'lucide-react';
+import { sendToCanvas } from '../../studio/handoff';
 import { Button, NumberInput, Toggle } from '../../components/ui/controls';
 import { Tooltip } from '../../components/ui/Tooltip';
 import type { Rect } from '../../types';
@@ -158,7 +159,7 @@ export default function Cropper() {
     const f = resolveFormat(format, img!.type);
     return encodeCanvas(canvas, f, quality);
   };
-  const doExport = async (kind: 'save' | 'copy' | 'editor') => {
+  const doExport = async (kind: 'save' | 'copy' | 'editor' | 'canvas') => {
     if (!work || !img) return;
     setBusy(true);
     try {
@@ -166,6 +167,7 @@ export default function Cropper() {
       const name = `${baseName(img.name)}-cropped`;
       if (kind === 'save') await saveBlob(blob, withExtension(name, f));
       else if (kind === 'copy') await copyImage(blob);
+      else if (kind === 'canvas') sendToCanvas(blob, withExtension(name, f));
       else {
         goEditor();
         await openImageBlob(blob, withExtension(name, f));
@@ -361,8 +363,11 @@ export default function Cropper() {
             <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('copy')}>
               <Copy size={13} /> Copy
             </Button>
-            <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('editor')} title="Open the result in the Screenshot Editor">
+            <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('editor')} title="Open the result in Studio Create">
               <PenTool size={13} /> Annotate
+            </Button>
+            <Button className="h-8 flex-1" disabled={busy} onClick={() => void doExport('canvas')} title="Use the result in a Studio Canvas design">
+              <LayoutTemplate size={13} /> Design
             </Button>
           </div>
         </>
@@ -375,7 +380,7 @@ function Intro() {
   return (
     <PanelSection title="How it works">
       <p className="text-xs leading-[17px] text-muted">
-        Drop an image, drag the frame or pick a shape, rotate or flip if needed, then download, copy, or send the result to the Screenshot Editor.
+        Drop an image, drag the frame or pick a shape, rotate or flip if needed, then download, copy, or send the result to Studio.
       </p>
     </PanelSection>
   );

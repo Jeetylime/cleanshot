@@ -14,6 +14,8 @@ import { getRoute, goEditor, useRoute } from './app/route';
 const ToolsApp = lazy(() => import('./tools/ToolsApp'));
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
 const LegalPage = lazy(() => import('./legal/LegalPage'));
+const StudioHub = lazy(() => import('./studio/StudioHub'));
+const CanvasApp = lazy(() => import('./studio/StudioApp'));
 
 let booted = false;
 
@@ -53,7 +55,7 @@ export default function App() {
     let lastId = store.get().doc?.id;
     store.subscribe(() => {
       const id = store.get().doc?.id;
-      if (id && id !== lastId && getRoute().section !== 'tools' && getRoute().section !== 'pdf') goEditor();
+      if (id && id !== lastId && !['tools', 'pdf', 'canvas'].includes(getRoute().section)) goEditor();
       lastId = id;
     });
   }, []);
@@ -66,6 +68,16 @@ export default function App() {
     <div className="flex h-full flex-col bg-window text-fg">
       {route.section === 'home' && <StartScreen />}
       {route.section === 'editor' && <Editor />}
+      {route.section === 'studio' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <StudioHub />
+        </Suspense>
+      )}
+      {route.section === 'canvas' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <CanvasApp />
+        </Suspense>
+      )}
       {route.section === 'legal' && (
         <Suspense fallback={<div className="flex-1" />}>
           <LegalPage doc={route.doc} />
@@ -81,7 +93,7 @@ export default function App() {
           <ToolsApp tool={route.tool} />
         </Suspense>
       )}
-      <DropOverlay active={dragging} />
+      <DropOverlay active={dragging && route.section !== 'canvas'} />
       <BusyIndicator />
       <Toasts />
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Download, Expand, Sparkles } from 'lucide-react';
+import { Copy, Download, Expand, Sparkles, LayoutTemplate } from 'lucide-react';
+import { sendToCanvas } from '../../studio/handoff';
 import { Button, Segmented } from '../../components/ui/controls';
 import { formatBytes } from '../../lib/utils';
 import { canvasToBlob, createCanvas, ctx2d } from '../../engine/images';
@@ -278,6 +279,9 @@ export default function Upscaler() {
               </Button>
               <Button className="h-8" onClick={() => void exportOut('copy')}>
                 <Copy size={13} /> Copy
+              </Button>
+              <Button className="h-8" onClick={() => out && img && sendToCanvas(out.aiBlob, `${baseName(img.name)}-${out.scale}x.png`)} title="Use the result in a Studio Canvas design">
+                <LayoutTemplate size={13} /> Design
               </Button>
             </div>
           )}

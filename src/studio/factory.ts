@@ -1,0 +1,188 @@
+import { uid } from '../lib/utils';
+import { layoutText, naturalTextWidth } from './render';
+import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
+
+export const DEFAULT_SHADOW: Shadow = { enabled: false, color: '#000000', blur: 24, x: 0, y: 10, opacity: 0.3 };
+
+function base(name: string, x: number, y: number, w: number, h: number) {
+  return {
+    id: uid('el'),
+    name,
+    x,
+    y,
+    w,
+    h,
+    rotation: 0,
+    opacity: 1,
+    locked: false,
+    hidden: false,
+    groupId: null,
+    shadow: { ...DEFAULT_SHADOW },
+  };
+}
+
+/** Keep a text box's height equal to its laid-out text. */
+export function fitText(e: TextElement): TextElement {
+  const h = layoutText(e).height;
+  return Math.abs(h - e.h) < 0.01 ? e : { ...e, h };
+}
+
+export function normalize<T extends StudioElement>(e: T): T {
+  return (e.type === 'text' ? fitText(e) : e) as T;
+}
+
+export type TextKind = 'heading' | 'subheading' | 'body';
+
+export function makeText(
+  doc: Pick<StudioDoc, 'width' | 'height'>,
+  over: Partial<TextElement> & { kind?: TextKind } = {},
+): TextElement {
+  const { kind = 'body', ...rest } = over;
+  const m = Math.min(doc.width, doc.height);
+  const presets: Record<TextKind, Partial<TextElement>> = {
+    heading: { name: 'Heading', text: 'Add a heading', fontFamily: 'montserrat', fontSize: Math.round(m * 0.085), bold: true, lineHeight: 1.1 },
+    subheading: { name: 'Subheading', text: 'Add a subheading', fontFamily: 'inter', fontSize: Math.round(m * 0.05), bold: true, lineHeight: 1.2 },
+    body: { name: 'Text', text: 'Add a little bit of body text', fontFamily: 'inter', fontSize: Math.round(m * 0.032), bold: false, lineHeight: 1.4 },
+  };
+  const e: TextElement = {
+    ...base('Text', 0, 0, 100, 10),
+    type: 'text',
+    text: '',
+    fontFamily: 'inter',
+    fontSize: 48,
+    bold: false,
+    italic: false,
+    underline: false,
+    color: '#1d1d1f',
+    align: 'center',
+    letterSpacing: 0,
+    lineHeight: 1.25,
+    strokeWidth: 0,
+    strokeColor: '#ffffff',
+    uppercase: false,
+    ...presets[kind],
+    ...rest,
+  };
+  if (over.w === undefined) e.w = Math.min(doc.width * 0.86, naturalTextWidth(e));
+  if (over.x === undefined) e.x = (doc.width - e.w) / 2;
+  const fitted = fitText(e);
+  if (over.y === undefined) fitted.y = (doc.height - fitted.h) / 2;
+  return fitted;
+}
+
+export const SHAPE_LABELS: Record<ShapeKind, string> = {
+  rect: 'Rectangle',
+  ellipse: 'Circle',
+  triangle: 'Triangle',
+  star: 'Star',
+  hexagon: 'Hexagon',
+  diamond: 'Diamond',
+  heart: 'Heart',
+  bubble: 'Speech bubble',
+};
+
+export function makeShape(doc: Pick<StudioDoc, 'width' | 'height'>, shape: ShapeKind, over: Partial<ShapeElement> = {}): ShapeElement {
+  const s = Math.round(Math.min(doc.width, doc.height) * 0.3);
+  const w = shape === 'rect' ? Math.round(s * 1.3) : s;
+  const h = shape === 'bubble' ? Math.round(s * 0.85) : s;
+  return {
+    ...base(SHAPE_LABELS[shape], (doc.width - w) / 2, (doc.height - h) / 2, w, h),
+    type: 'shape',
+    shape,
+    fill: '#0a84ff',
+    stroke: null,
+    strokeWidth: 0,
+    radius: shape === 'rect' ? Math.round(s * 0.08) : 0,
+    ...over,
+  };
+}
+
+export function makeLine(doc: Pick<StudioDoc, 'width' | 'height'>, arrow: boolean, over: Partial<LineElement> = {}): LineElement {
+  const w = Math.round(doc.width * 0.4);
+  const sw = Math.max(2, Math.round(Math.min(doc.width, doc.height) * 0.008));
+  const h = Math.max(sw * 4 + 12, 24);
+  return {
+    ...base(arrow ? 'Arrow' : 'Line', (doc.width - w) / 2, (doc.height - h) / 2, w, h),
+    type: 'line',
+    color: '#1d1d1f',
+    strokeWidth: sw,
+    dash: 'solid',
+    startHead: false,
+    endHead: arrow,
+    ...over,
+  };
+}
+
+export function makeIcon(doc: Pick<StudioDoc, 'width' | 'height'>, icon: string, over: Partial<IconElement> = {}): IconElement {
+  const s = Math.round(Math.min(doc.width, doc.height) * 0.18);
+  return {
+    ...base(icon.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()), (doc.width - s) / 2, (doc.height - s) / 2, s, s),
+    type: 'icon',
+    icon,
+    color: '#1d1d1f',
+    weight: 2,
+    filled: false,
+    ...over,
+  };
+}
+
+export function makeImage(
+  doc: Pick<StudioDoc, 'width' | 'height'>,
+  asset: { id: string; width: number; height: number; name?: string },
+  over: Partial<ImageElement> = {},
+): ImageElement {
+  const k = Math.min(1, (doc.width * 0.7) / asset.width, (doc.height * 0.7) / asset.height);
+  const w = Math.max(1, asset.width * k);
+  const h = Math.max(1, asset.height * k);
+  return {
+    ...base(asset.name?.replace(/\.[^.]+$/, '') || 'Image', (doc.width - w) / 2, (doc.height - h) / 2, w, h),
+    type: 'image',
+    assetId: asset.id,
+    crop: { x: 0, y: 0, w: asset.width, h: asset.height },
+    flipX: false,
+    flipY: false,
+    radius: 0,
+    borderWidth: 0,
+    borderColor: '#ffffff',
+    ...over,
+  };
+}
+
+/** Crop rectangle that makes the image cover a w×h box (centered). */
+export function coverCrop(asset: { width: number; height: number }, w: number, h: number) {
+  const target = w / h;
+  const src = asset.width / asset.height;
+  if (src > target) {
+    const cw = asset.height * target;
+    return { x: (asset.width - cw) / 2, y: 0, w: cw, h: asset.height };
+  }
+  const ch = asset.width / target;
+  return { x: 0, y: (asset.height - ch) / 2, w: asset.width, h: ch };
+}
+
+export function newDoc(opts: { name?: string; width: number; height: number; background?: StudioFill; elements?: StudioElement[] }): StudioDoc {
+  const now = Date.now();
+  return {
+    id: uid('proj'),
+    name: opts.name ?? 'Untitled design',
+    width: Math.round(opts.width),
+    height: Math.round(opts.height),
+    background: opts.background ?? { kind: 'solid', color: '#ffffff' },
+    elements: opts.elements ?? [],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+/** Deep-clone elements with fresh ids (groups get fresh ids too). */
+export function cloneElements(els: StudioElement[], dx = 0, dy = 0): StudioElement[] {
+  const groups = new Map<string, string>();
+  return els.map((e) => {
+    let groupId = e.groupId;
+    if (groupId) {
+      if (!groups.has(groupId)) groups.set(groupId, uid('grp'));
+      groupId = groups.get(groupId)!;
+    }
+    return { ...structuredClone(e), id: uid('el'), groupId, x: e.x + dx, y: e.y + dy };
+  });
+}

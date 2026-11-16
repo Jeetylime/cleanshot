@@ -29,12 +29,18 @@ import {
   MessageSquare,
   Lock,
   FileCheck,
+  LayoutTemplate,
+  ChevronRight,
 } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
 import { undo, redo } from '../store/history';
 import { fitView, zoomStep, zoomToCenter } from '../store/view';
 import { computeLayout } from '../engine/render';
+import { StudioSwitch } from './StudioSwitch';
+import { sendToCanvas } from '../studio/handoff';
+import { exportDocument, outputSize } from '../engine/export';
+import { store } from '../store/store';
 import { IconButton } from './ui/IconButton';
 import { Popover, MenuItem, MenuLabel, MenuSeparator } from './ui/Popover';
 import { Tooltip } from './ui/Tooltip';
@@ -43,7 +49,7 @@ import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, TextSize, Theme } from '../types';
 import { Toggle } from './ui/controls';
-import { goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
+import { goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -70,7 +76,8 @@ export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compac
 
 const SECTIONS = [
   { id: 'home', label: 'Home', hint: 'Start screen', icon: House, go: goHome },
-  { id: 'editor', label: 'Screenshot Editor', hint: 'Annotate, redact and frame', icon: SquarePen, go: goEditor },
+  { id: 'editor', label: 'Studio · Create', hint: 'Edit an image or screenshot', icon: SquarePen, go: goEditor },
+  { id: 'canvas', label: 'Studio · Canvas', hint: 'Design from scratch or a template', icon: LayoutTemplate, go: goCanvas },
   { id: 'tools', label: 'Image Tools', hint: 'Resize, compress, convert and more', icon: LayoutGrid, go: () => goTools() },
   { id: 'pdf', label: 'PDF Tools', hint: 'Merge, split, sign and convert', icon: FileText, go: () => goPdf() },
 ] as const;
@@ -394,6 +401,41 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
   );
 }
 
+/** Render the current screenshot (with edits and frame) and place it on Canvas. */
+function SendToCanvasButton() {
+  const [busy, setBusy] = useState(false);
+  const send = async () => {
+    const doc = store.get().doc;
+    if (!doc) return;
+    setBusy(true);
+    try {
+      const { width, height } = outputSize(doc);
+      const { blob } = await exportDocument(doc, { format: 'png', quality: 100, width, height });
+      sendToCanvas(blob, `${doc.name}.png`);
+      actions.showToast('Added to Canvas. Your screenshot is still open in Create.', 'success');
+    } catch {
+      actions.showToast('Couldn’t send this image to Canvas.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Tooltip label="Send to Canvas: use this image in a design">
+      <button
+        type="button"
+        onClick={() => void send()}
+        disabled={busy}
+        aria-label="Send to Canvas"
+        data-testid="send-to-canvas"
+        className="inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2 text-xs font-medium text-fg transition-colors hover:bg-hover disabled:opacity-50"
+      >
+        <LayoutTemplate size={14} />
+        <span className="hidden xl:inline">Send to Canvas</span>
+      </button>
+    </Tooltip>
+  );
+}
+
 function ExportButton() {
   const anchor = useRef<HTMLButtonElement>(null);
   const open = useEditor((s) => s.overlay === 'export');
@@ -434,8 +476,10 @@ export function TopBar() {
 
   return (
     <header className="relative z-20 flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2.5">
-      <div className="flex min-w-0 items-center">
-        <HomeLogo hideWordmarkOnMobile={hasDoc} />
+      <div className="flex min-w-0 items-center gap-1">
+        <HomeLogo hideWordmarkOnMobile />
+        <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
+        <StudioSwitch />
         {hasDoc && (
           <>
             <Divider />
@@ -477,6 +521,7 @@ export function TopBar() {
                 <span className="hidden lg:inline">{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </Tooltip>
+            <SendToCanvasButton />
             <ExportButton />
             <div className="lg:hidden">
               <IconButton label="Properties" active={propertiesOpen} onClick={actions.toggleProperties}>

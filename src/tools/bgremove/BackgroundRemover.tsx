@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Brush, Copy, Download, Eraser, Hand, ImagePlus, Maximize, Minus, PenTool, Plus, Redo2, Undo2 } from 'lucide-react';
+import { Brush, Copy, Download, Eraser, Hand, ImagePlus, Maximize, Minus, PenTool, Plus, Redo2, Undo2, LayoutTemplate } from 'lucide-react';
+import { sendToCanvas } from '../../studio/handoff';
 import { Button, ColorPicker, Segmented, Slider } from '../../components/ui/controls';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { Kbd } from '../../components/ui/Kbd';
@@ -414,7 +415,7 @@ export default function BackgroundRemover() {
     return out;
   };
 
-  const exportAs = async (kind: 'cutout' | 'background' | 'copy' | 'editor') => {
+  const exportAs = async (kind: 'cutout' | 'background' | 'copy' | 'editor' | 'canvas') => {
     if (!img || !cutout.current) return;
     setBusy(true);
     try {
@@ -429,7 +430,10 @@ export default function BackgroundRemover() {
       } else {
         const c = composite(bgMode !== 'transparent');
         if (kind === 'copy') await copyImage(c);
-        else {
+        else if (kind === 'canvas') {
+          const { blob } = await encodeCanvas(c, 'png');
+          sendToCanvas(blob, `${name}-no-bg.png`);
+        } else {
           const { blob } = await encodeCanvas(c, 'png');
           goEditor();
           await openImageBlob(blob, `${name}-no-bg.png`);
@@ -661,8 +665,11 @@ export default function BackgroundRemover() {
             <Button className="h-8 flex-1" disabled={!ready || busy} onClick={() => void exportAs('copy')}>
               <Copy size={13} /> Copy
             </Button>
-            <Button className="h-8 flex-1" disabled={!ready || busy} onClick={() => void exportAs('editor')} title="Open the result in the Screenshot Editor">
+            <Button className="h-8 flex-1" disabled={!ready || busy} onClick={() => void exportAs('editor')} title="Open the result in Studio Create">
               <PenTool size={13} /> Annotate
+            </Button>
+            <Button className="h-8 flex-1" disabled={!ready || busy} onClick={() => void exportAs('canvas')} title="Use the cut-out in a Studio Canvas design">
+              <LayoutTemplate size={13} /> Design
             </Button>
           </div>
         </>

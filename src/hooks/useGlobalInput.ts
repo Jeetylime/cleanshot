@@ -6,7 +6,7 @@ import { fitView, zoomStep, zoomToCenter } from '../store/view';
 import { TOOL_BY_SHORTCUT } from '../components/tools';
 import { isEditableTarget } from '../lib/utils';
 import { openFilePicker } from '../lib/filePicker';
-import { getRoute, getToolFileSink, goEditor } from '../app/route';
+import { getPasteFallback, getRoute, getToolFileSink, goEditor } from '../app/route';
 
 /** Application-wide keyboard shortcuts. */
 export function useKeyboardShortcuts() {
@@ -187,6 +187,9 @@ export function usePasteAndDrop(): boolean {
         if (files.length) {
           e.preventDefault();
           sink(files);
+        } else if (getRoute().section === 'canvas') {
+          const fallback = getPasteFallback();
+          if (fallback?.()) e.preventDefault();
         }
         return;
       }
@@ -230,9 +233,12 @@ export function usePasteAndDrop(): boolean {
     };
     const onDrop = (e: DragEvent) => {
       if (!hasFiles(e)) return;
+      // A drop zone inside the page (e.g. the Studio canvas) already handled it.
+      const handled = e.defaultPrevented;
       e.preventDefault();
       depth.current = 0;
       setDragging(false);
+      if (handled) return;
       const sink = getToolFileSink();
       if (sink) {
         const pdf = getRoute().section === 'pdf';

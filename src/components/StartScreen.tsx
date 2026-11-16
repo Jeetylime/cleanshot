@@ -1,7 +1,7 @@
-import { ArrowRight, ImagePlus, Sparkles } from 'lucide-react';
+import { ArrowRight, ImagePlus, LayoutTemplate, Sparkles } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
-import { goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
+import { goCanvas, goStudio, goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
 import { PDF_TOOLS } from '../pdf/registry';
 import { TOOLS } from '../tools/registry';
 import { HomeLogo, SettingsMenu } from './TopBar';
@@ -10,7 +10,7 @@ import { Kbd } from './ui/Kbd';
 import { modKey, timeAgo } from '../lib/utils';
 import { openFilePicker } from '../lib/filePicker';
 
-/** Minimal entry point: the screenshot editor or the image tools. */
+/** Minimal entry point: Studio (Create and Canvas), Image Tools or PDF Tools. */
 export function StartScreen() {
   const { docName, recents } = useEditor((s) => ({ docName: s.doc?.name ?? null, recents: s.recents }), shallowEqual);
 
@@ -25,7 +25,7 @@ export function StartScreen() {
         <div className="flex w-full max-w-[1180px] flex-col gap-8 animate-rise">
           <div className="text-center">
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-balance text-fg">What are you working on?</h1>
-            <p className="mt-1.5 text-sm text-muted">Polish a screenshot, or reach for a quick image or PDF utility.</p>
+            <p className="mt-1.5 text-sm text-muted">Design something, polish a screenshot, or reach for a quick image or PDF utility.</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -33,10 +33,10 @@ export function StartScreen() {
             <section className="group flex flex-col overflow-hidden rounded-[16px] border border-line bg-panel transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-pop">
               <button
                 type="button"
-                onClick={goEditor}
+                onClick={goStudio}
                 className="flex flex-col text-left"
                 data-testid="open-editor"
-                aria-label="Open Screenshot Editor"
+                aria-label="Open Studio"
               >
                 <div className="flex h-[176px] items-center justify-center bg-window px-8 pt-6 pb-4">
                   <div className="w-full max-w-[280px] transition-transform duration-300 group-hover:scale-[1.02]">
@@ -45,10 +45,10 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[15px] font-semibold text-fg">Screenshot Editor</h2>
+                    <h2 className="text-[15px] font-semibold text-fg">Studio</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
-                  <p className="text-sm text-muted">Annotate, blur and redact, add backgrounds and export polished screenshots.</p>
+                  <p className="text-sm text-muted">Edit screenshots and images in Create, or design posts, thumbnails and banners on Canvas.</p>
                 </div>
               </button>
               <div className="mt-auto flex flex-wrap items-center gap-2 px-5 pt-4 pb-5">
@@ -70,9 +70,18 @@ export function StartScreen() {
                     className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
                   >
                     <ImagePlus size={14} strokeWidth={2.2} />
-                    Open screenshot
+                    Open image
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={goCanvas}
+                  data-testid="start-canvas"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-control px-2.5 text-xs font-semibold text-fg hover:bg-active"
+                >
+                  <LayoutTemplate size={13} />
+                  New design
+                </button>
                 <button
                   type="button"
                   onClick={() => {
