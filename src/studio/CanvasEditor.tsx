@@ -115,7 +115,9 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
     <header className="relative z-20 flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2.5">
       <div className="flex min-w-0 items-center gap-1">
         <HomeLogo hideWordmarkOnMobile />
-        <ChevronRight size={14} className="shrink-0 text-subtle max-sm:hidden" />
+        <ChevronRight size={14} className="shrink-0 text-subtle" />
+        <DesignMenu onShortcuts={onShortcuts} />
+        <span className="mx-1 h-4 w-px bg-line max-sm:hidden" />
         <StudioSwitch />
         <span className="mx-1 h-4 w-px bg-line max-sm:hidden" />
         <IconButton label="Undo" shortcut={[modKey, 'Z']} onClick={undo} disabled={!canUndo}>
@@ -132,7 +134,6 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        <DesignMenu onShortcuts={onShortcuts} />
         <button
           type="button"
           onClick={() => studio.set({ exportOpen: true })}
@@ -220,14 +221,13 @@ function DesignMenu({ onShortcuts }: { onShortcuts: () => void }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex h-7 items-center gap-1 rounded-[7px] px-2 text-xs font-medium text-fg hover:bg-hover"
+        className={`flex shrink-0 items-center gap-1 rounded-[6px] px-1.5 py-1 text-sm font-semibold text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
         data-testid="design-menu"
       >
-        <span className="max-sm:hidden">Design</span>
-        <FolderOpen size={14} className="sm:hidden" />
-        <ChevronDown size={13} className="text-subtle" />
+        <span>Design</span>
+        <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} width={240} label="Design">
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={240} label="Design">
         <div className="p-1" role="menu">
           <MenuItem icon={<Plus size={14} />} onClick={run(A.closeProject)}>
             New design…
