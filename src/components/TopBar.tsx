@@ -14,6 +14,7 @@ import {
   Redo2,
   RotateCcw,
   Settings,
+  ShieldCheck,
   Sun,
   Trash2,
   Undo2,
@@ -31,7 +32,7 @@ import { ExportPanel } from './ExportPanel';
 import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, Theme } from '../types';
-import { goHome } from '../app/route';
+import { goAbout, goHome } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -252,9 +253,12 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </button>
             ))}
           </div>
+          <MenuSeparator />
+          <MenuItem icon={<ShieldCheck size={14} />} onClick={run(goAbout)}>
+            Privacy & AI
+          </MenuItem>
           {editorItems && (
             <>
-              <MenuSeparator />
               <MenuItem icon={<ImagePlus size={14} />} onClick={run(openFilePicker)} shortcut={`${modKey}O`}>
                 Open image…
               </MenuItem>

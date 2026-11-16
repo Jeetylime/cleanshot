@@ -6,14 +6,14 @@ import { Kbd } from '../../components/ui/Kbd';
 import { createCanvas, ctx2d } from '../../engine/images';
 import { isEditableTarget, modKey } from '../../lib/utils';
 import { openImageBlob, showToast } from '../../store/actions';
-import { goEditor } from '../../app/route';
+import { goAbout, goEditor } from '../../app/route';
 import type { Point } from '../../types';
 import { encodeCanvas } from '../shared/encode';
 import { baseName } from '../shared/files';
 import { errorMessage } from '../shared/batch';
 import { Advanced, copyImage, Dropzone, PanelSection, pickFiles, saveBlob, ToolLayout, useFileSink, useImageList } from '../shared/ui';
 import { describeAiError, isModelCached, type DownloadProgress } from '../ai/runtime';
-import { ModelStatus, useBundled, type AiPhase } from '../ai/ModelStatus';
+import { ModelStatus, type AiPhase } from '../ai/ModelStatus';
 import { loadSegmenter, predictMask, RMBG } from './segment';
 import { buildFullMask, composeCutout, drawCover, paintStroke, type Stroke } from './mask';
 
@@ -53,7 +53,6 @@ export default function BackgroundRemover() {
   const [redoStack, setRedoStack] = useState<Stroke[]>([]);
   const [fmt, setFmt] = useState<'png' | 'jpeg'>('png');
   const [busy, setBusy] = useState(false);
-  const bundled = useBundled();
 
   const baseMask = useRef<HTMLCanvasElement | null>(null);
   const fullMask = useRef<HTMLCanvasElement | null>(null);
@@ -452,13 +451,11 @@ export default function BackgroundRemover() {
         panel={
           <PanelSection title="How it works">
             <p className="text-xs leading-[17px] text-muted">
-              An AI segmentation model ({RMBG.label}) finds the subject and removes everything else, right in your browser. Then refine edges with the Erase and Restore brushes, pick a new background, and download.
+              Drop a photo and the subject is cut out automatically. Clean up edges with the Erase and Restore brushes, then download it transparent or on a new background.
             </p>
-            <p className="text-xs leading-[17px] text-subtle">
-              {bundled
-                ? 'The model (about 44 MB) is included with this page and loads on first use. Your images are never uploaded.'
-                : 'First use downloads the model (about 44 MB) once from huggingface.co. Your images are never uploaded.'}
-            </p>
+            <button type="button" onClick={goAbout} className="self-start text-xs text-accent hover:underline">
+              About the model
+            </button>
           </PanelSection>
         }
       />

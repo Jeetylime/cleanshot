@@ -1,7 +1,7 @@
-import { ArrowRight, ImagePlus, Lock, Sparkles } from 'lucide-react';
+import { ArrowRight, ImagePlus, Sparkles } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
-import { goEditor, goTools } from '../app/route';
+import { goAbout, goEditor, goTools } from '../app/route';
 import { TOOLS } from '../tools/registry';
 import { Logo, SettingsMenu } from './TopBar';
 import { Illustration } from './EmptyState';
@@ -165,9 +165,10 @@ export function StartScreen() {
             </section>
           )}
 
-          <p className="flex items-center justify-center gap-1.5 text-center text-xs text-subtle">
-            <Lock size={11} />
-            Everything runs in your browser. Images are never uploaded.
+          <p className="text-center">
+            <button type="button" onClick={goAbout} className="text-xs text-subtle hover:text-fg hover:underline">
+              Privacy & AI
+            </button>
           </p>
         </div>
       </main>

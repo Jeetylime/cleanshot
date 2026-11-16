@@ -27,11 +27,12 @@ export const TOOL_KEYS: ToolKey[] = [
   'color-picker',
 ];
 
-export type Route = { section: 'home' } | { section: 'editor' } | { section: 'tools'; tool: ToolKey | null };
+export type Route = { section: 'home' } | { section: 'editor' } | { section: 'about' } | { section: 'tools'; tool: ToolKey | null };
 
 function parse(hash: string): Route {
   const h = hash.replace(/^#/, '');
   if (h === 'editor') return { section: 'editor' };
+  if (h === 'privacy') return { section: 'about' };
   if (h === 'tools') return { section: 'tools', tool: null };
   if ((TOOL_KEYS as string[]).includes(h)) return { section: 'tools', tool: h as ToolKey };
   return { section: 'home' };
@@ -58,6 +59,7 @@ export function getRoute(): Route {
 function toHash(r: Route): string {
   if (r.section === 'home') return 'home';
   if (r.section === 'editor') return 'editor';
+  if (r.section === 'about') return 'privacy';
   return r.tool ?? 'tools';
 }
 
@@ -70,6 +72,7 @@ export function navigate(r: Route) {
 
 export const goHome = () => navigate({ section: 'home' });
 export const goEditor = () => navigate({ section: 'editor' });
+export const goAbout = () => navigate({ section: 'about' });
 export const goTools = (tool: ToolKey | null = null) => navigate({ section: 'tools', tool });
 
 export function useRoute(): Route {

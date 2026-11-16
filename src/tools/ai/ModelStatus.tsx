@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Cpu, HardDriveDownload, Lock, RotateCcw } from 'lucide-react';
+import { Cpu, HardDriveDownload, RotateCcw } from 'lucide-react';
+import { goAbout } from '../../app/route';
 import { getBundledManifest } from './bundled';
 import { formatBytes } from '../../lib/utils';
 import { Button } from '../../components/ui/controls';
@@ -47,21 +48,19 @@ export function ModelStatus({
                 <HardDriveDownload size={18} />
               </span>
               <div className="flex flex-col gap-1">
-                <p className="text-[13px] font-semibold text-fg">Download the AI model</p>
+                <p className="text-[13px] font-semibold text-fg">{bundled ? 'Load' : 'Download'} {model.label}</p>
                 <p className="text-xs leading-[17px] text-muted">
-                  {bundled
-                    ? `${model.label} runs on your device. It’s included with this page (${formatBytes(model.bytes)}) and loads once per session.`
-                    : `${model.label} runs on your device. It’s a one-time ${formatBytes(model.bytes)} download from huggingface.co, then cached for offline use.`}
+                  {formatBytes(model.bytes)}
+                  {bundled ? ', included with this page.' : ', one time. After that it works offline.'}
                 </p>
               </div>
             </div>
-            <p className="flex items-center gap-1.5 text-xs text-subtle">
-              <Lock size={11} /> Your image is never uploaded.
-            </p>
             <Button variant="primary" className="h-8" onClick={onStart}>
-              Download model and continue
+              {bundled ? 'Load model and continue' : 'Download model and continue'}
             </Button>
-            <p className="text-2xs text-subtle">{model.license}</p>
+            <button type="button" onClick={goAbout} className="self-start text-2xs text-subtle hover:text-fg hover:underline">
+              Model details and license
+            </button>
           </>
         )}
         {phase === 'downloading' && (
@@ -91,7 +90,6 @@ export function ModelStatus({
               <Cpu size={15} className="text-accent" /> {processingLabel}
             </p>
             <ProgressBar value={processingProgress ?? null} label={detail ? <span className="tabular-nums">{detail}</span> : undefined} />
-            <p className="text-xs text-subtle">AI processing runs locally and can take a while on large images.</p>
             {onCancel && (
               <Button className="h-8" onClick={onCancel}>
                 Cancel

@@ -9,9 +9,10 @@ import { baseName } from '../shared/files';
 import { renderResized } from '../shared/geometry';
 import { OutputOptions, type OutChoice } from '../shared/OutputOptions';
 import { errorMessage } from '../shared/batch';
+import { goAbout } from '../../app/route';
 import { AiBadge, CompareSlider, copyImage, Dropzone, Notice, PanelSection, saveBlob, ToolLayout, useBlobUrl, useFileSink, useImageList } from '../shared/ui';
 import { describeAiError, isModelCached, type DownloadProgress } from '../ai/runtime';
-import { ModelStatus, useBundled, type AiPhase } from '../ai/ModelStatus';
+import { ModelStatus, type AiPhase } from '../ai/ModelStatus';
 import { loadUpscaler, readyModels, SR_MODELS, upscale, type Scale } from './sr';
 
 interface Output {
@@ -38,7 +39,6 @@ export default function Upscaler() {
   const [format, setFormat] = useState<OutChoice>('png');
   const [quality, setQuality] = useState(92);
   const signal = useRef({ cancelled: false });
-  const bundled = useBundled();
 
   const model = SR_MODELS[scale];
   const aiUrl = useBlobUrl(out?.aiBlob ?? null);
@@ -133,7 +133,7 @@ export default function Upscaler() {
         panel={
           <PanelSection title="How it works">
             <p className="text-xs leading-[17px] text-muted">
-              A super-resolution neural network (Swin2SR) reconstructs detail when enlarging, instead of just stretching pixels. It runs locally in your browser; the model downloads once on first use.
+              Enlarge small images 2× or 4×. A super-resolution model rebuilds edges and texture instead of stretching pixels, and the comparison slider shows the difference against a standard resize.
             </p>
           </PanelSection>
         }
@@ -237,14 +237,15 @@ export default function Upscaler() {
             </dl>
             {tooBig && (
               <Notice>
-                AI upscaling runs on your device, so images larger than {model.maxSide}px are first reduced to {inputSize!.w} × {inputSize!.h}. For bigger results, crop to the area you need first.
+                To keep processing time reasonable, images larger than {model.maxSide}px are first reduced to {inputSize!.w} × {inputSize!.h}. For bigger results, crop to the area you need first.
               </Notice>
             )}
             {!cached[scale] && !readyModels.has(scale) && (
               <p className="text-xs leading-[16px] text-subtle">
-                {bundled
-                  ? `The model (${formatBytes(model.bytes)}) is included with this page and loads on first use. Your image is never uploaded.`
-                  : `First use downloads the model (${formatBytes(model.bytes)}) from huggingface.co. It’s cached afterwards. Your image is never uploaded.`}
+                Needs a {formatBytes(model.bytes)} model the first time.{' '}
+                <button type="button" onClick={goAbout} className="text-accent hover:underline">
+                  Details
+                </button>
               </p>
             )}
           </PanelSection>

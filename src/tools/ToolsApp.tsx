@@ -1,7 +1,8 @@
-import { Component, Suspense, type ReactNode } from 'react';
-import { ChevronRight, Lock } from 'lucide-react';
+import { Component, Suspense, useRef, useState, type ReactNode } from 'react';
+import { Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Popover } from '../components/ui/Popover';
 import type { ToolKey } from '../app/route';
-import { goTools } from '../app/route';
+import { goAbout, goTools } from '../app/route';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { TOOLS, TOOL_GROUPS, toolMeta, type ToolMeta } from './registry';
 import { AiBadge, Spinner } from './shared/ui';
@@ -26,16 +27,11 @@ export default function ToolsApp({ tool }: { tool: ToolKey | null }) {
           {meta && (
             <>
               <ChevronRight size={14} className="shrink-0 text-subtle" />
-              <span className="flex min-w-0 items-center gap-1.5 px-1 text-sm font-semibold text-fg" aria-current="page">
-                <meta.icon size={14} className="shrink-0 text-muted" />
-                <span className="truncate">{meta.name}</span>
-                {meta.ai && <AiBadge />}
-              </span>
+              <ToolSwitcher current={meta} />
             </>
           )}
         </nav>
         <div className="flex items-center gap-2">
-          {meta && <span className="hidden text-xs text-subtle xl:inline">{meta.tagline}</span>}
           <SettingsMenu editorItems={false} />
         </div>
       </header>
@@ -55,6 +51,85 @@ export default function ToolsApp({ tool }: { tool: ToolKey | null }) {
         <ToolsLanding />
       )}
     </div>
+  );
+}
+
+/** Breadcrumb button that opens a menu of every tool. */
+function ToolSwitcher({ current }: { current: ToolMeta }) {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        ref={anchor}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-current="page"
+        data-testid="tool-switcher"
+        className={`flex min-w-0 items-center gap-1.5 rounded-[6px] px-1.5 py-1 text-sm font-semibold text-fg transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
+      >
+        <current.icon size={14} className="shrink-0 text-muted" />
+        <span className="truncate">{current.name}</span>
+        {current.ai && <AiBadge />}
+        <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={300} label="Switch tool">
+        <div className="scroll-thin max-h-[min(70vh,560px)] overflow-y-auto p-1.5" role="menu">
+          {TOOL_GROUPS.map((g) => (
+            <div key={g.id} className="pb-1">
+              <div className="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">{g.label}</div>
+              {TOOLS.filter((t) => t.group === g.id).map((t) => {
+                const active = t.key === current.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setOpen(false);
+                      if (!active) goTools(t.key);
+                    }}
+                    className={`group flex w-full items-center gap-2.5 rounded-[8px] px-2 py-1.5 text-left transition-colors ${
+                      active ? 'bg-accent-soft' : 'hover:bg-hover'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-line bg-panel ${
+                        t.ai ? 'text-accent' : 'text-muted group-hover:text-fg'
+                      }`}
+                    >
+                      <t.icon size={15} />
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-fg">
+                        {t.name}
+                        {t.ai && <AiBadge />}
+                      </span>
+                      <span className="truncate text-2xs text-subtle">{t.description}</span>
+                    </span>
+                    {active && <Check size={14} className="shrink-0 text-accent" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+          <div className="mx-2 mt-0.5 border-t border-line pt-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                goTools();
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-0.5 py-1 text-xs text-muted hover:text-fg"
+            >
+              All tools <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+      </Popover>
+    </>
   );
 }
 
@@ -89,10 +164,9 @@ function ToolsLanding() {
             <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-fg">Image Tools</h1>
             <p className="mt-1 text-sm text-muted">Focused utilities for everyday image work.</p>
           </div>
-          <p className="flex items-center gap-1.5 text-xs text-subtle">
-            <Lock size={11} />
-            Processed on your device. AI models download once, on first use.
-          </p>
+          <button type="button" onClick={goAbout} className="text-xs text-subtle hover:text-fg hover:underline">
+            Privacy & AI
+          </button>
         </div>
         {TOOL_GROUPS.map((g) => (
           <section key={g.id} aria-labelledby={`group-${g.id}`} className="flex flex-col gap-2.5">

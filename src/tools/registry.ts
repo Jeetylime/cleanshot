@@ -11,8 +11,6 @@ export interface ToolMeta {
   group: ToolGroupId;
   icon: LucideIcon;
   ai: boolean;
-  /** Short line shown in the workspace header. */
-  tagline: string;
   batch: boolean;
   component: LazyExoticComponent<ComponentType>;
 }
@@ -30,7 +28,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'background-remover',
     name: 'Background Remover',
     description: 'Cut out the subject automatically, then refine edges with a brush.',
-    tagline: 'AI segmentation with RMBG-1.4, running on your device',
     group: 'ai',
     icon: Eraser,
     ai: true,
@@ -41,7 +38,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'upscaler',
     name: 'Image Upscaler',
     description: 'Enlarge images 2× or 4× with a super-resolution model.',
-    tagline: 'AI super-resolution with Swin2SR, running on your device',
     group: 'ai',
     icon: Expand,
     ai: true,
@@ -52,7 +48,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'resizer',
     name: 'Image Resizer',
     description: 'Resize to exact pixels, a percentage or social media sizes.',
-    tagline: 'Exact sizes, percentages and social presets',
     group: 'editing',
     icon: Scaling,
     ai: false,
@@ -63,7 +58,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'cropper',
     name: 'Image Cropper',
     description: 'Crop freely or to a ratio, rotate and flip.',
-    tagline: 'Freeform and preset crops with rotate and flip',
     group: 'editing',
     icon: Crop,
     ai: false,
@@ -74,7 +68,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'compressor',
     name: 'Image Compressor',
     description: 'Shrink file sizes with JPEG, WebP or optimized PNG.',
-    tagline: 'See exactly how much space you save',
     group: 'optimization',
     icon: Shrink,
     ai: false,
@@ -85,7 +78,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'converter',
     name: 'Image Converter',
     description: 'Convert between PNG, JPEG, WebP and AVIF in bulk.',
-    tagline: 'Batch conversion with ZIP download',
     group: 'optimization',
     icon: ArrowLeftRight,
     ai: false,
@@ -96,7 +88,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'metadata',
     name: 'Metadata Viewer',
     description: 'Inspect dimensions, color info and EXIF, then strip it.',
-    tagline: 'See what your image reveals, and remove it',
     group: 'utilities',
     icon: FileSearch,
     ai: false,
@@ -107,7 +98,6 @@ export const TOOLS: ToolMeta[] = [
     key: 'color-picker',
     name: 'Color Picker',
     description: 'Sample any pixel and extract the dominant palette.',
-    tagline: 'HEX, RGB and HSL from any pixel',
     group: 'utilities',
     icon: Pipette,
     ai: false,

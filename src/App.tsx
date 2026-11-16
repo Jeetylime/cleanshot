@@ -12,6 +12,7 @@ import { useKeyboardShortcuts, usePasteAndDrop, useThemeSync } from './hooks/use
 import { getRoute, goEditor, useRoute } from './app/route';
 
 const ToolsApp = lazy(() => import('./tools/ToolsApp'));
+const AboutPage = lazy(() => import('./tools/AboutPage'));
 
 let booted = false;
 
@@ -64,6 +65,11 @@ export default function App() {
     <div className="flex h-full flex-col bg-window text-fg">
       {route.section === 'home' && <StartScreen />}
       {route.section === 'editor' && <Editor />}
+      {route.section === 'about' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <AboutPage />
+        </Suspense>
+      )}
       {route.section === 'tools' && (
         <Suspense fallback={<div className="flex-1" />}>
           <ToolsApp tool={route.tool} />
