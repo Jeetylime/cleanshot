@@ -51,6 +51,18 @@
   --thumb: #ffffff;
 }
 
+/* Text sizes are real CSS variables (not inlined) so the Text size setting can scale them. */
+@theme {
+  --text-2xs: 10.5px;
+  --text-2xs--line-height: 14px;
+  --text-xs: 11px;
+  --text-xs--line-height: 15px;
+  --text-sm: 12px;
+  --text-sm--line-height: 16px;
+  --text-base: 13px;
+  --text-base--line-height: 18px;
+}
+
 @theme inline {
   --color-window: var(--bg-window);
   --color-panel: var(--bg-panel);
@@ -73,14 +85,6 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, 'Segoe UI', system-ui, Roboto,
     'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
-  --text-2xs: 10.5px;
-  --text-2xs--line-height: 14px;
-  --text-xs: 11px;
-  --text-xs--line-height: 15px;
-  --text-sm: 12px;
-  --text-sm--line-height: 16px;
-  --text-base: 13px;
-  --text-base--line-height: 18px;
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -95,8 +99,8 @@
     background: var(--bg-window);
     color: var(--fg);
     font-family: var(--font-sans);
-    font-size: 12px;
-    line-height: 16px;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow: hidden;
@@ -323,6 +327,61 @@ body {
 }
 .animate-spin-slow {
   animation: cs-spin 0.9s linear infinite;
+}
+
+/* ---- Accessibility settings (Settings menu → Accessibility) ---- */
+:root[data-text-size='large'] {
+  --text-2xs: 11.5px;
+  --text-2xs--line-height: 15px;
+  --text-xs: 12px;
+  --text-xs--line-height: 17px;
+  --text-sm: 13.5px;
+  --text-sm--line-height: 19px;
+  --text-base: 14.5px;
+  --text-base--line-height: 20px;
+}
+:root[data-text-size='larger'] {
+  --text-2xs: 12.5px;
+  --text-2xs--line-height: 17px;
+  --text-xs: 13.5px;
+  --text-xs--line-height: 19px;
+  --text-sm: 15px;
+  --text-sm--line-height: 21px;
+  --text-base: 16px;
+  --text-base--line-height: 22px;
+}
+:root[data-high-contrast],
+:root[data-high-contrast][data-theme='dark'] {
+  --border: rgba(255, 255, 255, 0.2);
+  --border-strong: rgba(255, 255, 255, 0.34);
+  --fg: #ffffff;
+  --fg-muted: #d4d4da;
+  --fg-subtle: #a9a9b2;
+  --bg-control: rgba(255, 255, 255, 0.1);
+}
+:root[data-high-contrast][data-theme='light'] {
+  --border: rgba(0, 0, 0, 0.24);
+  --border-strong: rgba(0, 0, 0, 0.4);
+  --fg: #000000;
+  --fg-muted: #2e2e33;
+  --fg-subtle: #55555c;
+  --bg-control: rgba(0, 0, 0, 0.08);
+}
+:root[data-high-contrast] :focus-visible {
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+:root[data-underline-links] a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+:root[data-reduce-motion] *,
+:root[data-reduce-motion] *::before,
+:root[data-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

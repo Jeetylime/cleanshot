@@ -18,12 +18,15 @@ import {
   Redo2,
   RotateCcw,
   Settings,
-  ShieldCheck,
   Sun,
   Trash2,
   Undo2,
   X,
   Scale,
+  Contrast,
+  Wind,
+  Underline,
+  MessageSquare,
   Lock,
   FileCheck,
 } from 'lucide-react';
@@ -38,8 +41,9 @@ import { Tooltip } from './ui/Tooltip';
 import { ExportPanel } from './ExportPanel';
 import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
-import type { Backdrop, Theme } from '../types';
-import { goEditor, goHome, goLegal, goPrivacy, goPdf, goTools, useRoute } from '../app/route';
+import type { Backdrop, TextSize, Theme } from '../types';
+import { Toggle } from './ui/controls';
+import { goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -69,7 +73,6 @@ const SECTIONS = [
   { id: 'editor', label: 'Screenshot Editor', hint: 'Annotate, redact and frame', icon: SquarePen, go: goEditor },
   { id: 'tools', label: 'Image Tools', hint: 'Resize, compress, convert and more', icon: LayoutGrid, go: () => goTools() },
   { id: 'pdf', label: 'PDF Tools', hint: 'Merge, split, sign and convert', icon: FileText, go: () => goPdf() },
-  { id: 'legal', label: 'Privacy & Legal', hint: 'Privacy, models, terms', icon: ShieldCheck, go: goPrivacy },
 ] as const;
 
 /** Logo that opens a menu of CleanShot's sections. */
@@ -211,7 +214,7 @@ function ZoomControl() {
         <Plus size={14} />
       </IconButton>
       <Popover open={open} onClose={close} anchor={anchor} align="center" width={196} label="Zoom">
-        <div className="p-1" role="menu">
+        <div className="scroll-thin max-h-[calc(100dvh-72px)] overflow-y-auto p-1" role="menu">
           <MenuItem
             onClick={() => {
               fitView(true);
@@ -244,8 +247,8 @@ function ZoomControl() {
 export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const { theme, backdrop, hasDoc, hasRecents } = useEditor(
-    (s) => ({ theme: s.theme, backdrop: s.backdrop, hasDoc: !!s.doc, hasRecents: s.recents.length > 0 }),
+  const { theme, backdrop, a11y, hasDoc, hasRecents } = useEditor(
+    (s) => ({ theme: s.theme, backdrop: s.backdrop, a11y: s.a11y, hasDoc: !!s.doc, hasRecents: s.recents.length > 0 }),
     shallowEqual,
   );
   const close = () => setOpen(false);
@@ -258,6 +261,16 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
     { id: 'dark', label: 'Dark', icon: <Moon size={13} /> },
     { id: 'light', label: 'Light', icon: <Sun size={13} /> },
     { id: 'system', label: 'System', icon: <Monitor size={13} /> },
+  ];
+  const textSizes: { id: TextSize; label: string; cls: string }[] = [
+    { id: 'default', label: 'Default', cls: 'text-[11px]' },
+    { id: 'large', label: 'Large', cls: 'text-[13px]' },
+    { id: 'larger', label: 'Larger', cls: 'text-[15px]' },
+  ];
+  const a11yToggles: { key: 'reduceMotion' | 'highContrast' | 'underlineLinks'; label: string; icon: React.ReactNode }[] = [
+    { key: 'highContrast', label: 'Increase contrast', icon: <Contrast size={14} /> },
+    { key: 'reduceMotion', label: 'Reduce motion', icon: <Wind size={14} /> },
+    { key: 'underlineLinks', label: 'Underline links', icon: <Underline size={14} /> },
   ];
   const backdrops: { id: Backdrop; label: string; swatch: string }[] = [
     { id: 'auto', label: 'Auto', swatch: 'linear-gradient(135deg, #111113 50%, #dcdce0 50%)' },
@@ -305,16 +318,36 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </button>
             ))}
           </div>
+          <MenuLabel>Accessibility</MenuLabel>
+          <div className="flex flex-col gap-1 px-1 pb-1.5">
+            <div className="flex gap-1" role="radiogroup" aria-label="Text size">
+              {textSizes.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={a11y.textSize === t.id}
+                  onClick={() => actions.setA11y({ textSize: t.id })}
+                  className={`flex h-8 flex-1 items-center justify-center gap-1 rounded-[7px] transition-colors ${
+                    a11y.textSize === t.id ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
+                  }`}
+                >
+                  <span className={`font-semibold ${t.cls}`}>A</span>
+                  <span className="text-xs">{t.label}</span>
+                </button>
+              ))}
+            </div>
+            {a11yToggles.map((t) => (
+              <label key={t.key} className="flex h-7 items-center justify-between gap-2 rounded-[6px] px-1.5 text-sm text-fg hover:bg-hover">
+                <span className="flex items-center gap-2.5">
+                  <span className="flex w-4 justify-center text-muted">{t.icon}</span>
+                  {t.label}
+                </span>
+                <Toggle checked={a11y[t.key]} onChange={(v) => actions.setA11y({ [t.key]: v })} label={t.label} />
+              </label>
+            ))}
+          </div>
           <MenuSeparator />
-          <MenuItem icon={<Scale size={14} />} onClick={run(() => goLegal('terms'))}>
-            Terms of Service
-          </MenuItem>
-          <MenuItem icon={<Lock size={14} />} onClick={run(() => goLegal('privacy-policy'))}>
-            Privacy Policy
-          </MenuItem>
-          <MenuItem icon={<FileCheck size={14} />} onClick={run(() => goLegal('acceptable-use'))}>
-            Acceptable Use Policy
-          </MenuItem>
           {editorItems && (
             <>
               <MenuItem icon={<ImagePlus size={14} />} onClick={run(openFilePicker)} shortcut={`${modKey}O`}>
@@ -324,6 +357,14 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
                 Keyboard shortcuts
               </MenuItem>
             </>
+          )}
+          <MenuItem icon={<MessageSquare size={14} />} onClick={run(() => (location.href = 'mailto:hello@cleanshot.space?subject=CleanShot%20feedback'))}>
+            Send feedback
+          </MenuItem>
+          {hasRecents && (
+            <MenuItem icon={<Trash2 size={14} />} danger onClick={run(() => void actions.clearRecents())}>
+              Clear recent sessions
+            </MenuItem>
           )}
           {hasDoc && editorItems && (
             <>
@@ -336,14 +377,17 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </MenuItem>
             </>
           )}
-          {hasRecents && editorItems && (
-            <>
-              <MenuSeparator />
-              <MenuItem icon={<Trash2 size={14} />} danger onClick={run(() => void actions.clearRecents())}>
-                Clear recent sessions
-              </MenuItem>
-            </>
-          )}
+          <MenuSeparator />
+          <MenuLabel>Legal</MenuLabel>
+          <MenuItem icon={<Scale size={14} />} onClick={run(() => goLegal('terms'))}>
+            Terms of Service
+          </MenuItem>
+          <MenuItem icon={<Lock size={14} />} onClick={run(() => goLegal('privacy-policy'))}>
+            Privacy Policy
+          </MenuItem>
+          <MenuItem icon={<FileCheck size={14} />} onClick={run(() => goLegal('acceptable-use'))}>
+            Acceptable Use Policy
+          </MenuItem>
         </div>
       </Popover>
     </>

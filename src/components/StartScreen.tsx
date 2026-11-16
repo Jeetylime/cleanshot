@@ -7,7 +7,6 @@ import { TOOLS } from '../tools/registry';
 import { HomeLogo, SettingsMenu } from './TopBar';
 import { Illustration } from './EmptyState';
 import { Kbd } from './ui/Kbd';
-import { LegalFooter } from './LegalFooter';
 import { modKey, timeAgo } from '../lib/utils';
 import { openFilePicker } from '../lib/filePicker';
 
@@ -204,7 +203,6 @@ export function StartScreen() {
             </section>
           )}
 
-          <LegalFooter className="mt-2" />
         </div>
       </main>
     </div>

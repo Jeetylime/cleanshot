@@ -6,6 +6,7 @@ import type {
   Point,
   Rect,
   Theme,
+  A11yPrefs,
   Backdrop,
   ToolId,
 } from '../types';
@@ -777,6 +778,10 @@ export function setTheme(theme: Theme) {
 
 export function setBackdrop(backdrop: Backdrop) {
   store.set({ backdrop });
+}
+
+export function setA11y(patch: Partial<A11yPrefs>) {
+  store.set({ a11y: { ...store.get().a11y, ...patch } });
 }
 
 export function toggleProperties() {

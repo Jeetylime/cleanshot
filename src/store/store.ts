@@ -1,5 +1,6 @@
 import { useRef, useSyncExternalStore } from 'react';
 import type {
+  A11yPrefs,
   Backdrop,
   CropState,
   EditorDoc,
@@ -62,6 +63,7 @@ export interface EditorState {
   crop: CropState | null;
   theme: Theme;
   backdrop: Backdrop;
+  a11y: A11yPrefs;
   exportPrefs: ExportPrefs;
   overlay: Overlay;
   propertiesOpen: boolean;
@@ -91,6 +93,7 @@ const PREFS_KEY = 'cleanshot:prefs';
 interface Prefs {
   theme: Theme;
   backdrop: Backdrop;
+  a11y: A11yPrefs;
   styles: ToolStyles;
   exportPrefs: ExportPrefs;
 }
@@ -134,6 +137,7 @@ function initialState(): EditorState {
     crop: null,
     theme: prefs.theme ?? 'dark',
     backdrop: prefs.backdrop ?? 'auto',
+    a11y: { textSize: 'default', reduceMotion: false, highContrast: false, underlineLinks: false, ...prefs.a11y },
     exportPrefs: { format: 'png', quality: 92, scale: 1, ...prefs.exportPrefs },
     overlay: null,
     propertiesOpen: false,
@@ -179,11 +183,12 @@ store.subscribe(() => {
     lastPrefs &&
     lastPrefs.theme === s.theme &&
     lastPrefs.backdrop === s.backdrop &&
+    lastPrefs.a11y === s.a11y &&
     lastPrefs.styles === s.styles &&
     lastPrefs.exportPrefs === s.exportPrefs
   )
     return;
-  lastPrefs = { theme: s.theme, backdrop: s.backdrop, styles: s.styles, exportPrefs: s.exportPrefs };
+  lastPrefs = { theme: s.theme, backdrop: s.backdrop, a11y: s.a11y, styles: s.styles, exportPrefs: s.exportPrefs };
   clearTimeout(prefsTimer);
   const snapshot = lastPrefs;
   prefsTimer = window.setTimeout(() => {

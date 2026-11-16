@@ -222,3 +222,10 @@ export type ExportFormat = 'png' | 'jpeg' | 'webp';
 
 export type Theme = 'dark' | 'light' | 'system';
 export type Backdrop = 'auto' | 'dark' | 'light' | 'checker';
+export type TextSize = 'default' | 'large' | 'larger';
+export interface A11yPrefs {
+  textSize: TextSize;
+  reduceMotion: boolean;
+  highContrast: boolean;
+  underlineLinks: boolean;
+}

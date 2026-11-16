@@ -1,7 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
-import { LegalFooter } from '../components/LegalFooter';
 import type { LegalDoc } from '../app/route';
 import { LEGAL, LEGAL_COMPLETE } from './config';
 import { TermsOfService } from './TermsOfService';
@@ -98,7 +97,6 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
               </a>
             </p>
           </article>
-          <LegalFooter />
         </div>
       </main>
     </div>

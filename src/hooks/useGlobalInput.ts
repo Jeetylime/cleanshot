@@ -266,6 +266,19 @@ export function usePasteAndDrop(): boolean {
   return dragging;
 }
 
+/** Mirror accessibility preferences onto <html> data attributes (styled in index.css). */
+function applyA11y(a: { textSize: string; reduceMotion: boolean; highContrast: boolean; underlineLinks: boolean }) {
+  const d = document.documentElement.dataset;
+  const set = (k: string, v: string | null) => {
+    if (v === null) delete d[k];
+    else if (d[k] !== v) d[k] = v;
+  };
+  set('textSize', a.textSize === 'default' ? null : a.textSize);
+  set('reduceMotion', a.reduceMotion ? '' : null);
+  set('highContrast', a.highContrast ? '' : null);
+  set('underlineLinks', a.underlineLinks ? '' : null);
+}
+
 /** Apply the UI theme to the document root. */
 export function useThemeSync() {
   useEffect(() => {
@@ -277,6 +290,7 @@ export function useThemeSync() {
         document.documentElement.dataset.theme = resolved;
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'light' ? '#f7f7f8' : '#1c1c1f');
       }
+      applyA11y(store.get().a11y);
     };
     apply();
     const unsub = store.subscribe(apply);
