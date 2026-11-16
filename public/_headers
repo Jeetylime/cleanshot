@@ -1,0 +1,14 @@
+# Cloudflare Pages / Netlify response headers.
+# Cross-origin isolation lets the AI tools use multiple CPU threads.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Hashed build files never change; cache them for a year.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/ort/*
+  Cache-Control: public, max-age=2592000

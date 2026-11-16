@@ -1,0 +1,111 @@
+import type { ToolKey } from '../app/route';
+
+/** Small illustrative thumbnails for tool cards. */
+export function ToolPreview({ tool }: { tool: ToolKey }) {
+  return (
+    <span className="relative flex h-[60px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-[9px] border border-line bg-window" aria-hidden="true">
+      <svg viewBox="0 0 76 60" width="76" height="60" className="transition-transform duration-300 group-hover:scale-[1.06]">
+        {PREVIEWS[tool]}
+      </svg>
+    </span>
+  );
+}
+
+const checker = (
+  <pattern id="tp-checker" width="8" height="8" patternUnits="userSpaceOnUse">
+    <rect width="8" height="8" fill="#d9d9de" />
+    <rect width="4" height="4" fill="#f4f4f6" />
+    <rect x="4" y="4" width="4" height="4" fill="#f4f4f6" />
+  </pattern>
+);
+
+const mountains = (x: number, y: number, w: number, h: number, sun = '#ffd60a') => (
+  <g>
+    <rect x={x} y={y} width={w} height={h} rx="3" fill="#8fc7e8" />
+    <circle cx={x + w * 0.72} cy={y + h * 0.3} r={h * 0.14} fill={sun} />
+    <path d={`M${x} ${y + h} L${x + w * 0.35} ${y + h * 0.45} L${x + w * 0.6} ${y + h * 0.78} L${x + w * 0.78} ${y + h * 0.58} L${x + w} ${y + h} Z`} fill="#3f8f6b" />
+  </g>
+);
+
+const PREVIEWS: Record<ToolKey, React.ReactNode> = {
+  'background-remover': (
+    <g>
+      <defs>{checker}</defs>
+      <rect x="0" y="0" width="38" height="60" fill="#7fb7a4" />
+      <rect x="38" y="0" width="38" height="60" fill="url(#tp-checker)" />
+      <circle cx="38" cy="22" r="9" fill="#f2c7a5" />
+      <path d="M22 60 C 22 40, 54 40, 54 60 Z" fill="#0a84ff" />
+      <line x1="38" y1="0" x2="38" y2="60" stroke="#fff" strokeWidth="1.5" />
+    </g>
+  ),
+  upscaler: (
+    <g>
+      <g opacity="0.9">
+        {[0, 1, 2, 3].map((i) =>
+          [0, 1, 2, 3].map((j) => (
+            <rect key={`${i}${j}`} x={8 + i * 6} y={18 + j * 6} width="6" height="6" fill={(i + j) % 2 ? '#8fc7e8' : '#5aa6d6'} />
+          )),
+        )}
+      </g>
+      <path d="M36 30 h8 m-3 -3 l3 3 l-3 3" stroke="currentColor" className="text-subtle" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+      {mountains(48, 14, 22, 32)}
+    </g>
+  ),
+  resizer: (
+    <g>
+      {mountains(10, 12, 40, 30)}
+      <rect x="10" y="12" width="56" height="40" rx="3" fill="none" stroke="#0a84ff" strokeWidth="1.4" strokeDasharray="3 2" />
+      <path d="M58 44 l6 6 m0 -5 v5 h-5" stroke="#0a84ff" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+    </g>
+  ),
+  cropper: (
+    <g>
+      {mountains(8, 10, 60, 40)}
+      <path d="M8 10 h60 v40 h-60 Z M20 18 v24 h36 v-24 Z" fill="rgba(0,0,0,0.45)" fillRule="evenodd" />
+      <rect x="20" y="18" width="36" height="24" fill="none" stroke="#fff" strokeWidth="1.2" />
+      <path d="M20 23 v-5 h5 M51 18 h5 v5 M56 37 v5 h-5 M25 42 h-5 v-5" stroke="#fff" strokeWidth="2.2" fill="none" />
+    </g>
+  ),
+  compressor: (
+    <g>
+      <rect x="10" y="20" width="22" height="30" rx="3" fill="#8e8e93" opacity="0.5" />
+      <rect x="44" y="32" width="22" height="18" rx="3" fill="#34c759" />
+      <text x="21" y="15" textAnchor="middle" fontSize="8" fontWeight="700" fill="#8e8e93" fontFamily="-apple-system, Inter, sans-serif">
+        4.2
+      </text>
+      <text x="55" y="27" textAnchor="middle" fontSize="8" fontWeight="700" fill="#34c759" fontFamily="-apple-system, Inter, sans-serif">
+        0.9
+      </text>
+      <path d="M34 38 h7 m-3 -3 l3 3 l-3 3" stroke="#8e8e93" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </g>
+  ),
+  converter: (
+    <g fontFamily="-apple-system, Inter, sans-serif" fontSize="7.5" fontWeight="700">
+      <rect x="6" y="18" width="26" height="24" rx="4" fill="#0a84ff" />
+      <text x="19" y="33" textAnchor="middle" fill="#fff">PNG</text>
+      <rect x="44" y="18" width="26" height="24" rx="4" fill="#34c759" />
+      <text x="57" y="33" textAnchor="middle" fill="#fff">WEBP</text>
+      <path d="M34 26 h7 m-2.5 -2.5 l2.5 2.5 l-2.5 2.5 M42 35 h-7 m2.5 -2.5 l-2.5 2.5 l2.5 2.5" stroke="#8e8e93" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+    </g>
+  ),
+  metadata: (
+    <g>
+      {mountains(6, 12, 30, 36)}
+      {[16, 24, 32, 40].map((y, i) => (
+        <g key={y}>
+          <rect x="42" y={y} width="8" height="3" rx="1.5" fill="#8e8e93" opacity="0.6" />
+          <rect x="52" y={y} width={[16, 12, 18, 10][i]} height="3" rx="1.5" fill="#8e8e93" opacity="0.35" />
+        </g>
+      ))}
+    </g>
+  ),
+  'color-picker': (
+    <g>
+      {['#2f6f8f', '#4f9d8c', '#7fb7a4', '#f3d9a4', '#f0a39a'].map((c, i) => (
+        <rect key={c} x={8 + i * 12} y="34" width="12" height="16" fill={c} rx={i === 0 ? 0 : 0} />
+      ))}
+      <rect x="8" y="34" width="60" height="16" rx="3" fill="none" stroke="rgba(0,0,0,0.1)" />
+      <circle cx="38" cy="18" r="9" fill="#7fb7a4" stroke="#fff" strokeWidth="2" />
+    </g>
+  ),
+};

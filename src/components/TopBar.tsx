@@ -1,0 +1,386 @@
+import { useRef, useState } from 'react';
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  Download,
+  ImagePlus,
+  Keyboard,
+  Minus,
+  Monitor,
+  Moon,
+  PanelRight,
+  Plus,
+  Redo2,
+  RotateCcw,
+  Settings,
+  Sun,
+  Trash2,
+  Undo2,
+  X,
+} from 'lucide-react';
+import { useEditor, shallowEqual } from '../store/store';
+import * as actions from '../store/actions';
+import { undo, redo } from '../store/history';
+import { fitView, zoomStep, zoomToCenter } from '../store/view';
+import { computeLayout } from '../engine/render';
+import { IconButton } from './ui/IconButton';
+import { Popover, MenuItem, MenuLabel, MenuSeparator } from './ui/Popover';
+import { Tooltip } from './ui/Tooltip';
+import { ExportPanel } from './ExportPanel';
+import { openFilePicker } from '../lib/filePicker';
+import { modKey } from '../lib/utils';
+import type { Backdrop, Theme } from '../types';
+import { goHome } from '../app/route';
+
+export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
+  return (
+    <div className="flex items-center gap-2 pr-1 pl-0.5">
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" className="shrink-0">
+        <rect width="32" height="32" rx="8.5" fill="var(--accent)" />
+        <path
+          d="M9 13V10.5A1.5 1.5 0 0 1 10.5 9H13M19 9h2.5A1.5 1.5 0 0 1 23 10.5V13M23 19v2.5a1.5 1.5 0 0 1-1.5 1.5H19M13 23h-2.5A1.5 1.5 0 0 1 9 21.5V19"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        <circle cx="16" cy="16" r="2.4" fill="#fff" />
+      </svg>
+      {!compact && (
+        <span className={`text-[13px] font-semibold tracking-[-0.01em] text-fg ${hideWordmarkOnMobile ? 'hidden sm:inline' : ''}`}>
+          CleanShot
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Logo that returns to the start screen. */
+export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobile?: boolean }) {
+  return (
+    <Tooltip label="Home">
+      <button
+        type="button"
+        onClick={goHome}
+        aria-label="CleanShot home"
+        data-testid="home-button"
+        className="-ml-1 rounded-[8px] py-1 pl-1 transition-colors hover:bg-hover"
+      >
+        <Logo hideWordmarkOnMobile={hideWordmarkOnMobile} />
+      </button>
+    </Tooltip>
+  );
+}
+
+function Divider() {
+  return <div className="mx-1.5 h-4 w-px shrink-0 bg-line-strong" />;
+}
+
+function DocTitle() {
+  const info = useEditor(
+    (s) => {
+      if (!s.doc) return null;
+      const L = computeLayout(s.doc);
+      return { name: s.doc.name, w: L.outW, h: L.outH };
+    },
+    shallowEqual,
+  );
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  if (!info) return null;
+
+  return (
+    <div className="flex min-w-0 items-center justify-center gap-2 text-sm">
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          onBlur={() => {
+            actions.renameDoc(draft);
+            setEditing(false);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            if (e.key === 'Escape') setEditing(false);
+          }}
+          aria-label="File name"
+          className="h-6 w-56 rounded-[5px] bg-control px-1.5 text-center text-sm text-fg ring-1 ring-accent"
+        />
+      ) : (
+        <Tooltip label="Rename">
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(info.name);
+              setEditing(true);
+            }}
+            className="max-w-[260px] min-w-0 truncate rounded-[5px] px-1.5 py-0.5 font-medium text-fg hover:bg-hover"
+          >
+            {info.name}
+          </button>
+        </Tooltip>
+      )}
+      <span className="shrink-0 text-xs text-subtle tabular-nums">
+        {info.w} × {info.h}
+      </span>
+    </div>
+  );
+}
+
+function ZoomControl() {
+  const zoom = useEditor((s) => s.view.zoom);
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  const presets = [0.25, 0.5, 1, 2, 4];
+
+  return (
+    <div className="flex items-center rounded-[8px] bg-control p-0.5">
+      <IconButton label="Zoom out" shortcut={[modKey, '−']} size="sm" onClick={() => zoomStep(-1)}>
+        <Minus size={14} />
+      </IconButton>
+      <button
+        ref={anchor}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-6 w-[58px] items-center justify-center gap-0.5 rounded-[6px] text-xs font-medium text-fg tabular-nums hover:bg-hover"
+        aria-label="Zoom level"
+        aria-haspopup="menu"
+      >
+        {Math.round(zoom * 100)}%
+        <ChevronDown size={11} className="text-subtle" />
+      </button>
+      <IconButton label="Zoom in" shortcut={[modKey, '+']} size="sm" onClick={() => zoomStep(1)}>
+        <Plus size={14} />
+      </IconButton>
+      <Popover open={open} onClose={close} anchor={anchor} align="center" width={196} label="Zoom">
+        <div className="p-1" role="menu">
+          <MenuItem
+            onClick={() => {
+              fitView(true);
+              close();
+            }}
+            shortcut={`${modKey}0`}
+          >
+            Zoom to fit
+          </MenuItem>
+          <MenuSeparator />
+          {presets.map((p) => (
+            <MenuItem
+              key={p}
+              onClick={() => {
+                zoomToCenter(p);
+                close();
+              }}
+              shortcut={p === 1 ? `${modKey}1` : undefined}
+              checked={Math.abs(zoom - p) < 0.001}
+            >
+              {p * 100}%
+            </MenuItem>
+          ))}
+        </div>
+      </Popover>
+    </div>
+  );
+}
+
+export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const { theme, backdrop, hasDoc, hasRecents } = useEditor(
+    (s) => ({ theme: s.theme, backdrop: s.backdrop, hasDoc: !!s.doc, hasRecents: s.recents.length > 0 }),
+    shallowEqual,
+  );
+  const close = () => setOpen(false);
+  const run = (fn: () => void) => () => {
+    close();
+    fn();
+  };
+
+  const themes: { id: Theme; label: string; icon: React.ReactNode }[] = [
+    { id: 'dark', label: 'Dark', icon: <Moon size={13} /> },
+    { id: 'light', label: 'Light', icon: <Sun size={13} /> },
+    { id: 'system', label: 'System', icon: <Monitor size={13} /> },
+  ];
+  const backdrops: { id: Backdrop; label: string; swatch: string }[] = [
+    { id: 'auto', label: 'Auto', swatch: 'linear-gradient(135deg, #111113 50%, #dcdce0 50%)' },
+    { id: 'dark', label: 'Dark', swatch: '#111113' },
+    { id: 'light', label: 'Light', swatch: '#dcdce0' },
+    { id: 'checker', label: 'Checker', swatch: 'repeating-conic-gradient(#3a3a3f 0% 25%, #222226 0% 50%) 50% / 8px 8px' },
+  ];
+
+  return (
+    <>
+      <IconButton ref={anchor} label="Settings" onClick={() => setOpen((o) => !o)} active={false} aria-haspopup="menu">
+        <Settings size={16} />
+      </IconButton>
+      <Popover open={open} onClose={close} anchor={anchor} width={268} label="Settings">
+        <div className="p-1" role="menu">
+          <MenuLabel>Appearance</MenuLabel>
+          <div className="flex gap-1 px-1 pb-1.5">
+            {themes.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => actions.setTheme(t.id)}
+                className={`flex h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-[7px] text-xs transition-colors ${
+                  theme === t.id ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
+                }`}
+              >
+                {t.icon}
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <MenuLabel>Canvas backdrop</MenuLabel>
+          <div className="flex gap-1 px-1 pb-1.5">
+            {backdrops.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => actions.setBackdrop(b.id)}
+                className={`flex h-8 flex-1 items-center justify-center gap-1 rounded-[7px] text-xs transition-colors ${
+                  backdrop === b.id ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
+                }`}
+              >
+                <span className="h-3 w-3 rounded-[3px] ring-1 ring-line-strong" style={{ background: b.swatch }} />
+                {b.label}
+              </button>
+            ))}
+          </div>
+          {editorItems && (
+            <>
+              <MenuSeparator />
+              <MenuItem icon={<ImagePlus size={14} />} onClick={run(openFilePicker)} shortcut={`${modKey}O`}>
+                Open image…
+              </MenuItem>
+              <MenuItem icon={<Keyboard size={14} />} onClick={run(() => actions.openOverlay('shortcuts'))} shortcut="?">
+                Keyboard shortcuts
+              </MenuItem>
+            </>
+          )}
+          {hasDoc && editorItems && (
+            <>
+              <MenuSeparator />
+              <MenuItem icon={<RotateCcw size={14} />} onClick={run(actions.resetEdits)}>
+                Revert to original
+              </MenuItem>
+              <MenuItem icon={<X size={14} />} onClick={run(() => void actions.closeDocument())}>
+                Close image
+              </MenuItem>
+            </>
+          )}
+          {hasRecents && editorItems && (
+            <>
+              <MenuSeparator />
+              <MenuItem icon={<Trash2 size={14} />} danger onClick={run(() => void actions.clearRecents())}>
+                Clear recent sessions
+              </MenuItem>
+            </>
+          )}
+        </div>
+      </Popover>
+    </>
+  );
+}
+
+function ExportButton() {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const open = useEditor((s) => s.overlay === 'export');
+  return (
+    <>
+      <Tooltip label="Export" shortcut={[modKey, 'E']}>
+        <button
+          ref={anchor}
+          type="button"
+          onClick={() => actions.openOverlay(open ? null : 'export')}
+          className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-accent pr-2.5 pl-2 text-xs font-semibold text-white shadow-soft transition-[background-color,transform] duration-150 hover:bg-accent-hover active:scale-[0.97]"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          <Download size={14} strokeWidth={2.25} />
+          Export
+        </button>
+      </Tooltip>
+      <Popover open={open} onClose={() => actions.openOverlay(null)} anchor={anchor} width={296} label="Export">
+        <ExportPanel />
+      </Popover>
+    </>
+  );
+}
+
+export function TopBar() {
+  const { hasDoc, canUndo, canRedo, propertiesOpen } = useEditor(
+    (s) => ({ hasDoc: !!s.doc, canUndo: s.past.length > 0, canRedo: s.future.length > 0, propertiesOpen: s.propertiesOpen }),
+    shallowEqual,
+  );
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await actions.copyImageToClipboard();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
+  };
+
+  return (
+    <header className="relative z-20 flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2.5">
+      <div className="flex min-w-0 items-center">
+        <HomeLogo hideWordmarkOnMobile={hasDoc} />
+        {hasDoc && (
+          <>
+            <Divider />
+            <IconButton label="Undo" shortcut={[modKey, 'Z']} onClick={undo} disabled={!canUndo}>
+              <Undo2 size={16} />
+            </IconButton>
+            <IconButton label="Redo" shortcut={[modKey, '⇧', 'Z']} onClick={redo} disabled={!canRedo}>
+              <Redo2 size={16} />
+            </IconButton>
+          </>
+        )}
+      </div>
+
+      {hasDoc && (
+        <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden max-w-[34vw] -translate-x-1/2 items-center md:flex">
+          <div className="pointer-events-auto min-w-0">
+            <DocTitle />
+          </div>
+        </div>
+      )}
+
+      <div className="flex shrink-0 items-center justify-end gap-1.5">
+        {hasDoc && (
+          <>
+            <div className="hidden sm:block">
+              <ZoomControl />
+            </div>
+            <div className="hidden sm:block">
+              <Divider />
+            </div>
+            <Tooltip label="Copy to clipboard" shortcut={[modKey, 'C']}>
+              <button
+                type="button"
+                onClick={copy}
+                aria-label="Copy to clipboard"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2 text-xs font-medium text-fg transition-colors hover:bg-hover"
+              >
+                {copied ? <Check size={14} className="text-success" strokeWidth={2.5} /> : <Copy size={14} />}
+                <span className="hidden lg:inline">{copied ? 'Copied' : 'Copy'}</span>
+              </button>
+            </Tooltip>
+            <ExportButton />
+            <div className="lg:hidden">
+              <IconButton label="Properties" active={propertiesOpen} onClick={actions.toggleProperties}>
+                <PanelRight size={16} />
+              </IconButton>
+            </div>
+          </>
+        )}
+        <SettingsMenu />
+      </div>
+    </header>
+  );
+}
