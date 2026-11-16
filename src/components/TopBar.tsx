@@ -31,6 +31,7 @@ import {
   FileCheck,
   LayoutTemplate,
   ChevronRight,
+  Info,
 } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
@@ -48,7 +49,7 @@ import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, TextSize, Theme } from '../types';
 import { Toggle } from './ui/controls';
-import { goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
+import { goAboutPage, goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -383,6 +384,9 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </MenuItem>
             </>
           )}
+          <MenuItem icon={<Info size={14} />} onClick={run(goAboutPage)}>
+            About Studiolo
+          </MenuItem>
           <MenuSeparator />
           <MenuLabel>Legal</MenuLabel>
           <MenuItem icon={<Scale size={14} />} onClick={run(() => goLegal('terms'))}>

@@ -15,6 +15,7 @@ const ToolsApp = lazy(() => import('./tools/ToolsApp'));
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
 const LegalPage = lazy(() => import('./legal/LegalPage'));
 const CanvasApp = lazy(() => import('./studio/StudioApp'));
+const AboutPage = lazy(() => import('./components/AboutPage'));
 
 let booted = false;
 
@@ -70,6 +71,11 @@ export default function App() {
       {route.section === 'canvas' && (
         <Suspense fallback={<div className="flex-1" />}>
           <CanvasApp />
+        </Suspense>
+      )}
+      {route.section === 'about' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <AboutPage />
         </Suspense>
       )}
       {route.section === 'legal' && (

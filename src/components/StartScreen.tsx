@@ -224,6 +224,12 @@ export function StartScreen() {
             </section>
           )}
 
+          <p className="text-center text-xs text-subtle">
+            Why “Studiolo”?{' '}
+            <a href="#about" className="text-muted hover:text-fg hover:underline">
+              The story behind the name
+            </a>
+          </p>
         </div>
       </main>
     </div>
