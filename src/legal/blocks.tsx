@@ -39,7 +39,6 @@ export function DocLink({ doc, children }: { doc: LegalDoc | 'privacy'; children
   );
 }
 
-export const Operator = () => (LEGAL.operatorName ? <>{LEGAL.operatorName}</> : <Placeholder>LEGAL NAME OF OPERATOR</Placeholder>);
 
 export const ContactEmail = () =>
   LEGAL.contactEmail ? (
@@ -57,13 +56,10 @@ export const MinimumAge = () => (LEGAL.minimumAge !== null ? <>{LEGAL.minimumAge
 export function ContactBlock() {
   return (
     <div className="flex flex-col gap-0.5 rounded-[12px] border border-line bg-panel px-4 py-3 text-sm text-muted">
-      <span className="font-medium text-fg">
-        <Operator />
-      </span>
+      <span className="font-medium text-fg">CleanShot</span>
       <span>
         Email: <ContactEmail />
       </span>
-      {LEGAL.postalAddress && <span>{LEGAL.postalAddress}</span>}
     </div>
   );
 }

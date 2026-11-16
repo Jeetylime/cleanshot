@@ -1,4 +1,4 @@
-import { ContactBlock, DocLink, List, MinimumAge, Operator, Section, Strong } from './blocks';
+import { ContactBlock, DocLink, List, MinimumAge, Section, Strong } from './blocks';
 
 /*
  * Every statement here was checked against the code and the live site's
@@ -26,7 +26,7 @@ export function PrivacyPolicy() {
 
       <Section id="who" title="Who this policy covers">
         <p>
-          This policy describes how CleanShot (cleanshot.space), operated by <Operator />, handles information. In this policy “we” means the operator of CleanShot and
+          This policy describes how CleanShot (cleanshot.space) handles information. In this policy “we” means the operator of CleanShot and
           “you” means anyone using the website.
         </p>
       </Section>

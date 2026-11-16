@@ -1,11 +1,11 @@
-import { ContactBlock, DocLink, GoverningLaw, List, MinimumAge, Operator, Section, Strong } from './blocks';
+import { ContactBlock, DocLink, GoverningLaw, List, MinimumAge, Section, Strong } from './blocks';
 
 export function TermsOfService() {
   return (
     <>
       <Section id="acceptance" title="1. Accepting these terms">
         <p>
-          These Terms of Service are an agreement between you and <Operator />, the operator of CleanShot (cleanshot.space). By using CleanShot you agree to these
+          These Terms of Service are an agreement between you and the operator of CleanShot (cleanshot.space), referred to as “CleanShot”, “we” or “us”. By using CleanShot you agree to these
           terms, the <DocLink doc="acceptable-use">Acceptable Use Policy</DocLink> and the <DocLink doc="privacy-policy">Privacy Policy</DocLink>. If you don’t agree,
           please don’t use CleanShot.
         </p>
@@ -58,7 +58,7 @@ export function TermsOfService() {
           purpose of providing the features you use. This permission ends when you delete the content or stop using CleanShot.
         </p>
         <p>
-          CleanShot itself, including its software, design, name and logo, belongs to <Operator /> or its licensors. These terms don’t give you any rights to them
+          CleanShot itself, including its software, design, name and logo, belongs to its operator or its licensors. These terms don’t give you any rights to them
           beyond using the service as intended. Open-source components and third-party models remain under their own licenses.
         </p>
       </Section>
@@ -106,7 +106,7 @@ export function TermsOfService() {
 
       <Section id="liability" title="8. Limitation of liability">
         <p>
-          To the fullest extent permitted by applicable law, <Operator /> will not be liable for any indirect, incidental, special, consequential or punitive damages,
+          To the fullest extent permitted by applicable law, CleanShot and its operator will not be liable for any indirect, incidental, special, consequential or punitive damages,
           or for any loss of data, files, profits, revenue or goodwill, arising from or related to your use of, or inability to use, CleanShot, even if advised of the
           possibility of such damages.
         </p>
