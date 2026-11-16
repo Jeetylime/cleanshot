@@ -1,0 +1,9 @@
+// Cloudflare Workers config: serves the static build in dist/.
+// Response headers (cross-origin isolation, caching) come from public/_headers.
+{
+  "name": "cleanshot",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
