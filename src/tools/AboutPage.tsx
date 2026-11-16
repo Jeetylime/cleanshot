@@ -72,7 +72,7 @@ export default function AboutPage() {
   const deleteModels = async () => {
     try {
       await caches.delete(CACHE_NAME);
-      showToast('Downloaded AI models deleted');
+      showToast('Downloaded models deleted');
     } catch {
       showToast('Couldn’t delete the models in this browser.', 'error');
     }
@@ -86,7 +86,7 @@ export default function AboutPage() {
           <HomeLogo />
           <ChevronRight size={14} className="text-subtle" />
           <span className="px-1.5 text-sm font-semibold text-fg" aria-current="page">
-            Privacy & AI
+            Privacy & Models
           </span>
         </nav>
         <SettingsMenu editorItems={false} />
@@ -94,15 +94,15 @@ export default function AboutPage() {
       <main className="scroll-thin flex-1 overflow-y-auto px-5 py-10">
         <article className="mx-auto flex w-full max-w-[680px] flex-col gap-9 animate-rise">
           <div className="flex flex-col gap-2">
-            <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-balance text-fg">Privacy & AI</h1>
+            <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-balance text-fg">Privacy & Models</h1>
             <p className="text-sm leading-[21px] text-muted">
-              What CleanShot downloads, what it stores in your browser, and what the AI tools can and can’t do.
+              What CleanShot downloads, what it stores in your browser, and how the Background Remover and Image Upscaler work.
             </p>
           </div>
 
           <Section title="Your images stay in this tab">
             <p>
-              CleanShot is a set of static files with no server behind it, so there is nowhere for an image to be sent. Editing, compression, conversion and both AI models
+              CleanShot is a set of static files with no server behind it, so there is nowhere for an image to be sent. Editing, compression, conversion and both models
               all run in your browser using Canvas and WebAssembly. Closing the tab ends all processing.
             </p>
             <p>
@@ -110,9 +110,24 @@ export default function AboutPage() {
             </p>
           </Section>
 
-          <Section title="AI models">
+          <Section title="Is this generative AI?">
             <p>
-              The two AI tools use open neural networks. Nothing downloads until you start one of those tools and confirm, and each model then stays cached in this browser so
+              No. Nothing in CleanShot creates images from a prompt, and nothing generates text. Two tools use small, task-specific neural networks; every other tool
+              uses standard image processing.
+            </p>
+            <p>
+              <span className="font-medium text-fg">Background Remover</span> uses a segmentation model. It only decides, pixel by pixel, what belongs to the subject and
+              what belongs to the background. It never adds or changes pixels; it only makes the background transparent.
+            </p>
+            <p>
+              <span className="font-medium text-fg">Image Upscaler</span> uses a super-resolution model. It rebuilds edges and fine texture from the pixels already in your
+              image, so its added detail is an estimate based on your image, not new content.
+            </p>
+          </Section>
+
+          <Section title="Models">
+            <p>
+              Both tools use open, published models. Nothing downloads until you start one of those tools and confirm, and each model then stays cached in this browser so
               it works offline afterwards.
             </p>
             <div className="overflow-x-auto rounded-[12px] border border-line">
@@ -151,7 +166,7 @@ export default function AboutPage() {
             </p>
           </Section>
 
-          <Section title="Where the AI falls short">
+          <Section title="Limitations">
             <p>
               <span className="font-medium text-fg">Background Remover</span> predicts its cut-out at 1024 px and scales it up to your image. Clear subjects (people,
               products, pets) work well. It can struggle with glass and other transparent objects, thin structures like bike spokes, and hair against a similar-colored
@@ -169,7 +184,7 @@ export default function AboutPage() {
             <ul className="flex flex-col gap-1.5 pl-4 [&>li]:list-disc">
               <li>Recent screenshot editor sessions, including the image and your edits, up to 10, in IndexedDB.</li>
               <li>Preferences such as theme, tool colors and export format, in local storage.</li>
-              <li>Downloaded AI models, in the browser’s cache storage.</li>
+              <li>Downloaded models, in the browser’s cache storage.</li>
             </ul>
             <p>None of this leaves your device. You can clear it here, or by clearing site data in your browser.</p>
             <div className="flex flex-wrap items-center gap-2 rounded-[12px] border border-line bg-panel p-3">

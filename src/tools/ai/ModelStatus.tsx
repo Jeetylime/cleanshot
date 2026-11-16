@@ -66,7 +66,7 @@ export function ModelStatus({
         {phase === 'downloading' && (
           <>
             <p className="flex items-center gap-2 text-[13px] font-semibold text-fg">
-              <Spinner /> Downloading AI model…
+              <Spinner /> Downloading model…
             </p>
             <ProgressBar
               value={progress && progress.total ? Math.min(1, progress.loaded / Math.max(progress.total, model.bytes)) : null}
@@ -80,7 +80,7 @@ export function ModelStatus({
               }
             />
             <p className="text-xs text-subtle">
-              {bundled ? 'Loading the model and AI runtime included with this page.' : 'This happens once. Next time the model loads from your browser’s cache.'}
+              {bundled ? 'Loading the model included with this page.' : 'This happens once. Next time the model loads from your browser’s cache.'}
             </p>
           </>
         )}

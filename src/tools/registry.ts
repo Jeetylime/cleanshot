@@ -16,7 +16,7 @@ export interface ToolMeta {
 }
 
 export const TOOL_GROUPS: { id: ToolGroupId; label: string }[] = [
-  { id: 'ai', label: 'AI Tools' },
+  { id: 'ai', label: 'Smart Tools' },
   { id: 'editing', label: 'Image Editing' },
   { id: 'optimization', label: 'Image Optimization' },
   { id: 'utilities', label: 'Image Utilities' },

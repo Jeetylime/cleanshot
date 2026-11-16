@@ -396,7 +396,7 @@ export default function Resizer() {
           </PanelSection>
           <Advanced>
             <p className="text-xs leading-[16px] text-subtle">
-              Downscaling uses multi-step filtering for sharp results. Enlarging beyond 100% can’t add detail; use the Image Upscaler for AI enlargement.
+              Downscaling uses multi-step filtering for sharp results. Enlarging beyond 100% can’t add detail; use the Image Upscaler, which reconstructs edges and texture.
             </p>
           </Advanced>
           {list.items.some((i) => current(i.id)?.status === 'error') && (

@@ -105,11 +105,10 @@ export function StartScreen() {
                       <span
                         key={t.key}
                         className={`relative flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-line bg-panel shadow-soft ${
-                          t.ai ? 'text-accent' : 'text-muted'
+                          'text-muted'
                         }`}
                       >
                         <t.icon size={19} strokeWidth={1.8} />
-                        {t.ai && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent ring-2 ring-window" />}
                       </span>
                     ))}
                   </div>
@@ -167,7 +166,7 @@ export function StartScreen() {
 
           <p className="text-center">
             <button type="button" onClick={goAbout} className="text-xs text-subtle hover:text-fg hover:underline">
-              Privacy & AI
+              Privacy & Models
             </button>
           </p>
         </div>

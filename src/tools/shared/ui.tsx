@@ -251,14 +251,6 @@ export function Spinner({ size = 14 }: { size?: number }) {
   return <Loader2 size={size} className="animate-spin-slow text-accent" />;
 }
 
-export function AiBadge({ className = '' }: { className?: string }) {
-  return (
-    <span className={`inline-flex h-[18px] items-center gap-1 rounded-full bg-accent-soft px-1.5 text-[10px] font-semibold tracking-[0.02em] text-accent ${className}`}>
-      AI
-    </span>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Previews
 

@@ -255,7 +255,7 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
           </div>
           <MenuSeparator />
           <MenuItem icon={<ShieldCheck size={14} />} onClick={run(goAbout)}>
-            Privacy & AI
+            Privacy & Models
           </MenuItem>
           {editorItems && (
             <>

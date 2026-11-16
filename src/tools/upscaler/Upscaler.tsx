@@ -10,7 +10,7 @@ import { renderResized } from '../shared/geometry';
 import { OutputOptions, type OutChoice } from '../shared/OutputOptions';
 import { errorMessage } from '../shared/batch';
 import { goAbout } from '../../app/route';
-import { AiBadge, CompareSlider, copyImage, Dropzone, Notice, PanelSection, saveBlob, ToolLayout, useBlobUrl, useFileSink, useImageList } from '../shared/ui';
+import { CompareSlider, copyImage, Dropzone, Notice, PanelSection, saveBlob, ToolLayout, useBlobUrl, useFileSink, useImageList } from '../shared/ui';
 import { describeAiError, isModelCached, type DownloadProgress } from '../ai/runtime';
 import { ModelStatus, type AiPhase } from '../ai/ModelStatus';
 import { loadUpscaler, readyModels, SR_MODELS, upscale, type Scale } from './sr';
@@ -152,7 +152,7 @@ export default function Upscaler() {
             <span className="flex items-center gap-2 text-xs text-muted tabular-nums">
               {out ? (
                 <>
-                  <AiBadge /> Enhanced with {SR_MODELS[out.scale].label}
+                  Enhanced with {SR_MODELS[out.scale].label}
                 </>
               ) : (
                 <>Original preview</>
@@ -182,7 +182,7 @@ export default function Upscaler() {
                 width={out.canvas.width}
                 height={out.canvas.height}
                 beforeLabel="Standard resize"
-                afterLabel="AI upscaled"
+                afterLabel="Enhanced"
                 natural={zoom === 'actual'}
                 checker
               />
@@ -200,7 +200,7 @@ export default function Upscaler() {
               model={model}
               phase={phase as AiPhase}
               progress={progress}
-              processingLabel={`AI upscaling ${scale}×…`}
+              processingLabel={`Upscaling ${scale}×…`}
               processingProgress={tiles ? tiles.done / tiles.total : null}
               detail={eta}
               error={error}
@@ -269,7 +269,7 @@ export default function Upscaler() {
         <>
           <Button variant={out ? 'secondary' : 'primary'} className="h-8" disabled={busy} onClick={() => void run()}>
             <Sparkles size={14} />
-            {out ? `Upscale again ${scale}×` : `Upscale ${scale}× with AI`}
+            {out ? `Upscale again ${scale}×` : `Upscale ${scale}×`}
           </Button>
           {out && (
             <div className="flex gap-2">

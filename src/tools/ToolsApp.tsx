@@ -5,7 +5,7 @@ import type { ToolKey } from '../app/route';
 import { goAbout, goTools } from '../app/route';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { TOOLS, TOOL_GROUPS, toolMeta, type ToolMeta } from './registry';
-import { AiBadge, Spinner } from './shared/ui';
+import { Spinner } from './shared/ui';
 import { ToolPreview } from './ToolPreview';
 
 export default function ToolsApp({ tool }: { tool: ToolKey | null }) {
@@ -72,7 +72,6 @@ function ToolSwitcher({ current }: { current: ToolMeta }) {
       >
         <current.icon size={14} className="shrink-0 text-muted" />
         <span className="truncate">{current.name}</span>
-        {current.ai && <AiBadge />}
         <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
       <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={300} label="Switch tool">
@@ -97,7 +96,7 @@ function ToolSwitcher({ current }: { current: ToolMeta }) {
                   >
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-line bg-panel ${
-                        t.ai ? 'text-accent' : 'text-muted group-hover:text-fg'
+                        'text-muted group-hover:text-fg'
                       }`}
                     >
                       <t.icon size={15} />
@@ -105,7 +104,6 @@ function ToolSwitcher({ current }: { current: ToolMeta }) {
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="flex items-center gap-1.5 text-sm font-medium text-fg">
                         {t.name}
-                        {t.ai && <AiBadge />}
                       </span>
                       <span className="truncate text-2xs text-subtle">{t.description}</span>
                     </span>
@@ -144,9 +142,8 @@ function ToolCard({ t }: { t: ToolMeta }) {
       <ToolPreview tool={t.key} />
       <span className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
         <span className="flex items-center gap-1.5">
-          <t.icon size={14} className={t.ai ? 'text-accent' : 'text-muted'} />
+          <t.icon size={14} className="text-muted" />
           <span className="truncate text-[13px] font-semibold text-fg">{t.name}</span>
-          {t.ai && <AiBadge className="ml-auto" />}
         </span>
         <span className="text-xs leading-[16px] text-muted">{t.description}</span>
         {t.batch && <span className="text-2xs text-subtle">Batch supported</span>}
@@ -165,7 +162,7 @@ function ToolsLanding() {
             <p className="mt-1 text-sm text-muted">Focused utilities for everyday image work.</p>
           </div>
           <button type="button" onClick={goAbout} className="text-xs text-subtle hover:text-fg hover:underline">
-            Privacy & AI
+            Privacy & Models
           </button>
         </div>
         {TOOL_GROUPS.map((g) => (
