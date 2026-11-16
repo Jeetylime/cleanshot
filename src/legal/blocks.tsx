@@ -56,7 +56,7 @@ export const MinimumAge = () => (LEGAL.minimumAge !== null ? <>{LEGAL.minimumAge
 export function ContactBlock() {
   return (
     <div className="flex flex-col gap-0.5 rounded-[12px] border border-line bg-panel px-4 py-3 text-sm text-muted">
-      <span className="font-medium text-fg">CleanShot</span>
+      <span className="font-medium text-fg">Studiolo</span>
       <span>
         Email: <ContactEmail />
       </span>

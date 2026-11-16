@@ -1,4 +1,4 @@
-# CleanShot
+# Studiolo
 
 A local-first image workspace for the browser with two sections:
 
@@ -46,7 +46,7 @@ npm run preview   # serve the production build
 
 **Layers**: list with rename, drag to reorder, hide/show, lock/unlock and delete.
 
-**Projects**: autosaved to IndexedDB (no account, no cloud), reopen and duplicate from “Your designs”, rename, download and import editable `.cleanshot` project files, warnings when browser storage is full or nearly full.
+**Projects**: autosaved to IndexedDB (no account, no cloud), reopen and duplicate from “Your designs”, rename, download and import editable `.studiolo` project files (older `.cleanshot` files still open), warnings when browser storage is full or nearly full.
 
 **Export**: PNG, JPEG, WebP or PDF (single page; paper presets export at real US Letter/A4 size), transparent background for PNG/WebP, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
 
@@ -94,7 +94,7 @@ src/
     render.ts           Scene renderer shared by screen, thumbnails and export; text layout
     geometry.ts         Transforms, hit-testing, bounds, snapping
     store.ts actions.ts State, snapshot history, every editing and project operation
-    persistence.ts      IndexedDB projects + shared asset store, .cleanshot project files
+    persistence.ts      IndexedDB projects + shared asset store, .studiolo project files
     Stage.tsx           Canvas interaction: select, drag, resize, rotate, crop, pan/zoom, text editing
     factory.ts templates.ts fonts.ts iconData.ts  Element defaults, presets, templates, fonts, icons
     handoff.ts          Tiny bridge so other tools can send images to Canvas
@@ -123,7 +123,7 @@ Key design choices:
 
 ## Deploying
 
-CleanShot builds to static files in `dist/` and needs no server. It uses hash routing, so no rewrite rules are needed.
+Studiolo builds to static files in `dist/` and needs no server. It uses hash routing, so no rewrite rules are needed.
 
 - **Cloudflare Pages / Netlify:** build command `npm run build`, output directory `dist`. Headers come from `public/_headers`.
 - **Vercel:** `vercel.json` sets the build, output and headers.

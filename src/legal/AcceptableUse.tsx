@@ -5,17 +5,17 @@ export function AcceptableUse() {
     <>
       <Section id="purpose" title="Why this policy exists">
         <p>
-          CleanShot is a free set of image and PDF tools. This policy explains what you may not use it for. It is part of the{' '}
-          <DocLink doc="terms">Terms of Service</DocLink>, so by using CleanShot you agree to it.
+          Studiolo is a free set of image and PDF tools. This policy explains what you may not use it for. It is part of the{' '}
+          <DocLink doc="terms">Terms of Service</DocLink>, so by using Studiolo you agree to it.
         </p>
         <p>
-          CleanShot processes files on your device, so we don’t see what you create. You are responsible for making sure your use, and anything you make, follows this
+          Studiolo processes files on your device, so we don’t see what you create. You are responsible for making sure your use, and anything you make, follows this
           policy and the law.
         </p>
       </Section>
 
       <Section id="prohibited-content" title="Prohibited uses and content">
-        <p>Don’t use CleanShot to create, edit, alter or distribute content, or to take part in activity, that:</p>
+        <p>Don’t use Studiolo to create, edit, alter or distribute content, or to take part in activity, that:</p>
         <List>
           <li>
             <span className="font-medium text-fg">Is illegal.</span> This includes unlawful content and any activity that breaks applicable laws or regulations.
@@ -46,12 +46,12 @@ export function AcceptableUse() {
       <Section id="service-abuse" title="Misuse of the service">
         <p>Don’t:</p>
         <List>
-          <li>try to exploit, disrupt, overload or damage CleanShot or the infrastructure that delivers it</li>
+          <li>try to exploit, disrupt, overload or damage Studiolo or the infrastructure that delivers it</li>
           <li>probe, scan or test for vulnerabilities without our permission, or bypass any security or access measure</li>
           <li>reverse engineer, decompile or extract parts of the service, except where the law allows this despite this restriction, or where a license for that part allows it</li>
           <li>use bots, scrapers or other automated means to access the site in a way that harms its availability or performance</li>
           <li>make excessive requests, for example repeatedly downloading the site’s files or models through it, in a way that degrades the service for others</li>
-          <li>use CleanShot to spread malware or other harmful code</li>
+          <li>use Studiolo to spread malware or other harmful code</li>
         </List>
         <p>
           Found a security issue? Please tell us using the contact details below instead of testing it in a way that could affect others.
@@ -68,7 +68,7 @@ export function AcceptableUse() {
       <Section id="enforcement" title="Enforcement">
         <p>
           If we reasonably believe you have broken this policy, we may, where legally permitted and without notice, restrict, suspend or block your access to
-          CleanShot, for example by blocking network traffic. We may also report illegal activity to the appropriate authorities and cooperate with lawful requests.
+          Studiolo, for example by blocking network traffic. We may also report illegal activity to the appropriate authorities and cooperate with lawful requests.
         </p>
       </Section>
 

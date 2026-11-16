@@ -673,7 +673,7 @@ export async function duplicateProject(id: string) {
 
 function reportStorageError(err: unknown) {
   const msg = db.isQuotaError(err)
-    ? 'Your browser is out of storage space for CleanShot. Download your design as a project file, or delete old designs to free space.'
+    ? 'Your browser is out of storage space for Studiolo. Download your design as a project file, or delete old designs to free space.'
     : 'Your design couldn’t be saved in this browser. Download it as a project file to keep a copy.';
   studio.set({ storageWarning: msg, saveState: 'error' });
 }
@@ -742,7 +742,7 @@ export async function downloadProjectFile() {
   }
   const blob = await db.buildProjectFile(doc, assets);
   const { downloadBlob } = await import('../engine/export');
-  await downloadBlob(blob, `${doc.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.cleanshot`);
+  await downloadBlob(blob, `${doc.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.studiolo`);
 }
 
 function renderBitmap(b: ImageBitmap): HTMLCanvasElement {

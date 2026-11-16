@@ -10,12 +10,12 @@ export const LEGAL = {
   lastUpdated: '2026-11-16',
 
   /** Email address for general, legal and privacy questions. */
-  contactEmail: 'hello@cleanshot.space' as string | null,
+  contactEmail: 'hello@studiolo.page' as string | null,
 
   /** Governing law and courts, e.g. "the State of Delaware, USA". Needs a legal decision. */
   governingLaw: 'the Commonwealth of Pennsylvania, USA' as string | null,
 
-  /** Minimum age to use CleanShot. Needs a legal decision (13 and 16 are common). */
+  /** Minimum age to use Studiolo. Needs a legal decision (13 and 16 are common). */
   minimumAge: 13 as number | null,
 };
 

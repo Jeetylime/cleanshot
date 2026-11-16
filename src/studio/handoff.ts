@@ -1,7 +1,7 @@
 import { goCanvas } from '../app/route';
 
 /**
- * Hand an image from elsewhere in CleanShot (Edit, Image Tools) to Canvas.
+ * Hand an image from elsewhere in Studiolo (Edit, Image Tools) to Canvas.
  * Kept tiny and free of Studio imports so tools don't pull the editor code
  * into their own bundles; Studio picks the image up when it mounts.
  */

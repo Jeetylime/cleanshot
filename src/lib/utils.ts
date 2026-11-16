@@ -138,7 +138,7 @@ export function stripExtension(name: string): string {
 
 export function defaultScreenshotName(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `CleanShot ${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} at ${pad(
+  return `Studiolo ${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} at ${pad(
     date.getHours(),
   )}.${pad(date.getMinutes())}.${pad(date.getSeconds())}`;
 }

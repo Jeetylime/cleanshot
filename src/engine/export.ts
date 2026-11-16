@@ -63,7 +63,7 @@ export async function exportDocument(doc: EditorDoc, req: ExportRequest): Promis
 }
 
 export function exportFileName(doc: EditorDoc, format: ExportFormat): string {
-  const base = stripExtension(doc.name || 'CleanShot').trim() || 'CleanShot';
+  const base = stripExtension(doc.name || 'Studiolo').trim() || 'Studiolo';
   return `${base}.${EXTENSION[format]}`;
 }
 

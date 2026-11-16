@@ -246,7 +246,7 @@ function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
           <MenuItem icon={<FileDown size={14} />} onClick={run(() => void A.downloadProjectFile())}>
             Download project file
           </MenuItem>
-          <MenuItem icon={<FileUp size={14} />} onClick={run(() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.cleanshot,application/json'))}>
+          <MenuItem icon={<FileUp size={14} />} onClick={run(() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.studiolo,.cleanshot,application/json'))}>
             Open project file…
           </MenuItem>
           <MenuSeparator />

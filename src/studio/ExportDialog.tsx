@@ -41,8 +41,8 @@ async function buildPdf(canvas: HTMLCanvasElement, docW: number, docH: number, q
   const { PDFDocument } = await import('pdf-lib');
   const pdf = await PDFDocument.create();
   pdf.setTitle(title);
-  pdf.setCreator('CleanShot Studio');
-  pdf.setProducer('CleanShot');
+  pdf.setCreator('Studiolo');
+  pdf.setProducer('Studiolo');
   const lossless = quality >= 100;
   const bytes = new Uint8Array(await (await canvasToBlob(canvas, lossless ? 'image/png' : 'image/jpeg', lossless ? undefined : quality / 100)).arrayBuffer());
   const img = lossless ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);

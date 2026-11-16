@@ -13,32 +13,32 @@ export function PrivacyPolicy() {
       <Section id="summary" title="The short version">
         <List>
           <li>
-            CleanShot is built to process your images and PDFs <Strong>on your device, in your browser</Strong>. No CleanShot feature uploads your files to
-            CleanShot or anyone else.
+            Studiolo is built to process your images and PDFs <Strong>on your device, in your browser</Strong>. No Studiolo feature uploads your files to
+            Studiolo or anyone else.
           </li>
-          <li>Some data is stored in your browser so CleanShot can work, for example recent editor sessions and downloaded models. You can delete it at any time.</li>
+          <li>Some data is stored in your browser so Studiolo can work, for example recent editor sessions and downloaded models. You can delete it at any time.</li>
           <li>
-            Like any website, the infrastructure that delivers CleanShot (Cloudflare) receives technical information such as your IP address and browser details when
+            Like any website, the infrastructure that delivers Studiolo (Cloudflare) receives technical information such as your IP address and browser details when
             your browser requests the site.
           </li>
-          <li>CleanShot doesn’t use advertising, doesn’t sell personal information, and doesn’t set its own cookies.</li>
+          <li>Studiolo doesn’t use advertising, doesn’t sell personal information, and doesn’t set its own cookies.</li>
         </List>
       </Section>
 
       <Section id="who" title="Who this policy covers">
         <p>
-          This policy describes how CleanShot (cleanshot.space) handles information. In this policy “we” means the operator of CleanShot and
+          This policy describes how Studiolo (studiolo.page) handles information. In this policy “we” means the operator of Studiolo and
           “you” means anyone using the website.
         </p>
       </Section>
 
       <Section id="files" title="Your images and PDFs">
         <p>
-          When you open, paste, drop or import a file, CleanShot reads it inside your browser tab. Editing, redaction, resizing, compression, conversion, metadata
+          When you open, paste, drop or import a file, Studiolo reads it inside your browser tab. Editing, redaction, resizing, compression, conversion, metadata
           viewing, color picking, PDF tools, background removal and upscaling all run on your device using browser technologies such as Canvas and WebAssembly.
         </p>
         <p>
-          CleanShot has no upload feature and no server-side processing, so we don’t receive, see or store the files you work on. If we ever add a feature that needs
+          Studiolo has no upload feature and no server-side processing, so we don’t receive, see or store the files you work on. If we ever add a feature that needs
           to send a file somewhere, that feature will say so clearly before anything is sent, and we will update this policy first.
         </p>
         <p>
@@ -47,8 +47,8 @@ export function PrivacyPolicy() {
         </p>
       </Section>
 
-      <Section id="browser-storage" title="What CleanShot stores in your browser">
-        <p>To work properly, CleanShot keeps some data on your device. It stays in your browser and isn’t sent to us.</p>
+      <Section id="browser-storage" title="What Studiolo stores in your browser">
+        <p>To work properly, Studiolo keeps some data on your device. It stays in your browser and isn’t sent to us.</p>
         <List>
           <li>
             <Strong>Canvas designs</Strong> (IndexedDB): designs you make on Canvas, including the images you add to them and a thumbnail, so you can reopen them
@@ -83,7 +83,7 @@ export function PrivacyPolicy() {
 
       <Section id="cookies" title="Cookies">
         <p>
-          CleanShot doesn’t set its own cookies and doesn’t use cookies for advertising or tracking. Cloudflare, which delivers the site, may set strictly necessary
+          Studiolo doesn’t set its own cookies and doesn’t use cookies for advertising or tracking. Cloudflare, which delivers the site, may set strictly necessary
           security cookies in some situations, for example to tell people from automated traffic during an attack. See Cloudflare’s documentation for details on those
           cookies.
         </p>
@@ -91,7 +91,7 @@ export function PrivacyPolicy() {
 
       <Section id="infrastructure" title="Information handled by our infrastructure">
         <p>
-          CleanShot is delivered by <Strong>Cloudflare</Strong>. When your browser requests the site, Cloudflare processes technical information needed to deliver it
+          Studiolo is delivered by <Strong>Cloudflare</Strong>. When your browser requests the site, Cloudflare processes technical information needed to deliver it
           and keep it secure, which can include:
         </p>
         <List>
@@ -106,21 +106,21 @@ export function PrivacyPolicy() {
         </p>
         <p>
           Cloudflare handles this information under its own privacy policy and retains it according to its own practices and the settings of our account. We use it
-          only to run, secure and troubleshoot CleanShot.
+          only to run, secure and troubleshoot Studiolo.
         </p>
       </Section>
 
       <Section id="analytics" title="Analytics">
         <p>
-          CleanShot doesn’t include a third-party analytics script, advertising pixel or tracking library. We may view aggregate traffic statistics that Cloudflare
+          Studiolo doesn’t include a third-party analytics script, advertising pixel or tracking library. We may view aggregate traffic statistics that Cloudflare
           provides from the requests it handles, such as numbers of visitors and requests, the pages requested, referring sites and approximate country. We use these to
-          understand how CleanShot is used and to keep it running well. We don’t use them to identify individuals.
+          understand how Studiolo is used and to keep it running well. We don’t use them to identify individuals.
         </p>
       </Section>
 
       <Section id="models" title="AI tools and model downloads">
         <p>
-          Two tools use small, task-specific neural networks. Nothing in CleanShot generates images from a prompt or generates text; every other tool uses standard image
+          Two tools use small, task-specific neural networks. Nothing in Studiolo generates images from a prompt or generates text; every other tool uses standard image
           processing.
         </p>
         <List>
@@ -137,7 +137,7 @@ export function PrivacyPolicy() {
           Both models run on your device. Nothing downloads until you open one of these tools and confirm. Your browser then fetches the model from{' '}
           <Strong>Hugging Face</Strong> (huggingface.co) and its content delivery providers, and keeps it cached so the tool works offline afterwards. Like any website,
           Hugging Face receives your IP address and standard request details when it serves the files, and handles them under its own privacy policy. These requests
-          download files only; they don’t contain your images. The engine that runs the models (ONNX Runtime, about 21 MB) is served by CleanShot itself.
+          download files only; they don’t contain your images. The engine that runs the models (ONNX Runtime, about 21 MB) is served by Studiolo itself.
         </p>
         <ModelsTable />
         <p>
@@ -150,14 +150,14 @@ export function PrivacyPolicy() {
 
       <Section id="use-and-sharing" title="How information is used and shared">
         <p>
-          We use the limited technical information described above only to deliver, secure, maintain and improve CleanShot, and to respond to you if you contact us. We
+          We use the limited technical information described above only to deliver, secure, maintain and improve Studiolo, and to respond to you if you contact us. We
           don’t sell or rent personal information and don’t share it for advertising.
         </p>
         <p>Information may be shared or disclosed only:</p>
         <List>
           <li>with the service providers described above (Cloudflare and, for model downloads, Hugging Face), to provide the service</li>
-          <li>if required by law, or to protect the rights, safety or security of users, the public or CleanShot</li>
-          <li>as part of a transfer of CleanShot to a new operator, who would remain bound by this policy for information already collected</li>
+          <li>if required by law, or to protect the rights, safety or security of users, the public or Studiolo</li>
+          <li>as part of a transfer of Studiolo to a new operator, who would remain bound by this policy for information already collected</li>
         </List>
       </Section>
 
@@ -183,7 +183,7 @@ export function PrivacyPolicy() {
           right to complain to your local data protection authority.
         </p>
         <p>
-          Because CleanShot processes files on your device and has no accounts, we usually hold little or no information that identifies you. You control the data in
+          Because Studiolo processes files on your device and has no accounts, we usually hold little or no information that identifies you. You control the data in
           your browser directly and can delete it at any time. For anything else, contact us using the details below and we’ll respond within the time required by
           applicable law. We may need to verify your request.
         </p>
@@ -191,7 +191,7 @@ export function PrivacyPolicy() {
 
       <Section id="children" title="Children">
         <p>
-          CleanShot isn’t directed at children under <MinimumAge />, and we don’t knowingly collect personal information from them. If you believe a child has sent us
+          Studiolo isn’t directed at children under <MinimumAge />, and we don’t knowingly collect personal information from them. If you believe a child has sent us
           personal information, contact us and we’ll delete it.
         </p>
       </Section>
@@ -204,7 +204,7 @@ export function PrivacyPolicy() {
 
       <Section id="changes" title="Changes to this policy">
         <p>
-          If we change how CleanShot handles information, we’ll update this page and the “Last updated” date. For significant changes, we’ll also post a notice on the
+          If we change how Studiolo handles information, we’ll update this page and the “Last updated” date. For significant changes, we’ll also post a notice on the
           site before they take effect.
         </p>
       </Section>

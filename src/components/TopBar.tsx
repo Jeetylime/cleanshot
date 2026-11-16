@@ -66,7 +66,7 @@ export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compac
       </svg>
       {!compact && (
         <span className={`text-[13px] font-semibold tracking-[-0.01em] text-fg ${hideWordmarkOnMobile ? 'hidden sm:inline' : ''}`}>
-          CleanShot
+          Studiolo
         </span>
       )}
     </div>
@@ -81,7 +81,7 @@ const SECTIONS = [
   { id: 'pdf', label: 'PDF Tools', hint: 'Merge, split, sign and convert', icon: FileText, go: () => goPdf() },
 ] as const;
 
-/** Logo that opens a menu of CleanShot's sections. */
+/** Logo that opens a menu of Studiolo's sections. */
 export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobile?: boolean }) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -93,7 +93,7 @@ export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobil
         ref={anchor}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="CleanShot menu"
+        aria-label="Studiolo menu"
         aria-haspopup="menu"
         aria-expanded={open}
         data-testid="home-button"
@@ -102,7 +102,7 @@ export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobil
         <Logo hideWordmarkOnMobile={hideWordmarkOnMobile} />
         <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={270} label="CleanShot sections">
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={270} label="Studiolo sections">
         <div className="p-1.5" role="menu">
           {SECTIONS.map((sec) => {
             const active = route.section === sec.id;
@@ -364,7 +364,7 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </MenuItem>
             </>
           )}
-          <MenuItem icon={<MessageSquare size={14} />} onClick={run(() => (location.href = 'mailto:hello@cleanshot.space?subject=CleanShot%20feedback'))}>
+          <MenuItem icon={<MessageSquare size={14} />} onClick={run(() => (location.href = 'mailto:hello@studiolo.page?subject=Studiolo%20feedback'))}>
             Send feedback
           </MenuItem>
           {hasRecents && (

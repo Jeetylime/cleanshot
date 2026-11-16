@@ -32,7 +32,7 @@ export default function Merge() {
         out.setProducer('');
         out.setCreator('');
       } else {
-        out.setProducer('CleanShot');
+        out.setProducer('Studiolo');
       }
       const blob = pdfBlob(await out.save({ useObjectStreams: true }));
       setResult({ blob, pages: out.getPageCount() });

@@ -156,13 +156,15 @@ export async function requestPersistence(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Project files (.cleanshot): the document plus its images, as JSON.
+// Project files (.studiolo; older .cleanshot files still open): the document plus its images, as JSON.
 
-export const PROJECT_FILE_FORMAT = 'cleanshot-studio';
+export const PROJECT_FILE_FORMAT = 'studiolo';
+/** Format id written by earlier versions (when the site was called CleanShot). */
+const LEGACY_FORMATS = ['cleanshot-studio'];
 export const PROJECT_FILE_VERSION = 1;
 
 interface ProjectFile {
-  format: typeof PROJECT_FILE_FORMAT;
+  format: string;
   version: number;
   doc: StudioDoc;
   assets: { id: string; name: string; width: number; height: number; type: string; data: string }[];
@@ -201,10 +203,10 @@ export async function parseProjectFile(file: Blob): Promise<{ doc: StudioDoc; as
   try {
     parsed = JSON.parse(await file.text()) as ProjectFile;
   } catch {
-    throw new Error('This file isn’t a CleanShot project.');
+    throw new Error('This file isn’t a Studiolo project.');
   }
-  if (parsed?.format !== PROJECT_FILE_FORMAT || !parsed.doc || !Array.isArray(parsed.doc.elements)) throw new Error('This file isn’t a CleanShot project.');
-  if (parsed.version > PROJECT_FILE_VERSION) throw new Error('This project was made with a newer version of CleanShot.');
+  if ((parsed?.format !== PROJECT_FILE_FORMAT && !LEGACY_FORMATS.includes(parsed?.format)) || !parsed.doc || !Array.isArray(parsed.doc.elements)) throw new Error('This file isn’t a Studiolo project.');
+  if (parsed.version > PROJECT_FILE_VERSION) throw new Error('This project was made with a newer version of Studiolo.');
   const doc = parsed.doc;
   if (!(doc.width > 0 && doc.height > 0)) throw new Error('The project file is damaged.');
   const assets = (parsed.assets ?? []).map((a) => ({ id: a.id, name: a.name, width: a.width, height: a.height, blob: base64ToBlob(a.data, a.type) }));

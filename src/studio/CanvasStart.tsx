@@ -74,7 +74,7 @@ export function CanvasStart() {
               <Button onClick={() => pickFiles(false, (f) => f[0] && void A.openImageInCanvas(f[0], f[0].name, { newDesign: true }))}>
                 <ImagePlus size={13} /> Start from an image
               </Button>
-              <Button onClick={() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.cleanshot,application/json')}>
+              <Button onClick={() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.studiolo,.cleanshot,application/json')}>
                 <FileUp size={13} /> Open project file
               </Button>
             </div>

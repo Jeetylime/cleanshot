@@ -13,17 +13,17 @@ import { AcceptableUse } from './AcceptableUse';
 const DOCS: Record<LegalDoc, { title: string; summary: string; body: () => ReactNode }> = {
   terms: {
     title: 'Terms of Service',
-    summary: 'The rules for using CleanShot, what you can expect from it, and the limits of our responsibility.',
+    summary: 'The rules for using Studiolo, what you can expect from it, and the limits of our responsibility.',
     body: TermsOfService,
   },
   'privacy-policy': {
     title: 'Privacy Policy',
-    summary: 'What information is involved when you use CleanShot, where it goes, and the choices you have.',
+    summary: 'What information is involved when you use Studiolo, where it goes, and the choices you have.',
     body: PrivacyPolicy,
   },
   'acceptable-use': {
     title: 'Acceptable Use Policy',
-    summary: 'What you may not use CleanShot for, and what can happen if you do.',
+    summary: 'What you may not use Studiolo for, and what can happen if you do.',
     body: AcceptableUse,
   },
 };
@@ -39,7 +39,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = `${meta.title} · CleanShot`;
+    document.title = `${meta.title} · Studiolo`;
     document.getElementById('legal-scroll')?.scrollTo(0, 0);
     return () => {
       document.title = prev;
@@ -93,7 +93,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
 
             <p className="text-sm">
               <a href="#home" className="text-accent hover:underline">
-                ← Back to CleanShot
+                ← Back to Studiolo
               </a>
             </p>
           </article>
