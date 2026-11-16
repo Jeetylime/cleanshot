@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react';
 import {
+  House,
+  LayoutGrid,
+  SquarePen,
   Check,
   ChevronDown,
   Copy,
@@ -32,7 +35,7 @@ import { ExportPanel } from './ExportPanel';
 import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, Theme } from '../types';
-import { goAbout, goHome } from '../app/route';
+import { goAbout, goEditor, goHome, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -57,20 +60,64 @@ export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compac
   );
 }
 
-/** Logo that returns to the start screen. */
+const SECTIONS = [
+  { id: 'home', label: 'Home', hint: 'Start screen', icon: House, go: goHome },
+  { id: 'editor', label: 'Screenshot Editor', hint: 'Annotate, redact and frame', icon: SquarePen, go: goEditor },
+  { id: 'tools', label: 'Image Tools', hint: 'Resize, compress, convert and more', icon: LayoutGrid, go: () => goTools() },
+  { id: 'about', label: 'Privacy & Models', hint: 'What’s stored and downloaded', icon: ShieldCheck, go: goAbout },
+] as const;
+
+/** Logo that opens a menu of CleanShot's sections. */
 export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobile?: boolean }) {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const route = useRoute();
+  const docName = useEditor((s) => s.doc?.name ?? null);
   return (
-    <Tooltip label="Home">
+    <>
       <button
+        ref={anchor}
         type="button"
-        onClick={goHome}
-        aria-label="CleanShot home"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="CleanShot menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
         data-testid="home-button"
-        className="-ml-1 rounded-[8px] py-1 pl-1 transition-colors hover:bg-hover"
+        className={`-ml-1 flex items-center gap-0.5 rounded-[8px] py-1 pr-1 pl-1 transition-colors hover:bg-hover ${open ? 'bg-hover' : ''}`}
       >
         <Logo hideWordmarkOnMobile={hideWordmarkOnMobile} />
+        <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
-    </Tooltip>
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={270} label="CleanShot sections">
+        <div className="p-1.5" role="menu">
+          {SECTIONS.map((sec) => {
+            const active = route.section === sec.id;
+            const hint = sec.id === 'editor' && docName ? `Continue “${docName}”` : sec.hint;
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  sec.go();
+                }}
+                className={`group flex w-full items-center gap-2.5 rounded-[8px] px-2 py-1.5 text-left transition-colors ${active ? 'bg-accent-soft' : 'hover:bg-hover'}`}
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-line bg-panel text-muted group-hover:text-fg">
+                  <sec.icon size={15} />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium text-fg">{sec.label}</span>
+                  <span className="truncate text-2xs text-subtle">{hint}</span>
+                </span>
+                {active && <Check size={14} className="shrink-0 text-accent" />}
+              </button>
+            );
+          })}
+        </div>
+      </Popover>
+    </>
   );
 }
 
