@@ -48,7 +48,7 @@ npm run preview   # serve the production build
 
 **Projects**: autosaved to IndexedDB (no account, no cloud), reopen and duplicate from “Your designs”, rename, download and import editable `.cleanshot` project files, warnings when browser storage is full or nearly full.
 
-**Export**: PNG, JPEG or WebP, transparent background for PNG/WebP, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
+**Export**: PNG, JPEG, WebP or PDF (single page; paper presets export at real US Letter/A4 size), transparent background for PNG/WebP, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
 
 **Integration**: Create's “Send to Canvas” places the edited screenshot on the current design; Canvas's “Edit in Create” opens an image in Create; the Cropper, Background Remover and Upscaler have a “Design” button that opens the result on Canvas.
 

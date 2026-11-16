@@ -14,9 +14,43 @@ import type { TextElement } from './types';
 
 const PREFS_KEY = 'cleanshot:studio-export';
 
+type Format = ExportFormat | 'pdf';
+const EXT: Record<Format, string> = { ...EXTENSION, pdf: 'pdf' };
+
 interface Prefs {
-  format: ExportFormat;
+  format: Format;
   quality: number;
+}
+
+/**
+ * PDF page size in points. Paper presets map to their real paper size;
+ * everything else uses 96 px per inch (CSS pixels), so a 1080 px design is 11.25 in wide.
+ */
+function pdfPageSize(w: number, h: number): [number, number] {
+  const near = (a: number, b: number) => Math.abs(a / b - 1) < 0.01;
+  const ratio = w / h;
+  if (near(ratio, 8.5 / 11) && w >= 600) return [612, 792];
+  if (near(ratio, 11 / 8.5) && w >= 600) return [792, 612];
+  if (near(ratio, 210 / 297) && w >= 600) return [595.28, 841.89];
+  if (near(ratio, 297 / 210) && w >= 600) return [841.89, 595.28];
+  return [w * 0.75, h * 0.75];
+}
+
+/** Single-page PDF with the design embedded as an image (lossless PNG at 100% quality, JPEG otherwise). */
+async function buildPdf(canvas: HTMLCanvasElement, docW: number, docH: number, quality: number, title: string): Promise<Blob> {
+  const { PDFDocument } = await import('pdf-lib');
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(title);
+  pdf.setCreator('CleanShot Studio');
+  pdf.setProducer('CleanShot');
+  const lossless = quality >= 100;
+  const bytes = new Uint8Array(await (await canvasToBlob(canvas, lossless ? 'image/png' : 'image/jpeg', lossless ? undefined : quality / 100)).arrayBuffer());
+  const img = lossless ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+  const [pw, ph] = pdfPageSize(docW, docH);
+  const page = pdf.addPage([pw, ph]);
+  page.drawImage(img, { x: 0, y: 0, width: pw, height: ph });
+  const out = await pdf.save();
+  return new Blob([out as BlobPart], { type: 'application/pdf' });
 }
 
 function loadPrefs(): Prefs {
@@ -63,18 +97,20 @@ export function ExportDialog() {
     return clampExportSize(w, h);
   }, [doc, scale, size]);
 
-  const canTransparent = prefs.format !== 'jpeg';
+  const isPdf = prefs.format === 'pdf';
+  const canTransparent = prefs.format === 'png' || prefs.format === 'webp';
   const bgIsTransparent = doc?.background.kind === 'transparent';
   // Drops a non-transparent page background for PNG/WebP
   const [removeBg, setRemoveBg] = useState(false);
 
-  const render = async (): Promise<Blob | null> => {
+  /** Returns the file to save and an image for the on-screen preview. */
+  const render = async (): Promise<{ blob: Blob; preview: Blob } | null> => {
     if (!doc) return null;
     await loadFontsFor(doc.elements.filter((e): e is TextElement => e.type === 'text'));
     await Promise.all(doc.elements.filter((e) => e.type === 'image').map((e) => loadAsset((e as { assetId: string }).assetId)));
     const sx = out.width / doc.width;
     const noBg = removeBg && canTransparent;
-    const matte = prefs.format === 'jpeg' && (bgIsTransparent || removeBg) ? '#ffffff' : null;
+    const matte = (prefs.format === 'jpeg' || isPdf) && (bgIsTransparent || removeBg) ? '#ffffff' : null;
     const c = renderToCanvas(doc, sx, { background: !noBg, matte });
     // renderToCanvas scales uniformly from width; stretch if a custom height breaks the aspect
     let canvas = c;
@@ -82,7 +118,13 @@ export function ExportDialog() {
       const { resample } = await import('../engine/images');
       canvas = resample(c, out.width, out.height);
     }
-    return canvasToBlob(canvas, MIME[prefs.format], prefs.format === 'png' ? undefined : prefs.quality / 100);
+    if (prefs.format === 'pdf') {
+      const blob = await buildPdf(canvas, doc.width, doc.height, prefs.quality, doc.name);
+      const preview = await canvasToBlob(canvas, 'image/jpeg', 0.85);
+      return { blob, preview };
+    }
+    const blob = await canvasToBlob(canvas, MIME[prefs.format], prefs.format === 'png' ? undefined : prefs.quality / 100);
+    return { blob, preview: blob };
   };
 
   // Live preview + size estimate (debounced)
@@ -91,11 +133,11 @@ export function ExportDialog() {
     let cancelled = false;
     const t = window.setTimeout(async () => {
       try {
-        const blob = await render();
-        if (!blob || cancelled) return;
+        const res = await render();
+        if (!res || cancelled) return;
         setPreview((p) => {
           if (p) URL.revokeObjectURL(p.url);
-          return { url: URL.createObjectURL(blob), bytes: blob.size };
+          return { url: URL.createObjectURL(res.preview), bytes: res.blob.size };
         });
       } catch {
         /* preview is best-effort */
@@ -115,14 +157,14 @@ export function ExportDialog() {
 
   if (!open || !doc) return null;
   const close = () => studio.set({ exportOpen: false });
-  const fileName = `${(name.trim() || doc.name).replace(/[\\/:*?"<>|]+/g, '-')}.${EXTENSION[prefs.format]}`;
+  const fileName = `${(name.trim() || doc.name).replace(/[\\/:*?"<>|]+/g, '-')}.${EXT[prefs.format]}`;
 
   const download = async () => {
     setBusy(true);
     try {
-      const blob = await render();
-      if (!blob) return;
-      const r = await downloadBlob(blob, fileName);
+      const res = await render();
+      if (!res) return;
+      const r = await downloadBlob(res.blob, fileName);
       if (r === 'saved') {
         showToast(`Saved ${fileName}`, 'success');
         close();
@@ -187,7 +229,7 @@ export function ExportDialog() {
             File name
             <span className="flex h-8 items-center rounded-[7px] bg-control px-2.5 ring-accent focus-within:ring-1">
               <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.stopPropagation()} className="min-w-0 flex-1 bg-transparent text-xs text-fg outline-none" aria-label="File name" />
-              <span className="text-subtle">.{EXTENSION[prefs.format]}</span>
+              <span className="text-subtle">.{EXT[prefs.format]}</span>
             </span>
           </label>
           <div className="flex flex-col gap-1.5">
@@ -200,17 +242,23 @@ export function ExportDialog() {
                 { value: 'png', label: 'PNG' },
                 { value: 'jpeg', label: 'JPEG' },
                 { value: 'webp', label: 'WebP' },
+                { value: 'pdf', label: 'PDF' },
               ]}
             />
           </div>
-          {prefs.format !== 'png' && <Slider label="Quality" value={prefs.quality} min={30} max={100} unit="%" onChange={(v) => setPrefs({ ...prefs, quality: v })} />}
+          {prefs.format !== 'png' && <Slider label={isPdf ? 'Image quality' : 'Quality'} value={prefs.quality} min={30} max={100} unit="%" onChange={(v) => setPrefs({ ...prefs, quality: v })} />}
+          {isPdf && (
+            <p className="-mt-1.5 text-2xs leading-[14px] text-subtle">
+              One page, with the design as an image. 100% keeps it lossless; use 2× or more for sharp printing.
+            </p>
+          )}
           {canTransparent ? (
             <label className="flex items-center justify-between gap-2 text-xs text-muted">
               <span>{bgIsTransparent ? 'Transparent background' : 'Remove page background'}</span>
               <Toggle checked={bgIsTransparent || removeBg} onChange={setRemoveBg} label="Transparent background" disabled={bgIsTransparent} />
             </label>
           ) : (
-            bgIsTransparent && <p className="text-2xs text-subtle">JPEG doesn’t support transparency; the background will be white.</p>
+            bgIsTransparent && <p className="text-2xs text-subtle">{isPdf ? 'PDF' : 'JPEG'} doesn’t support transparency; the background will be white.</p>
           )}
           <div className="flex flex-col gap-1.5">
             <span className="text-xs text-muted">Size</span>
@@ -244,7 +292,7 @@ export function ExportDialog() {
             <Button variant="primary" className="h-9 text-[13px]" onClick={() => void download()} disabled={busy}>
               <Download size={15} /> Download {prefs.format.toUpperCase()}
             </Button>
-            {clipboardSupported() && (
+            {clipboardSupported() && !isPdf && (
               <Button onClick={() => void copy()} disabled={busy}>
                 <Copy size={13} /> Copy as PNG
               </Button>
