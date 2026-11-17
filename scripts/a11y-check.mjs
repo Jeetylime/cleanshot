@@ -1,3 +1,4 @@
+/* global window, document */ // used inside page.evaluate, which runs in the browser
 // WCAG 2.2 AA automated check (axe-core) over every section and tool, in both themes.
 // Start the dev server first (npm run dev), then: node scripts/a11y-check.mjs [baseUrl]
 // Exits non-zero if any violation is found. Automated checks cover only part of WCAG;

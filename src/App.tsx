@@ -12,6 +12,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { useKeyboardShortcuts, usePasteAndDrop, useThemeSync } from './hooks/useGlobalInput';
 import { getRoute, goEditor, useRoute, type Route } from './app/route';
 import { TOOLS } from './tools/registry';
+import { noteRoute } from './app/recentTools';
 import { PDF_TOOLS } from './pdf/registry';
 
 const ToolsApp = lazy(() => import('./tools/ToolsApp'));
@@ -89,6 +90,7 @@ export default function App() {
   useEffect(() => {
     const t = pageTitle(route);
     if (t) document.title = t;
+    noteRoute(route);
   }, [route]);
 
   return (

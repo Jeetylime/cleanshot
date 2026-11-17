@@ -1,8 +1,10 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { ArrowRight, ImagePlus, LayoutTemplate } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
 import { goCanvas, goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
+import { getRecentTools } from '../app/recentTools';
+import type { ProjectSummary } from '../studio/persistence';
 import { PDF_TOOLS } from '../pdf/registry';
 import { TOOLS } from '../tools/registry';
 import { HomeLogo, SettingsMenu } from './TopBar';
@@ -15,7 +17,7 @@ const CanvasPreview = lazy(() => import('../studio/CanvasPreview'));
 
 /** Minimal entry point: Edit, Canvas, Image Tools or PDF Tools. */
 export function StartScreen() {
-  const { docName, recents } = useEditor((s) => ({ docName: s.doc?.name ?? null, recents: s.recents }), shallowEqual);
+  const { docName } = useEditor((s) => ({ docName: s.doc?.name ?? null }), shallowEqual);
 
   return (
     <div className="flex h-full flex-col">
@@ -197,32 +199,7 @@ export function StartScreen() {
             </section>
           </div>
 
-          {recents.length > 0 && (
-            <section aria-label="Recent screenshots" className="flex flex-col gap-2">
-              <h3 className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">Recent screenshots</h3>
-              <div className="scroll-thin flex gap-2 overflow-x-auto pb-1">
-                {recents.slice(0, 6).map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => {
-                      goEditor();
-                      void actions.openSession(r.id);
-                    }}
-                    className="flex w-[210px] shrink-0 items-center gap-2.5 rounded-[10px] border border-line bg-panel p-1.5 pr-3 text-left transition-colors hover:border-line-strong hover:bg-hover"
-                  >
-                    <span className="flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-window">
-                      {r.thumbUrl && <img src={r.thumbUrl} alt="" className="max-h-full max-w-full object-contain" draggable={false} />}
-                    </span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-xs font-medium text-fg">{r.name}</span>
-                      <span className="text-2xs text-subtle">{timeAgo(r.updatedAt)}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
+          <ContinueRow />
 
           <p className="text-center text-xs text-subtle">
             Why “Studiolo”?{' '}
@@ -233,5 +210,126 @@ export function StartScreen() {
         </div>
       </main>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pick up where you left off: the latest item from each section, in the same
+// columns as the cards above.
+
+function ContinueCard({ label, onClick, thumb, title, meta }: { label: string; onClick: () => void; thumb: ReactNode; title: string; meta: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-w-0 items-center gap-3 rounded-[12px] border border-line bg-panel p-2 pr-3 text-left transition-colors hover:border-line-strong hover:bg-hover"
+    >
+      <span className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[7px] bg-window text-muted">{thumb}</span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-2xs font-medium text-subtle">{label}</span>
+        <span className="truncate text-xs font-semibold text-fg">{title}</span>
+        <span className="truncate text-2xs text-subtle">{meta}</span>
+      </span>
+      <ArrowRight size={14} className="shrink-0 text-subtle" aria-hidden="true" />
+    </button>
+  );
+}
+
+function Empty({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="flex min-w-0 flex-col justify-center rounded-[12px] border border-dashed border-line px-3 py-2.5">
+      <span className="text-2xs font-medium text-subtle">{label}</span>
+      <span className="text-xs text-subtle">{text}</span>
+    </div>
+  );
+}
+
+function useLatestDesign(): ProjectSummary | null | undefined {
+  const [design, setDesign] = useState<ProjectSummary | null | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    import('../studio/persistence')
+      .then((db) => db.listProjects())
+      .then((list) => !cancelled && setDesign(list[0] ?? null))
+      .catch(() => !cancelled && setDesign(null));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return design;
+}
+
+function useBlobUrl(blob: Blob | null | undefined) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!blob) return setUrl(null);
+    const u = URL.createObjectURL(blob);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [blob]);
+  return url;
+}
+
+function ContinueRow() {
+  const recents = useEditor((s) => s.recents);
+  const design = useLatestDesign();
+  const designThumb = useBlobUrl(design?.thumb);
+  const [recentTools] = useState(getRecentTools);
+  const tool = recentTools.tools && TOOLS.find((t) => t.key === recentTools.tools!.key);
+  const pdfTool = recentTools.pdf && PDF_TOOLS.find((t) => t.key === recentTools.pdf!.key);
+  const edit = recents[0];
+
+  // Wait for the design lookup so the row doesn't appear and then reflow.
+  if (design === undefined) return null;
+  if (!edit && !design && !tool && !pdfTool) return null;
+
+  const img = (src: string | null) => (src ? <img src={src} alt="" className="max-h-full max-w-full object-contain" draggable={false} /> : null);
+
+  return (
+    <section aria-labelledby="continue-heading" className="flex flex-col gap-2.5">
+      <h2 id="continue-heading" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
+        Pick up where you left off
+      </h2>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {edit ? (
+          <ContinueCard
+            label={recents.length > 1 ? `Latest edit · ${recents.length} recent` : 'Latest edit'}
+            title={edit.name}
+            meta={timeAgo(edit.updatedAt)}
+            thumb={img(edit.thumbUrl)}
+            onClick={() => {
+              goEditor();
+              void actions.openSession(edit.id);
+            }}
+          />
+        ) : (
+          <Empty label="Latest edit" text="Images you edit will appear here." />
+        )}
+        {design ? (
+          <ContinueCard
+            label="Latest design"
+            title={design.name || 'Untitled design'}
+            meta={`${design.width} × ${design.height} · ${timeAgo(design.updatedAt)}`}
+            thumb={img(designThumb)}
+            onClick={() => {
+              goCanvas();
+              void import('../studio/actions').then((A) => A.openProject(design.id));
+            }}
+          />
+        ) : (
+          <Empty label="Latest design" text="Designs you make will appear here." />
+        )}
+        {tool ? (
+          <ContinueCard label="Last image tool" title={tool.name} meta={timeAgo(recentTools.tools!.at)} thumb={<tool.icon size={18} />} onClick={() => goTools(tool.key)} />
+        ) : (
+          <Empty label="Last image tool" text="The image tool you use last will appear here." />
+        )}
+        {pdfTool ? (
+          <ContinueCard label="Last PDF tool" title={pdfTool.name} meta={timeAgo(recentTools.pdf!.at)} thumb={<pdfTool.icon size={18} />} onClick={() => goPdf(pdfTool.key as PdfToolKey)} />
+        ) : (
+          <Empty label="Last PDF tool" text="The PDF tool you use last will appear here." />
+        )}
+      </div>
+    </section>
   );
 }
