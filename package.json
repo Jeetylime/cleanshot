@@ -6,13 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/gen-licenses.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "postinstall": "node scripts/copy-assets.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "licenses": "node scripts/gen-licenses.mjs"
   },
   "dependencies": {
     "@fontsource-variable/caveat": "^5.3.0",

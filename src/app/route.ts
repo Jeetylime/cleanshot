@@ -39,9 +39,9 @@ export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compr
 
 export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop', 'pdf-form'];
 
-export type LegalDoc = 'terms' | 'privacy-policy' | 'acceptable-use';
+export type LegalDoc = 'terms' | 'privacy-policy' | 'acceptable-use' | 'accessibility' | 'licenses';
 
-export const LEGAL_DOCS: LegalDoc[] = ['terms', 'privacy-policy', 'acceptable-use'];
+export const LEGAL_DOCS: LegalDoc[] = ['terms', 'privacy-policy', 'acceptable-use', 'accessibility', 'licenses'];
 
 export type Route =
   | { section: 'home' }

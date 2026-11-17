@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Studiolo is a single page with #hash sections, which search engines treat as one URL. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://studiolo.page/</loc>
+    <changefreq>weekly</changefreq>
+  </url>
+</urlset>

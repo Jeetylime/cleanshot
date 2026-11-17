@@ -40,6 +40,8 @@ Key invariants:
 - **WYSIWYG text.** A transparent `<textarea>` handles caret and IME while the canvas paints the glyphs. Text measurement is shared (`engine/text.ts`, `studio/textEngine.ts`).
 - Editor keyboard shortcuts and paste/drop apply only inside the editor. Each tool takes window-level paste/drop while it is open. To send files to a tool that hasn't mounted yet, use `openFilesIn(route, files)` in `route.ts`; the tool receives them when it registers its sink.
 - The CSP (`public/_headers`, `vercel.json`, mirrored in `vite.config.ts` for `preview`) allows only `'self'` plus Hugging Face hosts for `connect-src`, with no inline scripts. That is why the pre-paint theme script lives in `public/theme-init.js`. Any new external request or inline script needs a CSP change, and usually shouldn't be added.
+- `npm run build` first runs `scripts/gen-licenses.mjs`, which regenerates `src/legal/licenses.json` (the Open Source Licenses page) from the runtime dependency tree. Node-only packages are skipped via `NOT_SHIPPED`. Legal and info pages (`#terms`, `#privacy-policy`, `#acceptable-use`, `#accessibility`, `#licenses`) share `src/legal/LegalPage.tsx`; contact details come from `src/legal/config.ts`.
+- `public/.well-known/security.txt` has an `Expires` date (RFC 9116) that must be renewed yearly.
 - `public/sw.js` caches the app shell and same-origin files for offline use (production only). Bump `VERSION` there when its caching rules change.
 
 ## Deployment

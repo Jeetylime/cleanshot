@@ -6,11 +6,13 @@ import { LEGAL, LEGAL_COMPLETE } from './config';
 import { TermsOfService } from './TermsOfService';
 import { PrivacyPolicy } from './PrivacyPolicy';
 import { AcceptableUse } from './AcceptableUse';
+import { Accessibility } from './Accessibility';
+import { Licenses } from './Licenses';
 
 // ---------------------------------------------------------------------------
 // Page shell
 
-const DOCS: Record<LegalDoc, { title: string; summary: string; body: () => ReactNode }> = {
+const DOCS: Record<LegalDoc, { title: string; summary: string; body: () => ReactNode; policy?: boolean }> = {
   terms: {
     title: 'Terms of Service',
     summary: 'The rules for using Studiolo, what you can expect from it, and the limits of our responsibility.',
@@ -25,6 +27,18 @@ const DOCS: Record<LegalDoc, { title: string; summary: string; body: () => React
     title: 'Acceptable Use Policy',
     summary: 'What you may not use Studiolo for, and what can happen if you do.',
     body: AcceptableUse,
+  },
+  accessibility: {
+    title: 'Accessibility',
+    summary: 'What Studiolo offers for accessibility, where it falls short, and how to report problems.',
+    body: Accessibility,
+    policy: false,
+  },
+  licenses: {
+    title: 'Open Source Licenses',
+    summary: 'The open-source software and AI models Studiolo uses, and their licenses.',
+    body: Licenses,
+    policy: false,
   },
 };
 
@@ -67,7 +81,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
               <p className="text-xs text-subtle">
                 Last updated <time dateTime={LEGAL.lastUpdated}>{formatDate(LEGAL.lastUpdated)}</time>
               </p>
-              {!LEGAL_COMPLETE && (
+              {!LEGAL_COMPLETE && meta.policy !== false && (
                 <p className="mt-1 rounded-[10px] border border-line bg-panel px-3 py-2 text-xs leading-[17px] text-muted">
                   This policy is a draft. Highlighted details, such as contact information, are still being finalized.
                 </p>
