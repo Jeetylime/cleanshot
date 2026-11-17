@@ -37,7 +37,7 @@ npm test          # unit tests (Vitest)
 
 ## Canvas
 
-**Start**: preset sizes (square, portrait and story posts, YouTube thumbnail, presentation, web banner, US Letter, A4), custom width and height with ratio shortcuts, white/transparent/solid backgrounds, eight editable templates, starting from an image, and reopening saved designs.
+**Start**: preset sizes (square, portrait and story posts, YouTube thumbnail, presentation, web banner, US Letter, A4), custom width and height with ratio shortcuts, white/transparent/solid backgrounds, 34 editable templates (searchable by name, category and keywords), starting from an image, and reopening saved designs.
 
 **Elements**: one search box covers every element (shapes, lines, icons, stickers, badges, dividers, charts, QR codes, frames), with synonyms such as “circle” or “speech bubble”. Text (heading, subheading, body, font pairings), eight shapes, lines and arrows, 34 icons, and images (upload, drag and drop, paste, or reuse from the session). Panels can also be dragged onto the canvas.
 

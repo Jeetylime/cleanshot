@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Copy, Download, FileUp, ImagePlus, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Copy, Download, FileUp, ImagePlus, MoreHorizontal, Plus, Search, Trash2 } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { ColorWell, NumberInput, Button, Segmented } from '../components/ui/controls';
 import { Popover, MenuItem } from '../components/ui/Popover';
@@ -7,7 +7,8 @@ import { formatBytes, timeAgo } from '../lib/utils';
 import { pickFiles, useFileSink } from '../tools/shared/ui';
 import * as A from './actions';
 import * as db from './persistence';
-import { MAX_CANVAS_SIDE, RATIO_PRESETS, SIZE_PRESETS, TEMPLATES } from './templates';
+import { MAX_CANVAS_SIDE, RATIO_PRESETS, SIZE_PRESETS, TEMPLATES, type Template } from './templates';
+import { matchesQuery } from './search';
 import { TemplateThumb, UserTemplates } from './LeftPanel';
 import type { StudioFill } from './types';
 
@@ -28,6 +29,9 @@ const RECENT_COUNT_PHONE = 4;
 
 type StartTab = 'sizes' | 'templates';
 
+/** A varied first row of templates under the sizes. */
+const FEATURED = ['sale', 'tips-list', 'youtube', 'save-the-date', 'presentation'];
+
 export function CanvasStart() {
   const [projects, setProjects] = useState<db.ProjectSummary[] | null>(null);
   const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
@@ -37,6 +41,8 @@ export function CanvasStart() {
   const [color, setColor] = useState('#f5f5f7');
   const [showAll, setShowAll] = useState(false);
   const [tab, setTab] = useState<StartTab>('sizes');
+  const [q, setQ] = useState('');
+  const found = TEMPLATES.filter((t) => matchesQuery(q, t.name, t.category, t.keywords.join(' ')));
 
   const refresh = async () => {
     try {
@@ -215,26 +221,56 @@ export function CanvasStart() {
             </div>
           </div>
 
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between px-0.5">
+              <h3 className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">Or start from a template</h3>
+              <button type="button" onClick={() => setTab('templates')} className="text-xs font-medium text-accent hover:underline">
+                Show all {TEMPLATES.length}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {FEATURED.map((id, i) => {
+                const t = TEMPLATES.find((x) => x.id === id);
+                return t ? (
+                  // Two rows on phones, one row on wider screens (like Your designs).
+                  <div key={id} className={i >= RECENT_COUNT_PHONE ? 'max-sm:hidden' : ''}>
+                    <TemplateCard t={t} />
+                  </div>
+                ) : null;
+              })}
+            </div>
+          </div>
               </>
             ) : (
               <>
-          <UserTemplates />
-
+          <label className="flex h-9 w-full max-w-[420px] items-center gap-2 rounded-[9px] bg-control px-3 focus-within:ring-1 focus-within:ring-accent">
+            <Search size={14} className="shrink-0 text-subtle" aria-hidden="true" />
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              placeholder="Search templates, like “wedding”, “youtube” or “menu”"
+              aria-label="Search templates"
+              className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-subtle"
+            />
+          </label>
+          {!q.trim() && <UserTemplates />}
           <div className="flex flex-col gap-2.5">
             <h3 className="sr-only">Templates</h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {TEMPLATES.map((t) => (
-                <button key={t.id} type="button" onClick={() => A.createProject({ width: t.width, height: t.height, templateId: t.id })} className="group flex flex-col gap-1.5 text-left" data-testid={`start-template-${t.id}`}>
-                  <TemplateThumb id={t.id} />
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-xs font-medium text-fg">{t.name}</span>
-                    <span className="shrink-0 text-2xs text-subtle">{t.category}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
+            {found.length ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {found.map((t) => (
+                  <TemplateCard key={t.id} t={t} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-subtle" role="status">
+                No templates match “{q.trim()}”. Try a topic like “sale”, “birthday” or “slide”, or start from a size.
+              </p>
+            )}
+            {q.trim() && found.length > 0 && <p className="text-xs text-subtle" role="status">{found.length} of {TEMPLATES.length} templates</p>}
           </div>
-
               </>
             )}
           </section>
@@ -310,5 +346,17 @@ function ProjectCard({ p, onChanged }: { p: db.ProjectSummary; onChanged: () => 
         </div>
       </Popover>
     </div>
+  );
+}
+
+function TemplateCard({ t }: { t: Template }) {
+  return (
+    <button type="button" onClick={() => A.createProject({ width: t.width, height: t.height, templateId: t.id })} className="group flex w-full flex-col gap-1.5 text-left" data-testid={`start-template-${t.id}`}>
+      <TemplateThumb id={t.id} />
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="truncate text-xs font-medium text-fg">{t.name}</span>
+        <span className="shrink-0 text-2xs text-subtle">{t.category}</span>
+      </span>
+    </button>
   );
 }

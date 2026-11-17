@@ -1,5 +1,6 @@
 import { makeFrame, makeIcon, makeLine, makeShape, makeText } from './factory';
 import type { StudioElement, StudioFill } from './types';
+import { MORE_TEMPLATES } from './templatesMore';
 
 export interface SizePreset {
   id: string;
@@ -36,7 +37,28 @@ export const MAX_CANVAS_SIDE = 8000;
 export interface Template {
   id: string;
   name: string;
-  category: 'Social' | 'Thumbnail' | 'Banner' | 'Announcement' | 'Promo' | 'Presentation' | 'Quote' | 'Menu' | 'Invitation' | 'Certificate' | 'Podcast';
+  category:
+    | 'Social'
+    | 'Thumbnail'
+    | 'Banner'
+    | 'Announcement'
+    | 'Promo'
+    | 'Presentation'
+    | 'Quote'
+    | 'Menu'
+    | 'Invitation'
+    | 'Certificate'
+    | 'Podcast'
+    | 'Food'
+    | 'Real estate'
+    | 'Fitness'
+    | 'Wedding'
+    | 'Holiday'
+    | 'Newsletter'
+    | 'Flyer'
+    | 'Business';
+  /** Extra search words (never shown); name and category are searched too. */
+  keywords: string[];
   width: number;
   height: number;
   background: StudioFill;
@@ -45,9 +67,10 @@ export interface Template {
 
 const T = makeText;
 
-export const TEMPLATES: Template[] = [
+const BASE_TEMPLATES: Template[] = [
   {
     id: 'quote',
+    keywords: ['quote', 'inspiration', 'motivation', 'saying', 'words', 'wisdom', 'pink', 'peach', 'instagram'],
     name: 'Quote post',
     category: 'Social',
     width: 1080,
@@ -62,6 +85,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'sale',
+    keywords: ['sale', 'discount', 'offer', 'percent', 'off', 'summer', 'shop', 'store', 'black', 'friday', 'deal', 'retail'],
     name: 'Sale announcement',
     category: 'Promo',
     width: 1080,
@@ -78,6 +102,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'youtube',
+    keywords: ['youtube', 'thumbnail', 'video', 'vlog', 'challenge', 'clickbait', 'orange', 'creator'],
     name: 'Bold thumbnail',
     category: 'Thumbnail',
     width: 1280,
@@ -93,6 +118,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'event',
+    keywords: ['event', 'invite', 'invitation', 'party', 'launch', 'night', 'rsvp', 'story', 'purple'],
     name: 'Event story',
     category: 'Announcement',
     width: 1080,
@@ -112,6 +138,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'presentation',
+    keywords: ['slide', 'presentation', 'title', 'deck', 'keynote', 'report', 'quarterly', 'business', 'review'],
     name: 'Title slide',
     category: 'Presentation',
     width: 1920,
@@ -127,6 +154,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'banner',
+    keywords: ['header', 'banner', 'blog', 'website', 'newsletter', 'cover', 'green'],
     name: 'Header banner',
     category: 'Banner',
     width: 1500,
@@ -141,6 +169,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'product',
+    keywords: ['product', 'launch', 'new', 'release', 'ecommerce', 'shop', 'announcement', 'photo'],
     name: 'Product launch',
     category: 'Promo',
     width: 1080,
@@ -157,6 +186,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'hiring',
+    keywords: ['hiring', 'job', 'jobs', 'career', 'recruiting', 'vacancy', 'team', 'work', 'yellow'],
     name: 'We’re hiring',
     category: 'Announcement',
     width: 1080,
@@ -172,6 +202,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'quote-dark',
+    keywords: ['quote', 'dark', 'bold', 'motivation', 'inspiration', 'saying'],
     name: 'Bold quote',
     category: 'Quote',
     width: 1080,
@@ -186,6 +217,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'menu',
+    keywords: ['menu', 'cafe', 'coffee', 'restaurant', 'food', 'drinks', 'price', 'list', 'breakfast', 'print'],
     name: 'Café menu',
     category: 'Menu',
     width: 1275,
@@ -217,6 +249,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'invitation',
+    keywords: ['birthday', 'invitation', 'party', 'celebration', 'invite', 'rsvp', 'pink'],
     name: 'Birthday invitation',
     category: 'Invitation',
     width: 1080,
@@ -233,6 +266,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'certificate',
+    keywords: ['certificate', 'award', 'achievement', 'diploma', 'recognition', 'print', 'gold'],
     name: 'Certificate',
     category: 'Certificate',
     width: 1650,
@@ -255,6 +289,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'linkedin',
+    keywords: ['linkedin', 'banner', 'profile', 'header', 'personal', 'brand', 'career', 'professional'],
     name: 'LinkedIn banner',
     category: 'Banner',
     width: 1584,
@@ -268,6 +303,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'podcast',
+    keywords: ['podcast', 'cover', 'art', 'episode', 'show', 'audio', 'spotify', 'apple', 'music'],
     name: 'Podcast cover',
     category: 'Podcast',
     width: 1500,
@@ -282,3 +318,5 @@ export const TEMPLATES: Template[] = [
     ],
   },
 ];
+
+export const TEMPLATES: Template[] = [...BASE_TEMPLATES, ...MORE_TEMPLATES];

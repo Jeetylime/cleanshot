@@ -154,8 +154,8 @@ const tile =
 function TemplatesPanel() {
   const hasContent = useStudio((s) => (s.doc?.elements.length ?? 0) > 0);
   const [resize, setResize] = useState(true);
-  const [cat, setCat] = useState<string>('All');
-  const cats = ['All', ...new Set(TEMPLATES.map((t) => t.category))];
+  const [q, setQ] = useState('');
+  const found = TEMPLATES.filter((t) => matchesQuery(q, t.name, t.category, t.keywords.join(' ')));
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs leading-[17px] text-muted">Start from a layout, then change anything. Templates replace what’s on this page; undo brings it back.</p>
@@ -163,25 +163,24 @@ function TemplatesPanel() {
         <BookmarkPlus size={13} /> Save this design as a template
       </Button>
       <UserTemplates compact />
-      <div className="flex flex-wrap gap-1">
-        {cats.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCat(c)}
-            aria-pressed={cat === c}
-            className={`h-6 rounded-full px-2.5 text-2xs font-medium ${cat === c ? 'bg-accent-fill text-white' : 'bg-control text-muted hover:text-fg'}`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      <label className="flex h-8 items-center gap-2 rounded-[8px] bg-control px-2.5 focus-within:ring-1 focus-within:ring-accent">
+        <Search size={13} className="shrink-0 text-subtle" aria-hidden="true" />
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+          placeholder="Search templates"
+          aria-label="Search templates"
+          className="min-w-0 flex-1 bg-transparent text-xs text-fg outline-none placeholder:text-subtle"
+        />
+      </label>
       <label className="flex items-center justify-between gap-2 text-xs text-muted">
         <span>Use the template’s size</span>
         <Toggle checked={resize} onChange={setResize} label="Use the template’s size" />
       </label>
       <div className="grid grid-cols-2 gap-2">
-        {TEMPLATES.filter((t) => cat === 'All' || t.category === cat).map((t) => (
+        {found.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -195,10 +194,11 @@ function TemplatesPanel() {
             <TemplateThumb id={t.id} />
             <span className="truncate text-xs font-medium text-fg">{t.name}</span>
             <span className="-mt-1 text-2xs text-subtle">
-              {t.width} × {t.height}
+              {t.category} · {t.width} × {t.height}
             </span>
           </button>
         ))}
+        {!found.length && <p className="col-span-2 text-xs text-subtle" role="status">No templates match “{q.trim()}”.</p>}
       </div>
     </div>
   );
