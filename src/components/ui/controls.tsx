@@ -92,7 +92,7 @@ export function Slider({ label, value, min, max, step = 1, unit = '', format, on
         ) : (
           <button
             type="button"
-            className="h-[18px] rounded-[4px] px-1 text-xs text-fg tabular-nums hover:bg-hover"
+            className="-my-[3px] h-[24px] min-w-[24px] rounded-[4px] px-1 text-xs text-fg tabular-nums hover:bg-hover"
             onClick={() => {
               setDraft(String(Math.round(value * 100) / 100));
               setEditing(true);
@@ -260,7 +260,7 @@ export function ColorPicker({
   useEffect(() => setLocal(value), [value]);
 
   return (
-    <div className="flex flex-wrap items-center gap-[5px]">
+    <div className="flex flex-wrap items-center">
       {colors.map((c) => {
         const active = c.value.toLowerCase() === value.toLowerCase();
         const light = ['#ffffff', '#ffcc00', '#f2f2f4', '#ffd60a'].includes(c.value.toLowerCase());
@@ -271,28 +271,37 @@ export function ColorPicker({
               aria-label={c.name}
               aria-pressed={active}
               onClick={() => onChange(c.value)}
-              className={`relative flex h-[18px] w-[18px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-110 ${
-                active ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel' : ''
-              }`}
-              style={{ background: c.value, boxShadow: 'inset 0 0 0 1px var(--border-strong)' }}
+              // 24px target (WCAG 2.5.8) around an 18px swatch.
+              className="group flex h-[24px] w-[24px] items-center justify-center rounded-full"
             >
-              {active && <Check size={11} strokeWidth={3} color={light ? '#111' : '#fff'} />}
+              <span
+                className={`flex h-[18px] w-[18px] items-center justify-center rounded-full transition-transform duration-150 group-hover:scale-110 ${
+                  active ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel' : ''
+                }`}
+                style={{ background: c.value, boxShadow: 'inset 0 0 0 1px var(--border-strong)' }}
+              >
+                {active && <Check size={11} strokeWidth={3} color={light ? '#111' : '#fff'} />}
+              </span>
             </button>
           </Tooltip>
         );
       })}
       {allowCustom && (
         <Tooltip label="Custom color">
-          <span
-            className={`relative flex h-[18px] w-[18px] items-center justify-center overflow-hidden rounded-full transition-transform duration-150 hover:scale-110 ${
-              isCustom ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel' : ''
-            }`}
-            style={{
-              background: isCustom
-                ? local
-                : 'conic-gradient(from 180deg, #ff3b30, #ffcc00, #34c759, #0a84ff, #af52de, #ff3b30)',
-            }}
-          >
+          {/* The whole 24px slot is the color input (WCAG 2.5.8); the 18px circle is just the look. */}
+          <span className="group relative flex h-[24px] w-[24px] items-center justify-center">
+            <span
+              className={`pointer-events-none flex h-[18px] w-[18px] items-center justify-center overflow-hidden rounded-full transition-transform duration-150 group-hover:scale-110 ${
+                isCustom ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel' : ''
+              }`}
+              style={{
+                background: isCustom
+                  ? local
+                  : 'conic-gradient(from 180deg, #ff3b30, #ffcc00, #34c759, #0a84ff, #af52de, #ff3b30)',
+              }}
+            >
+              {!isCustom && <Pipette size={9} strokeWidth={2.5} className="text-white drop-shadow" />}
+            </span>
             <input
               ref={inputRef}
               type="color"
@@ -302,9 +311,8 @@ export function ColorPicker({
                 setLocal(e.target.value);
                 onChange(e.target.value);
               }}
-              className="cs-color absolute inset-0 h-full w-full cursor-default opacity-0"
+              className="cs-color absolute inset-0 h-full w-full cursor-default rounded-full opacity-0"
             />
-            {!isCustom && <Pipette size={9} strokeWidth={2.5} className="pointer-events-none text-white drop-shadow" />}
           </span>
         </Tooltip>
       )}

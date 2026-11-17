@@ -40,7 +40,10 @@ import {
   Ratio,
   List,
   ListOrdered,
+  ArrowUpDown,
+  ArrowLeftRight,
 } from 'lucide-react';
+import { Tooltip } from '../components/ui/Tooltip';
 import { Section, Slider, Segmented, Toggle, NumberInput, ColorPicker, ColorWell, Button } from '../components/ui/controls';
 import { styleAt } from './textEngine';
 import { IconButton } from '../components/ui/IconButton';
@@ -65,7 +68,7 @@ import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, Stud
 import { BRUSHES, brushOf } from './draw';
 
 /** Swatches for color pickers: brand colors first, then the defaults. */
-function palette() {
+export function palette() {
   const brand = getBrand().colors.map((c) => ({ value: c, name: `Brand ${c}` }));
   return [...brand, ...SOLIDS.filter((c) => !getBrand().colors.includes(c)).map((c) => ({ value: c, name: c }))].slice(0, 22);
 }
@@ -164,20 +167,50 @@ function CanvasProps() {
 // ---------------------------------------------------------------------------
 // Selected elements
 
+type PropsTab = 'style' | 'arrange';
+
+/** A tiny persisted UI preference (which tab, whether Effects is open). Falls back to memory when storage is blocked. */
+function usePersisted<T>(key: string, initial: T): [T, (v: T) => void] {
+  const [v, setV] = useState<T>(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw === null ? initial : (JSON.parse(raw) as T);
+    } catch {
+      return initial;
+    }
+  });
+  return [
+    v,
+    (next: T) => {
+      setV(next);
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // storage blocked: keep it for this session only
+      }
+    },
+  ];
+}
+
 function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean }) {
   const single = sel.length === 1 ? sel[0] : null;
   const locked = sel.every((e) => e.locked);
   const canGroup = useStudio((s) => A.canGroup(s));
   const canUngroup = useStudio((s) => A.canUngroup(s));
+  const [tab, setTab] = usePersisted<PropsTab>('studiolo:propsTab', 'style');
   const title = single ? TYPE_LABEL[single.type] : `${sel.length} selected`;
   const ids = sel.map((e) => e.id);
-  const same = <T,>(f: (e: StudioElement) => T) => f(sel[0]);
 
   return (
     <>
       <div className="flex h-11 shrink-0 items-center justify-between gap-1 border-b border-line px-3">
         <span className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{title}</span>
         <div className="flex items-center">
+          {single?.type === 'text' && !editing && !locked && (
+            <IconButton label="Edit text" shortcut="↵" onClick={() => A.startTextEdit(single.id)} size="sm">
+              <SquarePen size={13} />
+            </IconButton>
+          )}
           <IconButton label={locked ? 'Unlock' : 'Lock'} shortcut={['⌘', 'L']} onClick={() => A.toggleLock()} size="sm">
             {locked ? <Lock size={13} /> : <Unlock size={13} />}
           </IconButton>
@@ -198,23 +231,79 @@ function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean
         </Section>
       ) : (
         <>
-          {single?.type === 'text' && <TextProps e={single} editing={editing} />}
-          {single?.type === 'shape' && <ShapeProps e={single} />}
-          {single?.type === 'line' && <LineProps e={single} />}
-          {single?.type === 'icon' && <IconProps e={single} />}
-          {single?.type === 'image' && <ImageProps e={single} />}
-          {single?.type === 'chart' && <ChartProps e={single} palette={palette()} />}
-          {single?.type === 'qr' && <QrProps e={single} palette={palette()} />}
-          {single?.type === 'draw' && <DrawProps e={single} />}
-          {!single && sel.every((e) => e.type === sel[0].type && ['text', 'shape', 'line', 'icon', 'draw'].includes(e.type)) && <ColorForMany sel={sel} />}
-          <ArrangeProps sel={sel} canGroup={canGroup} canUngroup={canUngroup} />
-          <Section title="Appearance">
-            <Slider label="Opacity" value={Math.round(same((e) => e.opacity) * 100)} min={0} max={100} unit="%" onChange={(v) => A.updateElements(ids, { opacity: v / 100 }, 'opacity')} />
-            <ShadowProps ids={ids} shadow={sel[0].shadow} />
-          </Section>
+          <div className="border-b border-line px-3.5 py-2.5">
+            <Segmented<PropsTab>
+              ariaLabel="Properties view"
+              size="sm"
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'style', label: 'Style', title: 'Font, color and effects' },
+                { value: 'arrange', label: 'Arrange', title: 'Position, size, alignment and layers' },
+              ]}
+            />
+          </div>
+          {tab === 'style' ? (
+            <>
+              {single?.type === 'text' && <TextProps e={single} editing={editing} />}
+              {single?.type === 'shape' && <ShapeProps e={single} />}
+              {single?.type === 'line' && <LineProps e={single} />}
+              {single?.type === 'icon' && <IconProps e={single} />}
+              {single?.type === 'image' && <ImageProps e={single} />}
+              {single?.type === 'chart' && <ChartProps e={single} palette={palette()} />}
+              {single?.type === 'qr' && <QrProps e={single} palette={palette()} />}
+              {single?.type === 'draw' && <DrawProps e={single} />}
+              {!single && sel.every((e) => e.type === sel[0].type && ['text', 'shape', 'line', 'icon', 'draw'].includes(e.type)) && <ColorForMany sel={sel} />}
+              <Effects sel={sel} ids={ids} />
+            </>
+          ) : (
+            <ArrangeProps sel={sel} canGroup={canGroup} canUngroup={canUngroup} />
+          )}
         </>
       )}
     </>
+  );
+}
+
+/** Opacity, shadow and (for text) gradient, outline and curve, collapsed by default with a count of what's on. */
+function Effects({ sel, ids }: { sel: StudioElement[]; ids: string[] }) {
+  const [open, setOpen] = usePersisted('studiolo:effectsOpen', false);
+  const e = sel[0];
+  const text = sel.length === 1 && e.type === 'text' ? e : null;
+  const active = [
+    e.opacity < 1 && 'Opacity',
+    e.shadow.enabled && 'Shadow',
+    text?.gradient && 'Gradient',
+    text && text.strokeWidth > 0 && 'Outline',
+    text && (text.curve ?? 0) !== 0 && 'Curve',
+  ].filter(Boolean) as string[];
+  return (
+    <section className="border-b border-line last:border-b-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="effects-panel"
+        onClick={() => setOpen(!open)}
+        className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3.5 text-left hover:bg-hover"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">Effects</span>
+          {active.length > 0 && (
+            <span className="truncate rounded-full bg-accent-soft px-1.5 py-px text-2xs font-medium text-fg" title={active.join(', ')}>
+              {active.length === 1 ? active[0] : `${active.length} on`}
+            </span>
+          )}
+        </span>
+        <ChevronDown size={14} className={`shrink-0 text-subtle transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div id="effects-panel" className="flex flex-col gap-3 px-3.5 pb-3">
+          <Slider label="Opacity" value={Math.round(e.opacity * 100)} min={0} max={100} unit="%" onChange={(v) => A.updateElements(ids, { opacity: v / 100 }, 'opacity')} />
+          <ShadowProps ids={ids} shadow={e.shadow} />
+          {text && <TextEffects e={text} />}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -246,7 +335,7 @@ export function FontSelect({ value, onChange }: { value: string; onChange: (id: 
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
-        aria-label="Font"
+        aria-label={`${f.label}, font`}
         className="flex h-8 w-full items-center justify-between rounded-[7px] bg-control px-2.5 text-[length:calc(13px*var(--text-scale))] text-fg hover:bg-hover"
         data-testid="font-select"
       >
@@ -287,68 +376,102 @@ function ToggleIcon({ label, active, onClick, children, shortcut }: { label: str
   );
 }
 
-function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
-  const up = (p: Partial<TextElement>, key?: string) => A.updateElements<TextElement>([e.id], p, key);
-  const font = fontOf(e.fontFamily);
+/** Text styling state shared by the panel and the floating toolbar: styles the selected words while typing, else the whole box. */
+export function useTextStyle(e: TextElement, editing: boolean) {
   const sel = useStudio((s) => (s.editingTextId === e.id ? s.textSel : null), shallowEqual);
   const partial = !!sel && sel.end > sel.start && !(sel.start === 0 && sel.end >= e.text.length);
   const at = partial ? styleAt(e, sel!.start) : { bold: e.bold, italic: e.italic, underline: e.underline, color: null };
-  const style = (patch: Parameters<typeof A.styleText>[2], key?: string) => A.styleText(e.id, partial ? sel : null, patch, key);
-  // Keep the text field focused (and its selection) while clicking style controls.
-  const keepFocus = (ev: React.MouseEvent) => editing && ev.preventDefault();
+  return {
+    font: fontOf(e.fontFamily),
+    partial,
+    at,
+    up: (p: Partial<TextElement>, key?: string) => A.updateElements<TextElement>([e.id], p, key),
+    style: (patch: Parameters<typeof A.styleText>[2], key?: string) => A.styleText(e.id, partial ? sel : null, patch, key),
+    // Keep the text field focused (and its selection) while clicking style controls.
+    keepFocus: (ev: React.MouseEvent) => {
+      if (editing) ev.preventDefault();
+    },
+  };
+}
+
+function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
+  const { font, partial, at, up, style, keepFocus } = useTextStyle(e, editing);
+  const list = e.list ?? 'none';
+  return (
+    <Section title="Text">
+      <div className="flex items-center gap-1.5">
+        <div className="min-w-0 flex-1">
+          <FontSelect value={e.fontFamily} onChange={(id) => up({ fontFamily: id })} />
+        </div>
+        <div className="w-[78px] shrink-0">
+          <NumberInput ariaLabel="Font size" value={e.fontSize} min={4} max={2000} suffix="px" onChange={(v) => up({ fontSize: v }, 'fs')} />
+        </div>
+      </div>
+      <div className="flex gap-0.5 rounded-[8px] bg-control p-0.5" onMouseDown={keepFocus} role="group" aria-label="Text style">
+        <ToggleIcon label={font.bold ? 'Bold' : 'Bold (not available for this font)'} shortcut={['⌘', 'B']} active={at.bold && font.bold} onClick={() => style({ bold: !at.bold })}>
+          <Bold size={14} />
+        </ToggleIcon>
+        <ToggleIcon label="Italic" shortcut={['⌘', 'I']} active={at.italic} onClick={() => style({ italic: !at.italic })}>
+          <Italic size={14} />
+        </ToggleIcon>
+        <ToggleIcon label="Underline" shortcut={['⌘', 'U']} active={at.underline} onClick={() => style({ underline: !at.underline })}>
+          <Underline size={14} />
+        </ToggleIcon>
+        <ToggleIcon label="Uppercase" active={e.uppercase} onClick={() => up({ uppercase: !e.uppercase })}>
+          <CaseUpper size={15} />
+        </ToggleIcon>
+        <span className="mx-0.5 my-1.5 w-px bg-line" aria-hidden="true" />
+        <ToggleIcon label="Bulleted list" active={list === 'bullet'} onClick={() => up({ list: list === 'bullet' ? 'none' : 'bullet', curve: 0 })}>
+          <List size={14} />
+        </ToggleIcon>
+        <ToggleIcon label="Numbered list" active={list === 'number'} onClick={() => up({ list: list === 'number' ? 'none' : 'number', curve: 0 })}>
+          <ListOrdered size={14} />
+        </ToggleIcon>
+      </div>
+      {editing && (
+        <p className="-mt-1 text-2xs leading-[14px] text-subtle" aria-live="polite">
+          {partial ? 'Styling the selected words.' : 'Select words to style just them.'}
+        </p>
+      )}
+      <div className="flex items-center gap-1.5">
+        <div className="w-[96px] shrink-0">
+          <Segmented
+            ariaLabel="Alignment"
+            size="sm"
+            value={e.align}
+            onChange={(v) => up({ align: v })}
+            options={[
+              { value: 'left', label: <AlignLeft size={14} aria-label="Left" />, title: 'Align left' },
+              { value: 'center', label: <AlignCenter size={14} aria-label="Center" />, title: 'Center' },
+              { value: 'right', label: <AlignRight size={14} aria-label="Right" />, title: 'Align right' },
+            ]}
+          />
+        </div>
+        <Tooltip label="Line height">
+          <div className="min-w-0 flex-1">
+            <NumberInput ariaLabel="Line height in percent" prefix={<ArrowUpDown size={11} />} suffix="%" value={Math.round(e.lineHeight * 100)} min={70} max={300} onChange={(v) => up({ lineHeight: v / 100 }, 'lh')} />
+          </div>
+        </Tooltip>
+        <Tooltip label="Letter spacing">
+          <div className="min-w-0 flex-1">
+            <NumberInput ariaLabel="Letter spacing in percent" prefix={<ArrowLeftRight size={11} />} suffix="%" value={Math.round((e.letterSpacing / e.fontSize) * 100)} min={-10} max={60} onChange={(v) => up({ letterSpacing: (v / 100) * e.fontSize }, 'ls')} />
+          </div>
+        </Tooltip>
+      </div>
+      <div onMouseDown={keepFocus}>
+        <ColorPicker value={at.color ?? e.color} colors={palette()} onChange={(c) => style({ color: c }, 'color')} />
+      </div>
+    </Section>
+  );
+}
+
+/** Text-only effects, shown inside the Effects group. */
+function TextEffects({ e }: { e: TextElement }) {
+  const up = (p: Partial<TextElement>, key?: string) => A.updateElements<TextElement>([e.id], p, key);
   const grad = e.gradient;
   return (
     <>
-      <Section title="Text">
-        {!editing && (
-          <Button onClick={() => A.startTextEdit(e.id)} className="w-full">
-            <SquarePen size={13} /> Edit text
-          </Button>
-        )}
-        <FontSelect value={e.fontFamily} onChange={(id) => up({ fontFamily: id })} />
-        <div className="flex items-center gap-1.5">
-          <NumberInput ariaLabel="Font size" value={e.fontSize} min={4} max={2000} suffix="px" onChange={(v) => up({ fontSize: v }, 'fs')} />
-          <div className="flex rounded-[7px] bg-control p-0.5">
-            <button type="button" aria-label="Smaller" onClick={() => up({ fontSize: Math.max(4, Math.round(e.fontSize / 1.1)) }, 'fs')} className="h-6 w-6 rounded-[5px] text-sm text-muted hover:bg-hover hover:text-fg">
-              −
-            </button>
-            <button type="button" aria-label="Larger" onClick={() => up({ fontSize: Math.round(e.fontSize * 1.1) + 1 }, 'fs')} className="h-6 w-6 rounded-[5px] text-sm text-muted hover:bg-hover hover:text-fg">
-              +
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-0.5 rounded-[8px] bg-control p-0.5" onMouseDown={keepFocus}>
-          <ToggleIcon label={font.bold ? 'Bold' : 'Bold (not available for this font)'} active={at.bold && font.bold} onClick={() => style({ bold: !at.bold })}>
-            <Bold size={14} />
-          </ToggleIcon>
-          <ToggleIcon label="Italic" active={at.italic} onClick={() => style({ italic: !at.italic })}>
-            <Italic size={14} />
-          </ToggleIcon>
-          <ToggleIcon label="Underline" active={at.underline} onClick={() => style({ underline: !at.underline })}>
-            <Underline size={14} />
-          </ToggleIcon>
-          <ToggleIcon label="Uppercase" active={e.uppercase} onClick={() => up({ uppercase: !e.uppercase })}>
-            <CaseUpper size={15} />
-          </ToggleIcon>
-        </div>
-        <p className="-mt-1 text-2xs leading-[14px] text-subtle" aria-live="polite">
-          {partial ? 'Styling the selected text.' : editing ? 'Select words to style just them.' : 'Tip: while typing, select words to style just them.'}
-        </p>
-        <Segmented
-          ariaLabel="Alignment"
-          value={e.align}
-          onChange={(v) => up({ align: v })}
-          options={[
-            { value: 'left', label: <AlignLeft size={14} />, title: 'Align left' },
-            { value: 'center', label: <AlignCenter size={14} />, title: 'Center' },
-            { value: 'right', label: <AlignRight size={14} />, title: 'Align right' },
-          ]}
-        />
-        <div onMouseDown={keepFocus}>
-          <ColorPicker value={at.color ?? e.color} colors={palette()} onChange={(c) => style({ color: c }, 'color')} />
-        </div>
-      </Section>
-      <Section title="Gradient" action={<Toggle checked={!!grad} onChange={(on) => up({ gradient: on ? { from: e.color, to: '#bf5af2', angle: 90 } : null })} label="Gradient text" />}>
+      <EffectRow label="Gradient" checked={!!grad} onChange={(on) => up({ gradient: on ? { from: e.color, to: '#bf5af2', angle: 90 } : null })}>
         {grad && (
           <>
             <div className="flex gap-1.5">
@@ -358,33 +481,33 @@ function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
             <Slider label="Angle" value={grad.angle} min={0} max={360} unit="°" onChange={(v) => up({ gradient: { ...grad, angle: v } }, 'tg')} />
           </>
         )}
-      </Section>
-      <Section title="Layout">
-        <Segmented
-          ariaLabel="List"
-          value={e.list ?? 'none'}
-          onChange={(v) => up({ list: v, curve: 0 })}
-          options={[
-            { value: 'none', label: 'No list' },
-            { value: 'bullet', label: <><List size={14} /> Bullets</> },
-            { value: 'number', label: <><ListOrdered size={14} /> Numbers</> },
-          ]}
-        />
-        <Slider label="Curve" value={e.curve ?? 0} min={-100} max={100} format={(v) => (v === 0 ? 'Off' : `${Math.round(v)}`)} onChange={(v) => up({ curve: Math.abs(v) < 2 ? 0 : v, ...(Math.abs(v) >= 2 ? { list: 'none' as const } : {}) }, 'curve')} />
-      </Section>
-      <Section title="Spacing">
-        <Slider label="Letter spacing" value={Math.round((e.letterSpacing / e.fontSize) * 1000) / 10} min={-10} max={60} step={0.5} unit="%" onChange={(v) => up({ letterSpacing: (v / 100) * e.fontSize }, 'ls')} />
-        <Slider label="Line height" value={e.lineHeight} min={0.7} max={3} step={0.05} format={(v) => v.toFixed(2)} onChange={(v) => up({ lineHeight: v }, 'lh')} />
-      </Section>
-      <Section title="Outline" action={<Toggle checked={e.strokeWidth > 0} onChange={(on) => up({ strokeWidth: on ? Math.max(1, Math.round(e.fontSize * 0.04)) : 0 })} label="Text outline" />}>
+      </EffectRow>
+      <EffectRow label="Outline" checked={e.strokeWidth > 0} onChange={(on) => up({ strokeWidth: on ? Math.max(1, Math.round(e.fontSize * 0.04)) : 0 })}>
         {e.strokeWidth > 0 && (
           <>
             <Slider label="Width" value={e.strokeWidth} min={0.5} max={Math.max(20, e.fontSize * 0.2)} step={0.5} unit="px" onChange={(v) => up({ strokeWidth: v }, 'sw')} />
             <ColorPicker value={e.strokeColor} colors={palette()} onChange={(c) => up({ strokeColor: c }, 'sc')} />
           </>
         )}
-      </Section>
+      </EffectRow>
+      <EffectRow label="Curve" checked={(e.curve ?? 0) !== 0} onChange={(on) => up({ curve: on ? 40 : 0, ...(on ? { list: 'none' as const } : {}) })}>
+        {(e.curve ?? 0) !== 0 && (
+          <Slider label="Amount" value={e.curve ?? 0} min={-100} max={100} format={(v) => (v === 0 ? 'Off' : `${Math.round(v)}`)} onChange={(v) => up({ curve: Math.abs(v) < 2 ? 0 : v, ...(Math.abs(v) >= 2 ? { list: 'none' as const } : {}) }, 'curve')} />
+        )}
+      </EffectRow>
     </>
+  );
+}
+
+/** One effect: a labeled switch, with its settings in an inset panel while it's on. */
+function EffectRow({ label, checked, onChange, children }: { label: string; checked: boolean; onChange: (v: boolean) => void; children?: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex items-center justify-between text-xs text-muted">
+        {label} <Toggle checked={checked} onChange={onChange} label={label} />
+      </label>
+      {checked && children && <div className="flex flex-col gap-3 rounded-[10px] bg-window p-2.5">{children}</div>}
+    </div>
   );
 }
 
@@ -432,7 +555,7 @@ function ShapeProps({ e }: { e: ShapeElement }) {
       </Section>
       {e.shape === 'rect' && (
         <Section title="Corners">
-          <Slider label="Radius" value={e.radius} min={0} max={Math.round(Math.min(e.w, e.h) / 2)} unit="px" onChange={(v) => up({ radius: v }, 'radius')} />
+          <Slider label="Corner radius" value={e.radius} min={0} max={Math.round(Math.min(e.w, e.h) / 2)} unit="px" onChange={(v) => up({ radius: v }, 'radius')} />
         </Section>
       )}
     </>

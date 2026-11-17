@@ -11,6 +11,7 @@ import { fontOf } from './fonts';
 import { coverCrop, makeIcon, makeLine, makeShape, makeText } from './factory';
 import type { ImageElement, ShapeKind, StudioElement, TextElement } from './types';
 import { ContextMenu, type ContextMenuState } from './ContextMenu';
+import { FloatingToolbar } from './FloatingToolbar';
 import { getViewOptions, isStoryShape, safeZoneInsets, subscribeViewOptions, type ViewOptions } from './viewOptions';
 import { pickFiles } from '../tools/shared/ui';
 
@@ -950,6 +951,7 @@ export function Stage() {
         role="img"
       />
       <TextEditor />
+      <FloatingToolbar />
       {menu && <ContextMenu state={menu} onClose={() => setMenu(null)} />}
     </div>
   );

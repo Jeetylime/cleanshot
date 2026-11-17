@@ -12,7 +12,7 @@ const axeSrc = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const base = (process.argv[2] ?? 'http://localhost:5173/').replace(/\/?$/, '/');
 
 const { TOOL_KEYS, PDF_TOOL_KEYS, LEGAL_DOCS } = await import('../src/app/route.ts').catch(() => ({}));
-const routes = ['home', 'settings-menu', 'editor', 'editor-doc', 'editor-settings', 'canvas-editor', 'canvas-draw', 'canvas', 'tools', 'pdf', 'storage', 'about', ...(LEGAL_DOCS ?? []), ...(TOOL_KEYS ?? []), ...(PDF_TOOL_KEYS ?? [])];
+const routes = ['home', 'settings-menu', 'editor', 'editor-doc', 'editor-settings', 'canvas-editor', 'canvas-draw', 'canvas-selected', 'canvas', 'tools', 'pdf', 'storage', 'about', ...(LEGAL_DOCS ?? []), ...(TOOL_KEYS ?? []), ...(PDF_TOOL_KEYS ?? [])];
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
@@ -26,6 +26,18 @@ for (const theme of ['dark', 'light']) {
       await page.reload();
       await page.getByRole('button', { name: /Try a sample/ }).click();
       if (r === 'editor-settings') await page.getByRole('button', { name: 'Settings' }).click();
+    } else if (r === 'canvas-selected') {
+      // A text element selected: floating toolbar, Style tab with Effects open.
+      await page.goto(base + '#canvas');
+      await page.reload();
+      await page.waitForTimeout(800);
+      if (await page.locator('[data-testid=preset-square]').count()) await page.locator('[data-testid=preset-square]').click();
+      await page.waitForTimeout(800);
+      await page.locator('[data-testid=rail-text]').click();
+      await page.locator('aside button').filter({ hasText: /heading/i }).first().click();
+      await page.waitForTimeout(400);
+      const fx = page.getByRole('button', { name: /^Effects/ });
+      if ((await fx.getAttribute('aria-expanded')) === 'false') await fx.click();
     } else if (r === 'canvas-editor' || r === 'canvas-draw') {
       // A design open in the Canvas editor (with the Elements search or Draw panel showing).
       await page.goto(base + '#canvas');

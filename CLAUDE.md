@@ -33,6 +33,7 @@ Sections are selected by hash routing in `src/app/route.ts` (`#home`, `#editor`,
 - **Image Tools**: `src/tools/registry.ts` lists them. Each tool lives in `src/tools/<tool>/`, with shared helpers in `src/tools/shared/` and the on-demand Transformers.js runtime in `src/tools/ai/`.
 - **PDF tools**: `src/pdf/registry.ts` and `src/pdf/tools/*`, built on pdf-lib (write) and pdfjs-dist (render), with shared logic in `src/pdf/engine.ts`.
 - **Canvas drawing**: `draw` elements store points normalized to their box (`src/studio/draw.ts` builds the stroke path once for canvas, SVG and hit-testing). Drawing is active while the Draw panel is open (`studio.draw` settings); `Stage.tsx` turns the pointer into strokes inside one undo gesture.
+- **Canvas properties UI**: `Properties.tsx` has Style / Arrange tabs (tab and the collapsed Effects group persist in localStorage). Effects (opacity, shadow, and gradient/outline/curve for text) live in one collapsible group. `FloatingToolbar.tsx` shows quick actions above the selection and reuses `useTextStyle`, `FontSelect` and `palette` from `Properties.tsx`.
 - **Cross-section handoff**: `src/studio/handoff.ts` sends images to Canvas. Edit's "Send to Canvas", Canvas's "Annotate" and the tools' "Design" buttons go through it.
 
 Key invariants:
