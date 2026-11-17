@@ -104,6 +104,8 @@ export interface HighlightAnnotation extends AnnotationBase {
   w: number;
   h: number;
   color: string;
+  /** Spotlight: dim everything outside the box (with `color` at `opacity`) instead of tinting inside it. */
+  spotlight?: boolean;
 }
 
 export type TextStyle = 'plain' | 'outline' | 'filled';

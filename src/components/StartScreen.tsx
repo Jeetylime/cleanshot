@@ -149,6 +149,7 @@ export function StartScreen() {
                     key={t.key}
                     type="button"
                     onClick={() => goTools(t.key)}
+                    onPointerEnter={() => void t.load()}
                     className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-control px-2.5 text-xs font-medium text-muted transition-colors hover:bg-active hover:text-fg"
                   >
                     <t.icon size={13} />
@@ -187,6 +188,7 @@ export function StartScreen() {
                     key={t.key}
                     type="button"
                     onClick={() => goPdf(t.key as PdfToolKey)}
+                    onPointerEnter={() => void t.load?.()}
                     className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-control px-2.5 text-xs font-medium text-muted transition-colors hover:bg-active hover:text-fg"
                   >
                     <t.icon size={13} />

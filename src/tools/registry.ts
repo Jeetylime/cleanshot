@@ -1,4 +1,5 @@
-import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
+import { lazyTool } from './lazyTool';
+import { type ComponentType, type LazyExoticComponent } from 'react';
 import { AppWindow, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, LayoutGrid, Pipette, Scaling, Shrink, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
@@ -13,6 +14,8 @@ export interface ToolMeta {
   ai: boolean;
   batch: boolean;
   component: LazyExoticComponent<ComponentType>;
+  /** Start downloading the tool's code (e.g. on hover) without rendering it. */
+  load: () => Promise<unknown>;
 }
 
 export const TOOL_GROUPS: { id: ToolGroupId; label: string }[] = [
@@ -32,7 +35,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Eraser,
     ai: true,
     batch: false,
-    component: lazy(() => import('./bgremove/BackgroundRemover')),
+    ...lazyTool(() => import('./bgremove/BackgroundRemover')),
   },
   {
     key: 'upscaler',
@@ -42,7 +45,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Expand,
     ai: true,
     batch: false,
-    component: lazy(() => import('./upscaler/Upscaler')),
+    ...lazyTool(() => import('./upscaler/Upscaler')),
   },
   {
     key: 'resizer',
@@ -52,7 +55,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Scaling,
     ai: false,
     batch: true,
-    component: lazy(() => import('./resizer/Resizer')),
+    ...lazyTool(() => import('./resizer/Resizer')),
   },
   {
     key: 'cropper',
@@ -62,7 +65,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Crop,
     ai: false,
     batch: false,
-    component: lazy(() => import('./cropper/Cropper')),
+    ...lazyTool(() => import('./cropper/Cropper')),
   },
   {
     key: 'compressor',
@@ -72,7 +75,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Shrink,
     ai: false,
     batch: true,
-    component: lazy(() => import('./compressor/Compressor')),
+    ...lazyTool(() => import('./compressor/Compressor')),
   },
   {
     key: 'converter',
@@ -82,7 +85,7 @@ export const TOOLS: ToolMeta[] = [
     icon: ArrowLeftRight,
     ai: false,
     batch: true,
-    component: lazy(() => import('./converter/Converter')),
+    ...lazyTool(() => import('./converter/Converter')),
   },
   {
     key: 'metadata',
@@ -92,7 +95,7 @@ export const TOOLS: ToolMeta[] = [
     icon: FileSearch,
     ai: false,
     batch: false,
-    component: lazy(() => import('./metadata/MetadataViewer')),
+    ...lazyTool(() => import('./metadata/MetadataViewer')),
   },
   {
     key: 'color-picker',
@@ -102,7 +105,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Pipette,
     ai: false,
     batch: false,
-    component: lazy(() => import('./colorpicker/ColorPicker')),
+    ...lazyTool(() => import('./colorpicker/ColorPicker')),
   },
   {
     key: 'watermark',
@@ -112,7 +115,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Droplet,
     ai: false,
     batch: true,
-    component: lazy(() => import('./watermark/Watermark')),
+    ...lazyTool(() => import('./watermark/Watermark')),
   },
   {
     key: 'collage',
@@ -122,7 +125,7 @@ export const TOOLS: ToolMeta[] = [
     icon: LayoutGrid,
     ai: false,
     batch: true,
-    component: lazy(() => import('./collage/Collage')),
+    ...lazyTool(() => import('./collage/Collage')),
   },
   {
     key: 'favicon',
@@ -132,7 +135,7 @@ export const TOOLS: ToolMeta[] = [
     icon: AppWindow,
     ai: false,
     batch: false,
-    component: lazy(() => import('./favicon/Favicon')),
+    ...lazyTool(() => import('./favicon/Favicon')),
   },
   {
     key: 'frames',
@@ -142,7 +145,7 @@ export const TOOLS: ToolMeta[] = [
     icon: Film,
     ai: false,
     batch: false,
-    component: lazy(() => import('./frames/Frames')),
+    ...lazyTool(() => import('./frames/Frames')),
   },
 ];
 

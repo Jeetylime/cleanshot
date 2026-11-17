@@ -20,6 +20,17 @@ const PREVIEWS: Record<string, ReactNode> = {
       <text x="50" y="24" textAnchor="middle" fontSize="5" fontWeight="700" fill="#ff375f" opacity="0.5" transform="rotate(-40 50 21)">DRAFT</text>
     </g>
   ),
+  'pdf-form': (
+    <g>
+      <rect x="22" y="6" width="32" height="48" rx="2.5" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x="27" y={13 + i * 12} width="10" height="2" rx="1" fill="#c7c7cc" />
+          <rect x="27" y={17 + i * 12} width="22" height="5" rx="1.2" fill="none" stroke={i === 1 ? '#0a84ff' : '#c7c7cc'} strokeWidth="1" />
+        </g>
+      ))}
+    </g>
+  ),
   'pdf-crop': (
     <g>
       {page(28, 17)}

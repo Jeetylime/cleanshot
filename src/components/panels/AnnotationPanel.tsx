@@ -270,11 +270,12 @@ export function AnnotationPanel() {
             <span className="text-xs text-muted">Shape</span>
             <Segmented
               ariaLabel="Highlighter shape"
-              value={v.mode as 'stroke' | 'box'}
+              value={v.mode as 'stroke' | 'box' | 'spotlight'}
               onChange={(mode) => actions.applyStyle({ mode })}
               options={[
                 { value: 'stroke', label: 'Marker' },
                 { value: 'box', label: 'Area' },
+                { value: 'spotlight', label: 'Spotlight' },
               ]}
             />
           </div>

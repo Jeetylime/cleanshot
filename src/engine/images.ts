@@ -73,6 +73,17 @@ export function releaseImagesExcept(keep: Set<string>): void {
   }
 }
 
+/** Release specific images (and their mip levels). */
+export function releaseImages(ids: Iterable<string>): void {
+  for (const id of ids) {
+    const e = registry.get(id);
+    if (!e) continue;
+    if ('close' in e.source && typeof (e.source as ImageBitmap).close === 'function') (e.source as ImageBitmap).close();
+    e.mips.forEach((m) => (m.width = m.height = 0));
+    registry.delete(id);
+  }
+}
+
 function halve(src: ImageSource): HTMLCanvasElement {
   const c = createCanvas(Math.max(1, Math.ceil(src.width / 2)), Math.max(1, Math.ceil(src.height / 2)));
   const ctx = ctx2d(c);

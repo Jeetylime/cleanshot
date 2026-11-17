@@ -19,6 +19,7 @@ export interface SectionTool {
   icon: LucideIcon;
   batch?: boolean;
   component: LazyExoticComponent<ComponentType>;
+  load?: () => Promise<unknown>;
 }
 
 export interface SectionConfig {
@@ -171,6 +172,8 @@ function Landing({ config }: { config: SectionConfig }) {
                     key={t.key}
                     type="button"
                     onClick={() => config.go(t.key)}
+                    onPointerEnter={() => void t.load?.()}
+                    onFocus={() => void t.load?.()}
                     data-testid={`tool-card-${t.key}`}
                     className="group flex items-start gap-3 rounded-[12px] border border-line bg-panel p-3 text-left transition-[border-color,background-color,transform,box-shadow] duration-200 hover:-translate-y-px hover:border-line-strong hover:shadow-pop active:translate-y-0"
                   >

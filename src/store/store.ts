@@ -21,7 +21,7 @@ export interface ToolStyles {
   pen: { strokeWidth: number; shadow: boolean; opacity: number };
   text: { fontSize: number; weight: 400 | 600 | 800; style: TextStyle; shadow: boolean; opacity: number };
   step: { size: number; shadow: boolean; opacity: number };
-  highlighter: { color: string; strokeWidth: number; mode: 'stroke' | 'box'; opacity: number };
+  highlighter: { color: string; strokeWidth: number; mode: 'stroke' | 'box' | 'spotlight'; opacity: number };
   blur: { intensity: number };
   pixelate: { intensity: number };
   redact: { color: string };

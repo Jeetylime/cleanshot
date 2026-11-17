@@ -67,6 +67,9 @@ export function createAnnotation(
     }
     case 'highlighter': {
       const s = styles.highlighter;
+      if (s.mode === 'spotlight') {
+        return { id, type: 'highlight', x: p.x, y: p.y, w: 0, h: 0, color: '#000000', opacity: 0.6, spotlight: true };
+      }
       if (s.mode === 'box') {
         return { id, type: 'highlight', x: p.x, y: p.y, w: 0, h: 0, color: s.color, opacity: s.opacity };
       }

@@ -21,6 +21,10 @@ npm test          # unit tests (Vitest)
 
 **Annotate**: arrows (single, double, line), rectangles, ellipses, freehand drawing, text (plain, outline or label), auto-numbered step markers, and a highlighter (marker or area). Every annotation can be selected, moved, resized, restyled, duplicated, copied, pasted, reordered and deleted.
 
+**Spotlight**: a Highlighter mode that dims everything outside one or more areas, with overlapping spotlights merging cleanly.
+
+**Capture**: grab a screen, window or tab directly from Edit (`getDisplayMedia`).
+
 **Privacy**: blur, pixelate and solid redaction. On export, the original pixels under each region are erased and replaced with a patch computed only from downsampled pixels, so nothing recoverable is hidden under a translucent overlay.
 
 **Canvas**: freeform crop or crop to a preset ratio (with numeric X/Y/W/H), resize with an aspect lock, rotate 90°, and flip. Annotations follow every transform.
@@ -61,7 +65,7 @@ npm test          # unit tests (Vitest)
 
 **Export**: PNG, JPEG, WebP, SVG or PDF; one page, all pages (multi-page PDF, or a ZIP of images) or just the selection; PDFs can include an invisible text layer so text is selectable and searchable; SVG keeps shapes, icons, charts and text as vectors with fonts embedded; paper presets export at real US Letter/A4 size; transparent background for PNG/WebP/SVG, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
 
-**PDF Tools**: merge, split, organize (reorder, rotate, delete), sign, compress, images to PDF, PDF to images, page numbers / headers / footers / diagonal watermark, and text extraction to plain text or Markdown.
+**PDF Tools**: merge, split, organize (reorder, rotate, delete), sign (with opt-in saved signatures), fill AcroForm fields (with optional flattening), crop margins (auto-trim whitespace or set margins), compress, images to PDF, PDF to images, page numbers / headers / footers / diagonal watermark, and text extraction to plain text or Markdown.
 
 **App-wide**: ⌘K / Ctrl+K command palette for every section, tool and setting; a Storage page (`#storage`) showing everything saved on the device, with export and delete; offline support and installable app (service worker, web manifest, opening images and PDFs from the OS); a Content-Security-Policy that blocks every network destination except Hugging Face model downloads.
 
@@ -80,6 +84,7 @@ npm test          # unit tests (Vitest)
 | Metadata Viewer | File, dimensions, aspect ratio, bit depth, color profile, DPI, full EXIF including GPS; flags sensitive fields; downloads a clean copy | Dependency-free JPEG/PNG/WebP parser. Stripping removes EXIF/XMP/IPTC/text without re-encoding pixels |
 | Watermark | Text or logo, nine positions or tiled, opacity, rotation, batch to ZIP | Drawn on a canvas at full resolution |
 | Collage Maker | Grid of photos with columns, cell shape, spacing, rounded corners and background | Fill or fit each cell, reorder images |
+| GIF Frame Extractor | Every frame of an animated GIF, WebP or APNG with its duration; select frames, export PNG/JPEG/WebP or a ZIP | WebCodecs `ImageDecoder` |
 | Favicon Generator | favicon.ico (16/32/48), PNG icons, Apple touch and Android icons, web manifest, HTML snippet | Built-in multi-size ICO writer |
 | Color Picker | Click to sample with a magnifier; HEX/RGB/HSL copy; dominant palette with coverage; CSS/JSON/PNG export | Median-cut seeds refined with k-means |
 

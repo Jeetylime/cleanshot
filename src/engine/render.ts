@@ -3,6 +3,7 @@ import type {
   ArrowAnnotation,
   EditorDoc,
   EllipseAnnotation,
+  HighlightAnnotation,
   Point,
   RectAnnotation,
   StepAnnotation,
@@ -431,6 +432,8 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, a: Annotation, rc:
       break;
     }
     case 'highlight': {
+      // Spotlights are painted together, beneath everything, by drawSpotlights.
+      if (a.spotlight) break;
       const r = normalizeRect(a);
       ctx.fillStyle = a.color;
       ctx.beginPath();
@@ -450,7 +453,48 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, a: Annotation, rc:
 
 export function drawAnnotations(ctx: CanvasRenderingContext2D, doc: EditorDoc, pxScale: number) {
   const rc: RenderContext = { unit: doc.unit, pxScale, steps: stepNumbers(doc.annotations) };
+  drawSpotlights(ctx, doc, rc);
   for (const a of doc.annotations) drawAnnotation(ctx, a, rc);
+}
+
+let spotlightLayer: HTMLCanvasElement | null = null;
+
+/**
+ * Dim the image outside every spotlight box. The holes are cut from one dim
+ * layer, so overlapping spotlights merge instead of re-darkening their overlap.
+ * The first spotlight's color and opacity set the dim.
+ */
+function drawSpotlights(ctx: CanvasRenderingContext2D, doc: EditorDoc, rc: RenderContext) {
+  const spots = doc.annotations.filter((a): a is HighlightAnnotation => a.type === 'highlight' && !!a.spotlight);
+  if (!spots.length) return;
+  const { width: cw, height: ch } = ctx.canvas;
+  spotlightLayer ??= createCanvas(1, 1);
+  const layer = spotlightLayer;
+  if (layer.width !== cw || layer.height !== ch) {
+    layer.width = cw;
+    layer.height = ch;
+  }
+  const lc = ctx2d(layer);
+  lc.setTransform(1, 0, 0, 1, 0, 0);
+  lc.clearRect(0, 0, cw, ch);
+  lc.setTransform(ctx.getTransform());
+  lc.globalCompositeOperation = 'source-over';
+  lc.fillStyle = spots[0].color;
+  lc.fillRect(0, 0, doc.width, doc.height);
+  lc.globalCompositeOperation = 'destination-out';
+  lc.fillStyle = '#000';
+  for (const a of spots) {
+    const r = normalizeRect(a);
+    lc.beginPath();
+    lc.roundRect(r.x, r.y, r.w, r.h, Math.min(6 * rc.unit, r.w / 2, r.h / 2));
+    lc.fill();
+  }
+  lc.globalCompositeOperation = 'source-over';
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = spots[0].opacity;
+  ctx.drawImage(layer, 0, 0);
+  ctx.restore();
 }
 
 // ---------------------------------------------------------------------------

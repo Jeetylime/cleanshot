@@ -411,7 +411,7 @@ export type StylePatch = Partial<{
   style: 'plain' | 'outline' | 'filled';
   size: number;
   intensity: number;
-  mode: 'stroke' | 'box';
+  mode: 'stroke' | 'box' | 'spotlight';
 }>;
 
 function patchStyles(styles: ToolStyles, group: StyleGroup, patch: StylePatch): ToolStyles {

@@ -1,4 +1,5 @@
 import type { EditorDoc } from '../types';
+import { getImage, releaseImages } from '../engine/images';
 import { store } from './store';
 
 /**
@@ -9,6 +10,12 @@ import { store } from './store';
  */
 
 const HISTORY_LIMIT = 200;
+/**
+ * Pixel memory that undo history may keep alive for crops, rotations and
+ * resizes (each keeps its previous bitmap). Past this, the oldest steps are
+ * forgotten so a long session on a huge image can't exhaust memory.
+ */
+export const HISTORY_IMAGE_BUDGET = 1024 * 1024 * 1024;
 const COALESCE_MS = 900;
 
 let lastKey: string | null = null;
@@ -43,6 +50,7 @@ export function commit(mutate: (doc: EditorDoc) => EditorDoc, opts: { key?: stri
     future: [],
     selection: pruneSelection(next, s.selection),
   });
+  if (next.imageId !== s.doc.imageId) enforceBudget();
 }
 
 /** Start a gesture: subsequent live updates become one undo step. */
@@ -73,6 +81,7 @@ export function endGesture() {
       gesturing: false,
       selection: pruneSelection(s.doc, s.selection),
     });
+    if (base.imageId !== s.doc.imageId) enforceBudget();
   } else {
     store.set({ gesturing: false });
   }
@@ -120,6 +129,54 @@ export function redo() {
     selection: pruneSelection(next, s.selection),
     editingTextId: null,
   });
+}
+
+const docImages = (d: EditorDoc) => [d.imageId, d.originalImageId];
+
+/**
+ * Drop the oldest undo steps (then the farthest redo steps) until the distinct
+ * images referenced by history fit in `budget` bytes. The current document's
+ * images are always kept. Pure, for testing.
+ */
+export function trimHistoryToBudget<D>(
+  doc: D,
+  past: D[],
+  future: D[],
+  imagesOf: (d: D) => string[],
+  bytesOf: (id: string) => number,
+  budget: number,
+): { past: D[]; future: D[]; dropped: string[] } {
+  const total = (list: D[]) => {
+    const ids = new Set([doc, ...list].flatMap(imagesOf));
+    let n = 0;
+    for (const id of ids) n += bytesOf(id);
+    return n;
+  };
+  let p = past;
+  let f = future;
+  while (p.length + f.length > 0 && total([...p, ...f]) > budget) {
+    if (p.length) p = p.slice(1);
+    else f = f.slice(0, -1);
+  }
+  if (p === past && f === future) return { past, future, dropped: [] };
+  const kept = new Set([doc, ...p, ...f].flatMap(imagesOf));
+  const before = new Set([doc, ...past, ...future].flatMap(imagesOf));
+  return { past: p, future: f, dropped: [...before].filter((id) => !kept.has(id)) };
+}
+
+/** ~4 bytes per pixel, plus a third more for mip levels. */
+function imageBytes(id: string): number {
+  const e = getImage(id);
+  return e ? Math.round(e.width * e.height * 4 * 1.34) : 0;
+}
+
+function enforceBudget() {
+  const s = store.get();
+  if (!s.doc) return;
+  const t = trimHistoryToBudget(s.doc, s.past, s.future, docImages, imageBytes, HISTORY_IMAGE_BUDGET);
+  if (!t.dropped.length && t.past === s.past && t.future === s.future) return;
+  store.set({ past: t.past, future: t.future });
+  releaseImages(t.dropped);
 }
 
 /** Replace the document and clear history (new session). */
