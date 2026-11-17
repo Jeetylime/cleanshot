@@ -1,6 +1,9 @@
 import { uid } from '../lib/utils';
 import { layoutText, naturalTextWidth } from './render';
-import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
+import { syncPages } from './pages';
+import { NO_ADJUST } from './imageFx';
+import { CHART_COLORS } from './extraRender';
+import type { ChartElement, ChartKind, QrElement, IconElement, ImageElement, LineElement, Shadow, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
 
 export const DEFAULT_SHADOW: Shadow = { enabled: false, color: '#000000', blur: 24, x: 0, y: 10, opacity: 0.3 };
 
@@ -23,7 +26,13 @@ function base(name: string, x: number, y: number, w: number, h: number) {
 
 /** Keep a text box's height equal to its laid-out text. */
 export function fitText(e: TextElement): TextElement {
-  const h = layoutText(e).height;
+  const L = layoutText(e);
+  if (L.width !== undefined) {
+    // Curved text: the box follows the arc, keeping its center in place.
+    if (Math.abs(L.width - e.w) < 0.01 && Math.abs(L.height - e.h) < 0.01) return e;
+    return { ...e, x: e.x + (e.w - L.width) / 2, y: e.y + (e.h - L.height) / 2, w: L.width, h: L.height };
+  }
+  const h = L.height;
   return Math.abs(h - e.h) < 0.01 ? e : { ...e, h };
 }
 
@@ -144,8 +153,43 @@ export function makeImage(
     radius: 0,
     borderWidth: 0,
     borderColor: '#ffffff',
+    adjust: { ...NO_ADJUST },
+    mask: null,
     ...over,
   };
+}
+
+/** An empty frame: a shaped placeholder you drop a photo into. */
+export function makeFrame(doc: Pick<StudioDoc, 'width' | 'height'>, mask: ShapeKind): ImageElement {
+  const s = Math.round(Math.min(doc.width, doc.height) * 0.42);
+  const w = mask === 'rect' ? Math.round(s * 1.25) : s;
+  return makeImage(doc, { id: '', width: w, height: s, name: `${SHAPE_LABELS[mask]} frame` }, { mask, w, h: s, x: (doc.width - w) / 2, y: (doc.height - s) / 2, radius: mask === 'rect' ? Math.round(s * 0.06) : 0 });
+}
+
+export function makeChart(doc: Pick<StudioDoc, 'width' | 'height'>, chart: ChartKind): ChartElement {
+  const w = Math.round(Math.min(doc.width, doc.height) * 0.6);
+  const h = chart === 'pie' || chart === 'donut' ? Math.round(w * 0.62) : Math.round(w * 0.7);
+  return {
+    ...base(`${chart[0].toUpperCase()}${chart.slice(1)} chart`, (doc.width - w) / 2, (doc.height - h) / 2, w, h),
+    type: 'chart',
+    chart,
+    data: [
+      { label: 'Q1', value: 12 },
+      { label: 'Q2', value: 19 },
+      { label: 'Q3', value: 15 },
+      { label: 'Q4', value: 26 },
+    ],
+    colors: [...CHART_COLORS],
+    textColor: '#1d1d1f',
+    fontFamily: 'inter',
+    showLabels: true,
+    showValues: true,
+  };
+}
+
+export function makeQr(doc: Pick<StudioDoc, 'width' | 'height'>, data = 'https://studiolo.page'): QrElement {
+  const s = Math.round(Math.min(doc.width, doc.height) * 0.3);
+  return { ...base('QR code', (doc.width - s) / 2, (doc.height - s) / 2, s, s), type: 'qr', data, fg: '#1d1d1f', bg: '#ffffff', ecc: 'M', rounded: false };
 }
 
 /** Crop rectangle that makes the image cover a w×h box (centered). */
@@ -162,16 +206,19 @@ export function coverCrop(asset: { width: number; height: number }, w: number, h
 
 export function newDoc(opts: { name?: string; width: number; height: number; background?: StudioFill; elements?: StudioElement[] }): StudioDoc {
   const now = Date.now();
-  return {
+  const d: StudioDoc = {
     id: uid('proj'),
     name: opts.name ?? 'Untitled design',
     width: Math.round(opts.width),
     height: Math.round(opts.height),
     background: opts.background ?? { kind: 'solid', color: '#ffffff' },
     elements: opts.elements ?? [],
+    pages: [],
+    pageIndex: 0,
     createdAt: now,
     updatedAt: now,
   };
+  return syncPages(d);
 }
 
 /** Deep-clone elements with fresh ids (groups get fresh ids too). */
@@ -185,4 +232,21 @@ export function cloneElements(els: StudioElement[], dx = 0, dy = 0): StudioEleme
     }
     return { ...structuredClone(e), id: uid('el'), groupId, x: e.x + dx, y: e.y + dy };
   });
+}
+
+/** Scale an element by `k` around the origin, then offset it (used for canvas resizes and templates). */
+export function scaleElement(e: StudioElement, k: number, ox = 0, oy = 0): StudioElement {
+  const base = { ...e, x: ox + e.x * k, y: oy + e.y * k, w: e.w * k, h: e.h * k, shadow: { ...e.shadow, blur: e.shadow.blur * k, x: e.shadow.x * k, y: e.shadow.y * k } };
+  switch (e.type) {
+    case 'text':
+      return fitText({ ...(base as typeof e), fontSize: e.fontSize * k, letterSpacing: e.letterSpacing * k, strokeWidth: e.strokeWidth * k });
+    case 'shape':
+      return { ...(base as typeof e), strokeWidth: e.strokeWidth * k, radius: e.radius * k };
+    case 'line':
+      return { ...(base as typeof e), strokeWidth: e.strokeWidth * k };
+    case 'image':
+      return { ...(base as typeof e), radius: e.radius * k, borderWidth: e.borderWidth * k };
+    default:
+      return base as StudioElement;
+  }
 }

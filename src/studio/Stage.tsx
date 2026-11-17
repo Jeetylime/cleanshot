@@ -7,9 +7,11 @@ import * as A from './actions';
 import { aabb, center, corners, hitTest, rotatePoint, snapBox, snapTargets, snapValue, toLocal, unionBounds, type Guide } from './geometry';
 import { paintStudioFill, renderScene } from './render';
 import { fontOf } from './fonts';
-import { makeIcon, makeLine, makeShape, makeText } from './factory';
+import { coverCrop, makeIcon, makeLine, makeShape, makeText } from './factory';
 import type { ImageElement, ShapeKind, StudioElement, TextElement } from './types';
 import { ContextMenu, type ContextMenuState } from './ContextMenu';
+import { getViewOptions, isStoryShape, safeZoneInsets, subscribeViewOptions, type ViewOptions } from './viewOptions';
+import { pickFiles } from '../tools/shared/ui';
 
 type Handle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rot';
 
@@ -164,6 +166,7 @@ export function Stage() {
 
       // Overlays in screen space
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawHelpers(ctx, doc.width, doc.height, s.view, getViewOptions());
       const toS = (p: Point) => ({ x: x + p.x * zoom, y: y + p.y * zoom });
       const col = accent();
       const poly = (pts: Point[], stroke: string, width = 1, dash: number[] = []) => {
@@ -295,6 +298,7 @@ export function Stage() {
           ctx.stroke();
         }
       }
+      if (getViewOptions().rulers) drawRulers(ctx, W, H, s.view, doc.width, doc.height, selectedElements(s));
       // Marquee
       if (s.marquee) {
         const a = toS(s.marquee);
@@ -312,11 +316,13 @@ export function Stage() {
     schedule();
     const unsub = studio.subscribe(schedule);
     hoverListeners.add(schedule);
+    const unsubView = subscribeViewOptions(schedule);
     const mq = matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
     mq.addEventListener?.('change', schedule);
     return () => {
       unsub();
       hoverListeners.delete(schedule);
+      unsubView();
       mq.removeEventListener?.('change', schedule);
       cancelAnimationFrame(raf);
     };
@@ -429,7 +435,7 @@ export function Stage() {
         drag.current = { kind: 'rotate', start: p, c: center(hh.frame), base };
       } else {
         const others = s.doc.elements.filter((x) => !s.selection.includes(x.id));
-        drag.current = { kind: 'resize', handle: hh.handle, start: p, frame: hh.frame, base, targets: snapTargets(s.doc.width, s.doc.height, others) };
+        drag.current = { kind: 'resize', handle: hh.handle, start: p, frame: hh.frame, base, targets: withGrid(snapTargets(s.doc.width, s.doc.height, others), s.doc.width, s.doc.height) };
       }
       return;
     }
@@ -447,7 +453,7 @@ export function Stage() {
       const doc = studio.get().doc!;
       const ids = new Set(sel.map((x) => x.id));
       const others = doc.elements.filter((x) => !ids.has(x.id));
-      drag.current = { kind: 'move', start: p, base: sel, box: unionBounds(sel)!, targets: snapTargets(doc.width, doc.height, others), moved: false };
+      drag.current = { kind: 'move', start: p, base: sel, box: unionBounds(sel)!, targets: withGrid(snapTargets(doc.width, doc.height, others), doc.width, doc.height), moved: false };
       return;
     }
 
@@ -750,8 +756,17 @@ export function Stage() {
     const p = toCanvas(e.clientX, e.clientY);
     const hit = hitElement(p);
     if (!hit || hit.locked) return;
+    const sel = studio.get().selection;
+    if (hit.groupId && sel.length > 1 && sel.includes(hit.id)) {
+      // First double-click on a group selects the item inside it.
+      A.select([hit.id], false, { single: true });
+      return;
+    }
     if (hit.type === 'text') A.startTextEdit(hit.id);
-    else if (hit.type === 'image') {
+    else if (hit.type === 'image' && !hit.assetId) {
+      studio.set({ selection: [hit.id] });
+      pickFiles(false, (f) => f[0] && void A.fillFrame(hit.id, f[0]));
+    } else if (hit.type === 'image') {
       studio.set({ selection: [hit.id] });
       A.setCropMode(hit.id);
     }
@@ -811,7 +826,16 @@ export function Stage() {
     if (payload) {
       e.preventDefault();
       e.stopPropagation();
-      dropPayload(JSON.parse(payload) as DndPayload, p);
+      const data = JSON.parse(payload) as DndPayload;
+      const hit = hitElement(p);
+      const asset = data.kind === 'asset' ? studio.get().assets.find((x) => x.id === data.id) : null;
+      if (asset && hit?.type === 'image' && !hit.assetId) {
+        // Dropping a photo onto an empty frame fills it.
+        A.updateElements<ImageElement>([hit.id], (e) => ({ assetId: asset.id, crop: coverCrop(asset, e.w, e.h) }));
+        A.select([hit.id]);
+        return;
+      }
+      dropPayload(data, p);
       return;
     }
     const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'));
@@ -819,7 +843,7 @@ export function Stage() {
       e.preventDefault();
       // Dropping onto an image while it's selected replaces it
       const hit = hitElement(p);
-      if (hit?.type === 'image' && studio.get().selection.includes(hit.id) && files.length === 1) void A.replaceImage(hit.id, files[0]);
+      if (hit?.type === 'image' && (!hit.assetId || studio.get().selection.includes(hit.id)) && files.length === 1) void A.replaceImage(hit.id, files[0]);
       else void A.addImageFiles(files, p);
     }
   };
@@ -861,6 +885,136 @@ export function Stage() {
   );
 }
 
+function withGrid(t: ReturnType<typeof snapTargets>, w: number, h: number) {
+  const o = getViewOptions();
+  if (o.margins) {
+    t.xs.push(o.marginSize, w - o.marginSize);
+    t.ys.push(o.marginSize, h - o.marginSize);
+  }
+  if (!o.snapToGrid || o.gridSize < 4) return t;
+  for (let x = 0; x <= w; x += o.gridSize) t.xs.push(x);
+  for (let y = 0; y <= h; y += o.gridSize) t.ys.push(y);
+  return t;
+}
+
+/** Grid, margins and story safe zone, drawn over the page in screen space. */
+function drawHelpers(ctx: CanvasRenderingContext2D, W: number, H: number, v: { zoom: number; x: number; y: number }, o: ViewOptions) {
+  const sx = (x: number) => v.x + x * v.zoom;
+  const sy = (y: number) => v.y + y * v.zoom;
+  ctx.save();
+  if (o.grid && o.gridSize * v.zoom >= 4) {
+    ctx.beginPath();
+    for (let x = o.gridSize; x < W; x += o.gridSize) {
+      ctx.moveTo(Math.round(sx(x)) + 0.5, sy(0));
+      ctx.lineTo(Math.round(sx(x)) + 0.5, sy(H));
+    }
+    for (let y = o.gridSize; y < H; y += o.gridSize) {
+      ctx.moveTo(sx(0), Math.round(sy(y)) + 0.5);
+      ctx.lineTo(sx(W), Math.round(sy(y)) + 0.5);
+    }
+    ctx.strokeStyle = 'rgba(10,132,255,0.22)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  if (o.margins) {
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = 'rgba(191,90,242,0.85)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(Math.round(sx(o.marginSize)) + 0.5, Math.round(sy(o.marginSize)) + 0.5, (W - 2 * o.marginSize) * v.zoom, (H - 2 * o.marginSize) * v.zoom);
+    ctx.setLineDash([]);
+  }
+  if (o.safeZone && isStoryShape(W, H)) {
+    const z = safeZoneInsets(H);
+    ctx.fillStyle = 'rgba(255,55,95,0.12)';
+    ctx.fillRect(sx(0), sy(0), W * v.zoom, z.top * v.zoom);
+    ctx.fillRect(sx(0), sy(H - z.bottom), W * v.zoom, z.bottom * v.zoom);
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = 'rgba(255,55,95,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(sx(0), Math.round(sy(z.top)) + 0.5);
+    ctx.lineTo(sx(W), Math.round(sy(z.top)) + 0.5);
+    ctx.moveTo(sx(0), Math.round(sy(H - z.bottom)) + 0.5);
+    ctx.lineTo(sx(W), Math.round(sy(H - z.bottom)) + 0.5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (v.zoom * H > 300) {
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,55,95,0.95)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('App buttons cover this area', sx(W / 2), sy(z.top / 2));
+      ctx.fillText('App buttons cover this area', sx(W / 2), sy(H - z.bottom / 2));
+    }
+  }
+  ctx.restore();
+}
+
+/** Pixel rulers along the top and left edge of the stage, with the selection highlighted. */
+function drawRulers(ctx: CanvasRenderingContext2D, SW: number, SH: number, v: { zoom: number; x: number; y: number }, W: number, H: number, sel: StudioElement[]) {
+  const T = 18;
+  const style = getComputedStyle(document.documentElement);
+  const bg = style.getPropertyValue('--bg-panel').trim() || '#1c1c1f';
+  const fg = style.getPropertyValue('--fg-subtle').trim() || '#6f6f78';
+  const line = style.getPropertyValue('--border-strong').trim() || 'rgba(255,255,255,0.12)';
+  // Pick a tick spacing that leaves ~60 screen px between labels
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000];
+  const step = steps.find((s) => s * v.zoom >= 60) ?? 5000;
+  ctx.save();
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, SW, T);
+  ctx.fillRect(0, 0, T, SH);
+  const b = unionBounds(sel);
+  if (b) {
+    ctx.fillStyle = 'rgba(10,132,255,0.25)';
+    ctx.fillRect(v.x + b.x * v.zoom, 0, b.w * v.zoom, T);
+    ctx.fillRect(0, v.y + b.y * v.zoom, T, b.h * v.zoom);
+  }
+  ctx.fillStyle = 'rgba(10,132,255,0.1)';
+  ctx.fillRect(v.x, T - 3, W * v.zoom, 3);
+  ctx.fillRect(T - 3, v.y, 3, H * v.zoom);
+  ctx.strokeStyle = fg;
+  ctx.fillStyle = fg;
+  ctx.font = '9px system-ui, sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  const startX = Math.floor(-v.x / v.zoom / step) * step;
+  for (let u = startX; v.x + u * v.zoom < SW; u += step / 5) {
+    const x = Math.round(v.x + u * v.zoom) + 0.5;
+    if (x < T) continue;
+    const major = Math.abs(u % step) < 1e-6;
+    ctx.moveTo(x, major ? 6 : 12);
+    ctx.lineTo(x, T);
+    if (major) ctx.fillText(String(Math.round(u)), x + 2, 2);
+  }
+  const startY = Math.floor(-v.y / v.zoom / step) * step;
+  for (let u = startY; v.y + u * v.zoom < SH; u += step / 5) {
+    const y = Math.round(v.y + u * v.zoom) + 0.5;
+    if (y < T) continue;
+    const major = Math.abs(u % step) < 1e-6;
+    ctx.moveTo(major ? 6 : 12, y);
+    ctx.lineTo(T, y);
+    if (major) {
+      ctx.save();
+      ctx.translate(2, y + 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.fillText(String(Math.round(u)), 0, -9);
+      ctx.restore();
+    }
+  }
+  ctx.stroke();
+  ctx.strokeStyle = line;
+  ctx.beginPath();
+  ctx.moveTo(0, T + 0.5);
+  ctx.lineTo(SW, T + 0.5);
+  ctx.moveTo(T + 0.5, 0);
+  ctx.lineTo(T + 0.5, SH);
+  ctx.stroke();
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, T, T);
+  ctx.restore();
+}
+
 function intersects(a: Rect, b: Rect) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
@@ -880,7 +1034,8 @@ export type DndPayload =
   | { kind: 'line'; arrow: boolean }
   | { kind: 'icon'; icon: string }
   | { kind: 'text'; text: 'heading' | 'subheading' | 'body' }
-  | { kind: 'asset'; id: string };
+  | { kind: 'asset'; id: string }
+  | { kind: 'sticker'; id: string };
 
 function dropPayload(p: DndPayload, at: Point) {
   const doc = studio.get().doc;
@@ -890,6 +1045,10 @@ function dropPayload(p: DndPayload, at: Point) {
   if (p.kind === 'line') el = makeLine(doc, p.arrow);
   if (p.kind === 'icon') el = makeIcon(doc, p.icon);
   if (p.kind === 'text') el = makeText(doc, { kind: p.text });
+  if (p.kind === 'sticker') {
+    A.addSticker(p.id, at);
+    return;
+  }
   if (p.kind === 'asset') {
     const a = studio.get().assets.find((x) => x.id === p.id);
     if (a) {
@@ -925,7 +1084,14 @@ function TextEditor() {
       spellCheck
       aria-label="Edit text"
       onChange={(e) => A.setEditingText(el.id, e.target.value)}
-      onBlur={() => A.finishTextEdit()}
+      onSelect={(e) => {
+        const t = e.currentTarget;
+        studio.set({ textSel: { start: t.selectionStart, end: t.selectionEnd } });
+      }}
+      onBlur={() => {
+        studio.set({ textSel: null });
+        A.finishTextEdit();
+      }}
       onKeyDown={(e) => {
         e.stopPropagation();
         if (e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {

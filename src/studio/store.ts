@@ -4,7 +4,7 @@ import type { Asset, StudioDoc, StudioElement, StudioFill, StudioView } from './
 import type { Guide } from './geometry';
 import { shallowEqual } from '../store/store';
 
-export type LeftPanel = 'templates' | 'elements' | 'text' | 'uploads' | 'backgrounds' | 'layers';
+export type LeftPanel = 'templates' | 'elements' | 'text' | 'uploads' | 'backgrounds' | 'brand' | 'layers';
 
 export interface StudioState {
   doc: StudioDoc | null;
@@ -29,6 +29,9 @@ export interface StudioState {
   fullscreen: boolean;
   /** Bumped when fonts or images finish loading, to trigger a redraw. */
   paintTick: number;
+  /** Selected character range in the text being edited. */
+  textSel: { start: number; end: number } | null;
+  dialog: 'resize' | 'find' | null;
 }
 
 type Listener = () => void;
@@ -69,6 +72,8 @@ export const studio = createStore({
   gesturing: false,
   fullscreen: false,
   paintTick: 0,
+  textSel: null,
+  dialog: null,
 });
 
 export function useStudio<T>(selector: (s: StudioState) => T, equal: (a: T, b: T) => boolean = Object.is): T {

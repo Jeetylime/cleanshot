@@ -1,8 +1,11 @@
 import { createCanvas, ctx2d, getImage, getMipLevel } from '../engine/images';
 import { paintFill } from '../engine/backgrounds';
 import { ICONS } from './iconData';
+import { adjustedImage, isIdentity } from './imageFx';
+import { drawChart, drawQr } from './extraRender';
+import { layoutText, linearGradientFor, type CharStyle } from './textEngine';
 import { fontCss } from './fonts';
-import type { IconElement, ImageElement, LineElement, ShapeElement, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
+import type { IconElement, ImageElement, LineElement, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
 
 /**
  * Scene renderer shared by the editor stage, thumbnails and export, so what
@@ -15,65 +18,8 @@ import type { IconElement, ImageElement, LineElement, ShapeElement, StudioDoc, S
 // ---------------------------------------------------------------------------
 // Text layout
 
-let measureCtx: CanvasRenderingContext2D | null = null;
-function mctx() {
-  if (!measureCtx) measureCtx = ctx2d(createCanvas(4, 4));
-  return measureCtx;
-}
-
-export interface TextLayout {
-  lines: { text: string; width: number }[];
-  lineHeightPx: number;
-  height: number;
-}
-
-function displayText(e: TextElement) {
-  return e.uppercase ? e.text.toUpperCase() : e.text;
-}
-
-function widthOf(ctx: CanvasRenderingContext2D, s: string, spacing: number): number {
-  if (!s) return 0;
-  if (!spacing) return ctx.measureText(s).width;
-  let w = 0;
-  for (const ch of s) w += ctx.measureText(ch).width;
-  return w + spacing * (Array.from(s).length - 1);
-}
-
-export function layoutText(e: TextElement, width = e.w): TextLayout {
-  const ctx = mctx();
-  ctx.font = fontCss(e.fontFamily, e.fontSize, e.bold, e.italic);
-  const max = Math.max(1, width);
-  const lines: { text: string; width: number }[] = [];
-  for (const para of displayText(e).split('\n')) {
-    const words = para.split(/(\s+)/);
-    let line = '';
-    for (const word of words) {
-      if (!word) continue;
-      const next = line + word;
-      if (line && /\S/.test(word) && widthOf(ctx, next.trimEnd(), e.letterSpacing) > max) {
-        lines.push({ text: line.trimEnd(), width: widthOf(ctx, line.trimEnd(), e.letterSpacing) });
-        line = word.trimStart();
-        // Break words longer than the box.
-        while (widthOf(ctx, line, e.letterSpacing) > max && line.length > 1) {
-          let cut = line.length - 1;
-          while (cut > 1 && widthOf(ctx, line.slice(0, cut), e.letterSpacing) > max) cut--;
-          lines.push({ text: line.slice(0, cut), width: widthOf(ctx, line.slice(0, cut), e.letterSpacing) });
-          line = line.slice(cut);
-        }
-      } else line = next;
-    }
-    lines.push({ text: line, width: widthOf(ctx, line, e.letterSpacing) });
-  }
-  const lineHeightPx = e.fontSize * e.lineHeight;
-  return { lines, lineHeightPx, height: Math.max(lineHeightPx, lines.length * lineHeightPx) };
-}
-
-/** Width that fits the text on its longest line (used when text is first created). */
-export function naturalTextWidth(e: TextElement): number {
-  const ctx = mctx();
-  ctx.font = fontCss(e.fontFamily, e.fontSize, e.bold, e.italic);
-  return Math.max(...displayText(e).split('\n').map((l) => widthOf(ctx, l, e.letterSpacing)), e.fontSize) + 2;
-}
+export { layoutText, naturalTextWidth } from './textEngine';
+export type { TextLayout } from './textEngine';
 
 // ---------------------------------------------------------------------------
 // Fills
@@ -188,13 +134,32 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
   else ctx.roundRect(x, y, w, h, rr);
 }
 
-export function shapePath(ctx: CanvasRenderingContext2D, e: ShapeElement) {
-  const { w, h } = e;
+/** The drawing calls a shape outline needs; a canvas context or the SVG path builder. */
+export interface PathSink {
+  beginPath(): void;
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+  bezierCurveTo(a: number, b: number, c: number, d: number, x: number, y: number): void;
+  quadraticCurveTo(a: number, b: number, x: number, y: number): void;
+  ellipse(x: number, y: number, rx: number, ry: number, rot: number, a0: number, a1: number): void;
+  roundRect(x: number, y: number, w: number, h: number, r: number): void;
+  rect(x: number, y: number, w: number, h: number): void;
+  closePath(): void;
+}
+
+export function shapePath(ctx: PathSink, e: Pick<ShapeElement, 'shape' | 'w' | 'h' | 'radius'>) {
+  pathFor(ctx, e.shape, e.w, e.h, e.radius);
+}
+
+export function pathFor(ctx: PathSink, shape: ShapeKind, w: number, h: number, radius: number) {
   ctx.beginPath();
-  switch (e.shape) {
-    case 'rect':
-      roundRectPath(ctx, 0, 0, w, h, e.radius);
+  switch (shape) {
+    case 'rect': {
+      const rr = Math.max(0, Math.min(radius, w / 2, h / 2));
+      if (rr <= 0) ctx.rect(0, 0, w, h);
+      else ctx.roundRect(0, 0, w, h, rr);
       return;
+    }
     case 'ellipse':
       ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
       return;
@@ -264,8 +229,8 @@ export function shapePath(ctx: CanvasRenderingContext2D, e: ShapeElement) {
 function drawShape(ctx: CanvasRenderingContext2D, e: ShapeElement, scale: number) {
   shapePath(ctx, e);
   applyShadow(ctx, e, scale);
-  if (e.fill) {
-    ctx.fillStyle = e.fill;
+  if (e.gradient || e.fill) {
+    ctx.fillStyle = e.gradient ? linearGradientFor(ctx, e.gradient, e.w, e.h) : e.fill!;
     ctx.fill();
     clearShadow(ctx);
   }
@@ -337,17 +302,57 @@ function drawIcon(ctx: CanvasRenderingContext2D, e: IconElement, scale: number) 
   ctx.restore();
 }
 
+function imageOutline(ctx: CanvasRenderingContext2D, e: ImageElement) {
+  if (e.mask && e.mask !== 'rect') pathFor(ctx, e.mask, e.w, e.h, e.radius);
+  else roundRectPath(ctx, 0, 0, e.w, e.h, e.radius);
+}
+
+/** An empty frame: a soft placeholder in the frame's shape. */
+function paintFramePlaceholder(ctx: CanvasRenderingContext2D, e: ImageElement) {
+  imageOutline(ctx, e);
+  ctx.fillStyle = 'rgba(142,142,150,0.28)';
+  ctx.fill();
+  ctx.setLineDash([Math.max(4, e.w / 40), Math.max(3, e.w / 60)]);
+  ctx.strokeStyle = 'rgba(142,142,150,0.9)';
+  ctx.lineWidth = Math.max(1.5, Math.min(e.w, e.h) / 120);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const icon = iconPath('camera');
+  if (icon) {
+    const k = Math.min(e.w, e.h) / 24 / 4;
+    ctx.save();
+    ctx.translate(e.w / 2 - 12 * k, e.h / 2 - 12 * k);
+    ctx.scale(k, k);
+    ctx.strokeStyle = 'rgba(142,142,150,0.95)';
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke(icon);
+    ctx.restore();
+  }
+}
+
+let showPlaceholders = true;
+
 function paintImageContent(ctx: CanvasRenderingContext2D, e: ImageElement, scale: number) {
+  if (!e.assetId) {
+    if (showPlaceholders) paintFramePlaceholder(ctx, e);
+    return;
+  }
   const entry = getImage(e.assetId);
   ctx.save();
   if (e.flipX || e.flipY) {
     ctx.translate(e.flipX ? e.w : 0, e.flipY ? e.h : 0);
     ctx.scale(e.flipX ? -1 : 1, e.flipY ? -1 : 1);
   }
-  roundRectPath(ctx, 0, 0, e.w, e.h, e.radius);
+  imageOutline(ctx, e);
   ctx.save();
   ctx.clip();
-  if (entry) {
+  const adjusted = entry && !isIdentity(e.adjust) ? adjustedImage(e.assetId, e.crop, e.adjust!, e.w * scale, e.h * scale, scale) : null;
+  if (adjusted) {
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(adjusted, 0, 0, e.w, e.h);
+  } else if (entry) {
     const devicePerSource = (e.w / e.crop.w) * scale;
     const k = devicePerSource >= 0.5 ? 0 : Math.min(6, Math.floor(Math.log2(1 / devicePerSource)));
     const lvl = getMipLevel(e.assetId, k) ?? { source: entry.source, factor: 1 };
@@ -360,10 +365,22 @@ function paintImageContent(ctx: CanvasRenderingContext2D, e: ImageElement, scale
   }
   ctx.restore();
   if (e.borderWidth > 0) {
-    roundRectPath(ctx, e.borderWidth / 2, e.borderWidth / 2, e.w - e.borderWidth, e.h - e.borderWidth, Math.max(0, e.radius - e.borderWidth / 2));
-    ctx.strokeStyle = e.borderColor;
-    ctx.lineWidth = e.borderWidth;
-    ctx.stroke();
+    if (e.mask && e.mask !== 'rect') {
+      // Stroke inside the shape: clip, then draw a double-width stroke.
+      imageOutline(ctx, e);
+      ctx.save();
+      ctx.clip();
+      ctx.strokeStyle = e.borderColor;
+      ctx.lineWidth = e.borderWidth * 2;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      roundRectPath(ctx, e.borderWidth / 2, e.borderWidth / 2, e.w - e.borderWidth, e.h - e.borderWidth, Math.max(0, e.radius - e.borderWidth / 2));
+      ctx.strokeStyle = e.borderColor;
+      ctx.lineWidth = e.borderWidth;
+      ctx.stroke();
+    }
   }
   ctx.restore();
 }
@@ -397,22 +414,69 @@ function drawImage(ctx: CanvasRenderingContext2D, e: ImageElement, scale: number
 
 function drawText(ctx: CanvasRenderingContext2D, e: TextElement, scale: number) {
   const L = layoutText(e);
-  ctx.font = fontCss(e.fontFamily, e.fontSize, e.bold, e.italic);
   ctx.textBaseline = 'middle';
+  const baseFill: string | CanvasGradient = e.gradient ? linearGradientFor(ctx, e.gradient, e.w, e.h) : e.color;
+  const fillFor = (st: CharStyle) => st.color ?? baseFill;
+
+  if (L.curved) {
+    ctx.textAlign = 'center';
+    const paintCurved = (mode: 'fill' | 'stroke') => {
+      for (const g of L.curved!) {
+        ctx.save();
+        ctx.translate(g.x, g.y);
+        ctx.rotate(g.angle);
+        ctx.font = g.font;
+        if (mode === 'fill') {
+          ctx.fillStyle = fillFor(g.style);
+          ctx.fillText(g.ch, 0, 0);
+        } else ctx.strokeText(g.ch, 0, 0);
+        ctx.restore();
+      }
+    };
+    applyShadow(ctx, e, scale);
+    if (e.strokeWidth > 0) {
+      ctx.strokeStyle = e.strokeColor;
+      ctx.lineWidth = e.strokeWidth * 2;
+      ctx.lineJoin = 'round';
+      paintCurved('stroke');
+      clearShadow(ctx);
+    }
+    paintCurved('fill');
+    clearShadow(ctx);
+    return;
+  }
+
   ctx.textAlign = 'left';
-  const lineX = (w: number) => (e.align === 'center' ? (e.w - w) / 2 : e.align === 'right' ? e.w - w : 0);
+  const lineX = (l: { width: number; indent: number }) => {
+    const avail = e.w - l.indent;
+    return l.indent + (e.align === 'center' ? (avail - l.width) / 2 : e.align === 'right' ? avail - l.width : 0);
+  };
+  const baseFont = fontCss(e.fontFamily, e.fontSize, e.bold, e.italic);
   const paint = (mode: 'fill' | 'stroke') => {
     L.lines.forEach((line, i) => {
       const y = i * L.lineHeightPx + L.lineHeightPx / 2;
-      let x = lineX(line.width);
-      if (!e.letterSpacing) {
-        if (mode === 'fill') ctx.fillText(line.text, x, y);
-        else ctx.strokeText(line.text, x, y);
-      } else {
-        for (const ch of line.text) {
-          if (mode === 'fill') ctx.fillText(ch, x, y);
-          else ctx.strokeText(ch, x, y);
-          x += ctx.measureText(ch).width + e.letterSpacing;
+      let x = lineX(line);
+      if (line.marker) {
+        ctx.font = baseFont;
+        const mx = x - line.markerWidth - e.fontSize * 0.4;
+        if (mode === 'fill') {
+          ctx.fillStyle = baseFill;
+          ctx.fillText(line.marker, mx, y);
+        } else ctx.strokeText(line.marker, mx, y);
+      }
+      for (const seg of line.segs) {
+        ctx.font = seg.font;
+        if (mode === 'fill') ctx.fillStyle = fillFor(seg.style);
+        if (!e.letterSpacing) {
+          if (mode === 'fill') ctx.fillText(seg.text, x, y);
+          else ctx.strokeText(seg.text, x, y);
+          x += seg.width;
+        } else {
+          for (const ch of seg.text) {
+            if (mode === 'fill') ctx.fillText(ch, x, y);
+            else ctx.strokeText(ch, x, y);
+            x += ctx.measureText(ch).width + e.letterSpacing;
+          }
         }
       }
     });
@@ -425,17 +489,21 @@ function drawText(ctx: CanvasRenderingContext2D, e: TextElement, scale: number) 
     paint('stroke');
     clearShadow(ctx);
   }
-  ctx.fillStyle = e.color;
   paint('fill');
   clearShadow(ctx);
-  if (e.underline) {
-    const t = Math.max(1, e.fontSize / 14);
-    L.lines.forEach((line, i) => {
-      if (!line.text.trim()) return;
-      const y = i * L.lineHeightPx + L.lineHeightPx / 2 + e.fontSize * 0.42;
-      ctx.fillRect(lineX(line.width), y, line.width, t);
-    });
-  }
+  // Underlines, per styled segment
+  const t = Math.max(1, e.fontSize / 14);
+  L.lines.forEach((line, i) => {
+    const y = i * L.lineHeightPx + L.lineHeightPx / 2 + e.fontSize * 0.42;
+    let x = lineX(line);
+    for (const seg of line.segs) {
+      if (seg.style.underline && seg.text.trim()) {
+        ctx.fillStyle = fillFor(seg.style);
+        ctx.fillRect(x, y, seg.width - (e.letterSpacing ? e.letterSpacing : 0), t);
+      }
+      x += seg.width;
+    }
+  });
 }
 
 /** Draw one element with its transform applied. */
@@ -462,6 +530,14 @@ export function drawElement(ctx: CanvasRenderingContext2D, e: StudioElement, sca
     case 'text':
       drawText(ctx, e, scale);
       break;
+    case 'chart':
+      applyShadow(ctx, e, scale);
+      drawChart(ctx, e);
+      clearShadow(ctx);
+      break;
+    case 'qr':
+      drawQr(ctx, e);
+      break;
   }
   ctx.restore();
 }
@@ -473,8 +549,9 @@ export function drawElement(ctx: CanvasRenderingContext2D, e: StudioElement, sca
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   doc: StudioDoc,
-  opts: { scale: number; skip?: string | null; background?: boolean },
+  opts: { scale: number; skip?: string | null; background?: boolean; placeholders?: boolean; only?: Set<string> },
 ) {
+  showPlaceholders = opts.placeholders !== false;
   ctx.save();
   if (opts.background !== false) {
     ctx.save();
@@ -485,10 +562,29 @@ export function renderScene(
   ctx.rect(0, 0, doc.width, doc.height);
   ctx.clip();
   for (const e of doc.elements) {
-    if (e.id === opts.skip) continue;
+    if (e.id === opts.skip || (opts.only && !opts.only.has(e.id))) continue;
     drawElement(ctx, e, opts.scale);
   }
   ctx.restore();
+  showPlaceholders = true;
+}
+
+/**
+ * Render for export: no frame placeholders, optionally only some elements,
+ * optionally cropped to `bounds` (design px). `scale` = output px per design px.
+ */
+export function renderExport(doc: StudioDoc, opts: { scale: number; background: boolean; matte?: string | null; only?: Set<string>; bounds?: { x: number; y: number; w: number; h: number }; outW?: number; outH?: number }): HTMLCanvasElement {
+  const box = opts.bounds ?? { x: 0, y: 0, w: doc.width, h: doc.height };
+  const c = createCanvas(Math.max(1, Math.round(opts.outW ?? box.w * opts.scale)), Math.max(1, Math.round(opts.outH ?? box.h * opts.scale)));
+  const ctx = ctx2d(c);
+  if (opts.matte) {
+    ctx.fillStyle = opts.matte;
+    ctx.fillRect(0, 0, c.width, c.height);
+  }
+  ctx.scale(c.width / box.w, c.height / box.h);
+  ctx.translate(-box.x, -box.y);
+  renderScene(ctx, doc, { scale: c.width / box.w, background: opts.background, placeholders: false, only: opts.only });
+  return c;
 }
 
 /** Render a document to a new canvas at `scale` output pixels per design pixel. */

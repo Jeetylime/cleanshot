@@ -12,6 +12,14 @@ export function useStudioShortcuts(openShortcuts: () => void) {
       if (getRoute().section !== 'canvas') return;
       const s = studio.get();
       if (!s.doc) return;
+      // While a dialog is open, Escape closes it and canvas shortcuts pause.
+      if (s.dialog) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          studio.set({ dialog: null });
+        }
+        return;
+      }
       const mod = e.metaKey || e.ctrlKey;
       const key = e.key.toLowerCase();
       let handled = true;
@@ -57,6 +65,9 @@ export function useStudioShortcuts(openShortcuts: () => void) {
             break;
           case 's':
             void A.saveNow();
+            break;
+          case 'f':
+            studio.set({ dialog: 'find' });
             break;
           case 'e':
             studio.set({ exportOpen: true });
@@ -118,6 +129,12 @@ export function useStudioShortcuts(openShortcuts: () => void) {
         case 'ArrowDown':
           A.nudge(0, step);
           break;
+        case 'PageDown':
+          A.goToPage((s.doc.pageIndex ?? 0) + 1);
+          break;
+        case 'PageUp':
+          A.goToPage((s.doc.pageIndex ?? 0) - 1);
+          break;
         case '?':
           openShortcuts();
           break;
@@ -160,8 +177,10 @@ export const STUDIO_SHORTCUTS: { group: string; items: [string, string][] }[] = 
       ['Edit text / crop image', 'Enter or double-click'],
       ['Zoom in / out', '⌘+ / ⌘−'],
       ['Fit / 100%', '⌘0 / ⌘1'],
+      ['Previous / next page', 'PgUp / PgDn'],
       ['Pan', 'Space + drag'],
       ['Export', '⌘E'],
+      ['Find and replace', '⌘F'],
       ['Keep proportions / free resize', '⇧ while resizing'],
       ['Turn off snapping', 'Alt while dragging'],
     ],

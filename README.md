@@ -46,9 +46,19 @@ npm run preview   # serve the production build
 
 **Layers**: list with rename, drag to reorder, hide/show, lock/unlock and delete.
 
+**Pages**: multi-page designs (carousels, decks, multi-page flyers) with a page strip to add, duplicate, reorder and delete pages; PgUp/PgDn to move between them.
+
+**More elements**: 130 icons, stickers, badges and dividers (editable groups), frames you drop photos into, bar/column/line/pie/donut charts from typed-in data, and styled QR codes.
+
+**Image tools in Canvas**: brightness, contrast, saturation, warmth, blur, grayscale and sepia, ten filter presets, frame shapes (masks), plus background removal and 2× upscaling using the on-device models.
+
+**Rich text**: style individual words (bold, italic, underline, color), bulleted and numbered lists, curved text, and gradient text. Shapes can use gradient fills too.
+
+**Workflow**: brand kit (colors, fonts, logos), your own templates, smart resize into other sizes, find and replace across pages, rulers, grid with snapping, margins and a story safe zone, named and collapsible layer groups.
+
 **Projects**: autosaved to IndexedDB (no account, no cloud), reopen and duplicate from “Your designs”, rename, download and import editable `.studiolo` project files (older `.cleanshot` files still open), warnings when browser storage is full or nearly full.
 
-**Export**: PNG, JPEG, WebP or PDF (single page; paper presets export at real US Letter/A4 size), transparent background for PNG/WebP, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
+**Export**: PNG, JPEG, WebP, SVG or PDF; one page, all pages (multi-page PDF, or a ZIP of images) or just the selection; PDFs can include an invisible text layer so text is selectable and searchable; SVG keeps shapes, icons, charts and text as vectors with fonts embedded; paper presets export at real US Letter/A4 size; transparent background for PNG/WebP/SVG, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
 
 **Integration**: Edit's “Send to Canvas” places the edited image on the current design; Canvas's “Annotate” opens an image in Edit; the Cropper, Background Remover and Upscaler have a “Design” button that opens the result on Canvas.
 

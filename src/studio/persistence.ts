@@ -1,4 +1,6 @@
 import type { StudioDoc } from './types';
+import { allPages } from './pages';
+import { brandAssetIds } from './brand';
 
 /**
  * Local project storage (IndexedDB). Projects store the editable document and
@@ -7,7 +9,7 @@ import type { StudioDoc } from './types';
  */
 
 const DB_NAME = 'cleanshot-studio';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface ProjectRecord {
   id: string;
@@ -40,6 +42,7 @@ function db(): Promise<IDBDatabase> {
       const d = req.result;
       if (!d.objectStoreNames.contains('projects')) d.createObjectStore('projects', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('assets')) d.createObjectStore('assets', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('templates')) d.createObjectStore('templates', { keyPath: 'id' });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -109,15 +112,17 @@ export async function hasAsset(id: string): Promise<boolean> {
 /** Delete a project and any assets no other project still uses. */
 export async function deleteProject(id: string): Promise<void> {
   const d = await db();
-  const tx = d.transaction(['projects', 'assets'], 'readwrite');
+  const tx = d.transaction(['projects', 'assets', 'templates'], 'readwrite');
   const projects = tx.objectStore('projects');
   const assets = tx.objectStore('assets');
   projects.delete(id);
   const all = (await wrap(projects.getAll())) as ProjectRecord[];
-  const used = new Set<string>();
+  const tpls = (await wrap(tx.objectStore('templates').getAll())) as ProjectRecord[];
+  const used = new Set<string>(brandAssetIds());
+  for (const t of tpls) for (const pg of allPages(t.doc)) for (const e of pg.elements) if (e.type === 'image') used.add(e.assetId);
   for (const p of all) {
     if (p.id === id) continue;
-    for (const e of p.doc.elements) if (e.type === 'image') used.add(e.assetId);
+    for (const pg of allPages(p.doc)) for (const e of pg.elements) if (e.type === 'image') used.add(e.assetId);
   }
   const keys = (await wrap(assets.getAllKeys())) as string[];
   for (const k of keys) if (!used.has(k)) assets.delete(k);
@@ -127,10 +132,10 @@ export async function deleteProject(id: string): Promise<void> {
 /** Remove assets that no saved project references (e.g. images deleted before a save). */
 export async function collectGarbage(keep: Set<string>): Promise<void> {
   const d = await db();
-  const tx = d.transaction(['projects', 'assets'], 'readwrite');
-  const all = (await wrap(tx.objectStore('projects').getAll())) as ProjectRecord[];
-  const used = new Set(keep);
-  for (const p of all) for (const e of p.doc.elements) if (e.type === 'image') used.add(e.assetId);
+  const tx = d.transaction(['projects', 'assets', 'templates'], 'readwrite');
+  const all = [...((await wrap(tx.objectStore('projects').getAll())) as ProjectRecord[]), ...((await wrap(tx.objectStore('templates').getAll())) as ProjectRecord[])];
+  const used = new Set([...keep, ...brandAssetIds()]);
+  for (const p of all) for (const pg of allPages(p.doc)) for (const e of pg.elements) if (e.type === 'image') used.add(e.assetId);
   const store = tx.objectStore('assets');
   const keys = (await wrap(store.getAllKeys())) as string[];
   for (const k of keys) if (!used.has(k)) store.delete(k);
@@ -205,10 +210,33 @@ export async function parseProjectFile(file: Blob): Promise<{ doc: StudioDoc; as
   } catch {
     throw new Error('This file isn’t a Studiolo project.');
   }
-  if ((parsed?.format !== PROJECT_FILE_FORMAT && !LEGACY_FORMATS.includes(parsed?.format)) || !parsed.doc || !Array.isArray(parsed.doc.elements)) throw new Error('This file isn’t a Studiolo project.');
+  if ((parsed?.format !== PROJECT_FILE_FORMAT && !LEGACY_FORMATS.includes(parsed?.format)) || !parsed.doc || !(Array.isArray(parsed.doc.elements) || Array.isArray(parsed.doc.pages))) throw new Error('This file isn’t a Studiolo project.');
   if (parsed.version > PROJECT_FILE_VERSION) throw new Error('This project was made with a newer version of Studiolo.');
   const doc = parsed.doc;
   if (!(doc.width > 0 && doc.height > 0)) throw new Error('The project file is damaged.');
   const assets = (parsed.assets ?? []).map((a) => ({ id: a.id, name: a.name, width: a.width, height: a.height, blob: base64ToBlob(a.data, a.type) }));
   return { doc, assets };
+}
+
+// ---------------------------------------------------------------------------
+// Your templates: saved copies of designs to start new ones from.
+
+export async function saveTemplate(rec: ProjectRecord): Promise<void> {
+  const d = await db();
+  const tx = d.transaction('templates', 'readwrite');
+  tx.objectStore('templates').put(rec);
+  await done(tx);
+}
+
+export async function listTemplates(): Promise<ProjectRecord[]> {
+  const d = await db();
+  const all = (await wrap(d.transaction('templates').objectStore('templates').getAll())) as ProjectRecord[];
+  return all.sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  const d = await db();
+  const tx = d.transaction('templates', 'readwrite');
+  tx.objectStore('templates').delete(id);
+  await done(tx);
 }

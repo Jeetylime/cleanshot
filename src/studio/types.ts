@@ -8,6 +8,8 @@
  * history snapshots stay small.
  */
 
+import type { Adjust } from './imageFx';
+
 export type PatternKind = 'dots' | 'grid' | 'stripes' | 'checks';
 
 export type StudioFill =
@@ -46,6 +48,23 @@ interface ElementBase {
 
 export type TextAlign = 'left' | 'center' | 'right';
 
+/** Linear gradient across an element's box (CSS angle: 0 = up, 90 = right). */
+export interface Gradient {
+  from: string;
+  to: string;
+  angle: number;
+}
+
+/** Style override for part of a text, by character offsets into `text`. */
+export interface TextRun {
+  start: number;
+  end: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  color?: string;
+}
+
 export interface TextElement extends ElementBase {
   type: 'text';
   text: string;
@@ -64,6 +83,13 @@ export interface TextElement extends ElementBase {
   strokeColor: string;
   /** Uppercase rendering without changing the stored text. */
   uppercase: boolean;
+  /** Styled ranges (later runs win). */
+  runs?: TextRun[];
+  list?: 'none' | 'bullet' | 'number';
+  /** -100 to 100; 0 = straight. Positive arches up, negative curves down. */
+  curve?: number;
+  /** Gradient fill instead of `color` (runs with a color still use it). */
+  gradient?: Gradient | null;
 }
 
 export type ShapeKind = 'rect' | 'ellipse' | 'triangle' | 'star' | 'hexagon' | 'diamond' | 'heart' | 'bubble';
@@ -76,6 +102,8 @@ export interface ShapeElement extends ElementBase {
   strokeWidth: number;
   /** Corner radius for rectangles. */
   radius: number;
+  /** Gradient fill instead of `fill`. */
+  gradient?: Gradient | null;
 }
 
 export interface LineElement extends ElementBase {
@@ -105,6 +133,10 @@ export interface ImageElement extends ElementBase {
   radius: number;
   borderWidth: number;
   borderColor: string;
+  /** Non-destructive adjustments (see imageFx). Optional for older designs. */
+  adjust?: Adjust;
+  /** Clip the image to a shape (a "frame"). Null = rectangle with `radius`. */
+  mask?: ShapeKind | null;
 }
 
 export interface IconElement extends ElementBase {
@@ -116,16 +148,51 @@ export interface IconElement extends ElementBase {
   filled: boolean;
 }
 
-export type StudioElement = TextElement | ShapeElement | LineElement | ImageElement | IconElement;
+export type ChartKind = 'bar' | 'column' | 'line' | 'pie' | 'donut';
+
+export interface ChartElement extends ElementBase {
+  type: 'chart';
+  chart: ChartKind;
+  data: { label: string; value: number }[];
+  colors: string[];
+  textColor: string;
+  fontFamily: string;
+  showLabels: boolean;
+  showValues: boolean;
+}
+
+export interface QrElement extends ElementBase {
+  type: 'qr';
+  data: string;
+  fg: string;
+  /** Null = transparent. */
+  bg: string | null;
+  ecc: 'L' | 'M' | 'Q' | 'H';
+  rounded: boolean;
+}
+
+export type StudioElement = TextElement | ShapeElement | LineElement | ImageElement | IconElement | ChartElement | QrElement;
 export type ElementType = StudioElement['type'];
+
+export interface PageData {
+  id: string;
+  background: StudioFill;
+  elements: StudioElement[];
+}
 
 export interface StudioDoc {
   id: string;
   name: string;
   width: number;
   height: number;
+  /** The page being edited (mirrored into `pages[pageIndex]` by syncPages). */
   background: StudioFill;
   elements: StudioElement[];
+  /** Every page. The entry at `pageIndex` may be stale while it is active; use allPages(). */
+  pages: PageData[];
+  pageIndex: number;
+  /** Display names for groups, by group id. */
+  groupNames?: Record<string, string>;
   createdAt: number;
   updatedAt: number;
 }

@@ -17,20 +17,33 @@ import {
   Minus,
   MoveRight,
   Group,
+  ChartColumn,
+  ChartBar,
+  ChartLine,
+  ChartPie,
+  Donut,
+  QrCode,
+  Briefcase,
+  BookmarkPlus,
+  ChevronRight,
 } from 'lucide-react';
 import { Tooltip } from '../components/ui/Tooltip';
-import { ColorWell, Slider, Toggle } from '../components/ui/controls';
+import { Button, ColorWell, Slider, Toggle } from '../components/ui/controls';
 import { pickFiles } from '../tools/shared/ui';
 import { getImage } from '../engine/images';
 import { studio, useStudio, shallowEqual, type LeftPanel as PanelId } from './store';
 import * as A from './actions';
 import { DND_TYPE, type DndPayload } from './Stage';
+import { FrameShapeGlyph } from './ImageExtras';
+import { STICKERS } from './stickers';
+import { deleteTemplate, listTemplates, type ProjectRecord } from './persistence';
+import { BrandPanel } from './BrandPanel';
 import { ICONS } from './iconData';
 import { SHAPE_LABELS, fitText, newDoc } from './factory';
 import { TEMPLATES } from './templates';
 import { renderToCanvas, studioFillCss } from './render';
 import { FONTS, fontOf, loadFontsFor } from './fonts';
-import type { PatternKind, ShapeKind, StudioElement, StudioFill, TextElement } from './types';
+import type { ChartKind, PatternKind, ShapeKind, StudioElement, StudioFill, TextElement } from './types';
 
 const RAIL: { id: PanelId; label: string; icon: typeof Shapes }[] = [
   { id: 'templates', label: 'Templates', icon: LayoutTemplate },
@@ -38,6 +51,7 @@ const RAIL: { id: PanelId; label: string; icon: typeof Shapes }[] = [
   { id: 'text', label: 'Text', icon: Type },
   { id: 'uploads', label: 'Uploads', icon: Upload },
   { id: 'backgrounds', label: 'Background', icon: Palette },
+  { id: 'brand', label: 'Brand', icon: Briefcase },
   { id: 'layers', label: 'Layers', icon: Layers },
 ];
 
@@ -91,6 +105,7 @@ export function LeftDrawer() {
         {panel === 'text' && <TextPanel />}
         {panel === 'uploads' && <UploadsPanel />}
         {panel === 'backgrounds' && <BackgroundPanel />}
+        {panel === 'brand' && <BrandPanel />}
         {panel === 'layers' && <LayersPanel />}
       </div>
     </aside>
@@ -128,15 +143,34 @@ const tile =
 function TemplatesPanel() {
   const hasContent = useStudio((s) => (s.doc?.elements.length ?? 0) > 0);
   const [resize, setResize] = useState(true);
+  const [cat, setCat] = useState<string>('All');
+  const cats = ['All', ...new Set(TEMPLATES.map((t) => t.category))];
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs leading-[17px] text-muted">Start from a layout, then change anything. Templates replace what’s on the canvas; undo brings it back.</p>
+      <p className="text-xs leading-[17px] text-muted">Start from a layout, then change anything. Templates replace what’s on this page; undo brings it back.</p>
+      <Button onClick={() => void A.saveAsTemplate()}>
+        <BookmarkPlus size={13} /> Save this design as a template
+      </Button>
+      <UserTemplates compact />
+      <div className="flex flex-wrap gap-1">
+        {cats.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setCat(c)}
+            aria-pressed={cat === c}
+            className={`h-6 rounded-full px-2.5 text-2xs font-medium ${cat === c ? 'bg-accent text-white' : 'bg-control text-muted hover:text-fg'}`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
       <label className="flex items-center justify-between gap-2 text-xs text-muted">
         <span>Use the template’s size</span>
         <Toggle checked={resize} onChange={setResize} label="Use the template’s size" />
       </label>
       <div className="grid grid-cols-2 gap-2">
-        {TEMPLATES.map((t) => (
+        {TEMPLATES.filter((t) => cat === 'All' || t.category === cat).map((t) => (
           <button
             key={t.id}
             type="button"
@@ -155,6 +189,57 @@ function TemplatesPanel() {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Designs you saved as templates; using one starts a new design. */
+export function UserTemplates({ compact = false }: { compact?: boolean }) {
+  const tick = useStudio((s) => s.paintTick);
+  const [list, setList] = useState<ProjectRecord[] | null>(null);
+  const refresh = () => void listTemplates().then(setList).catch(() => setList([]));
+  useEffect(refresh, [tick]);
+  if (!list?.length) return null;
+  return (
+    <section className="flex flex-col gap-2" aria-label="Your templates">
+      <h3 className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">Your templates</h3>
+      <div className={`grid gap-2 ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
+        {list.map((t) => (
+          <UserTemplateCard key={t.id} t={t} onDeleted={refresh} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function UserTemplateCard({ t, onDeleted }: { t: ProjectRecord; onDeleted: () => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!t.thumb) return;
+    const u = URL.createObjectURL(t.thumb);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [t.thumb]);
+  return (
+    <div className="group relative flex flex-col gap-1.5">
+      <button type="button" onClick={() => void A.createFromUserTemplate(t)} className="flex flex-col gap-1.5 text-left" title="Start a new design from this template">
+        <span className="flex aspect-square items-center justify-center overflow-hidden rounded-[10px] border border-line bg-window p-2 group-hover:border-line-strong">
+          {url && <img src={url} alt="" className="max-h-full max-w-full rounded-[3px] shadow-soft" draggable={false} />}
+        </span>
+        <span className="truncate text-xs font-medium text-fg">{t.name}</span>
+      </button>
+      <button
+        type="button"
+        aria-label={`Delete template ${t.name}`}
+        onClick={async () => {
+          if (!confirm(`Delete the template “${t.name}”?`)) return;
+          await deleteTemplate(t.id);
+          onDeleted();
+        }}
+        className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-[6px] bg-elevated text-muted shadow-pop group-hover:flex hover:text-danger"
+      >
+        <Trash2 size={12} />
+      </button>
     </div>
   );
 }
@@ -197,6 +282,37 @@ export function TemplateThumb({ id }: { id: string }) {
 // ---------------------------------------------------------------------------
 // Elements
 
+const CHARTS: { kind: ChartKind; label: string; icon: typeof Shapes }[] = [
+  { kind: 'column', label: 'Column', icon: ChartColumn },
+  { kind: 'bar', label: 'Bar', icon: ChartBar },
+  { kind: 'line', label: 'Line', icon: ChartLine },
+  { kind: 'pie', label: 'Pie', icon: ChartPie },
+  { kind: 'donut', label: 'Donut', icon: Donut },
+];
+
+const stickerThumbs = new Map<string, string>();
+function StickerThumb({ id }: { id: string }) {
+  const [url, setUrl] = useState(stickerThumbs.get(id) ?? null);
+  useEffect(() => {
+    if (url) return;
+    let cancelled = false;
+    void (async () => {
+      const st = STICKERS.find((x) => x.id === id)!;
+      const els = st.build();
+      await loadFontsFor(els.filter((e): e is TextElement => e.type === 'text'));
+      const doc = newDoc({ width: st.w + 8, height: st.h + 8, background: { kind: 'transparent' }, elements: els.map((e) => ({ ...(e.type === 'text' ? fitText(e) : e), x: e.x + 4, y: e.y + 4 })) });
+      const u = renderToCanvas(doc, Math.min(1, 160 / Math.max(doc.width, doc.height))).toDataURL('image/png');
+      stickerThumbs.set(id, u);
+      if (!cancelled) setUrl(u);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, url]);
+  return url ? <img src={url} alt="" draggable={false} className="max-h-full max-w-full" /> : <span className="h-1/2 w-1/2 animate-pulse rounded bg-control" />;
+}
+
+const FRAME_SHAPES: ShapeKind[] = ['ellipse', 'rect', 'heart', 'star', 'hexagon', 'diamond', 'triangle', 'bubble'];
 const SHAPES: ShapeKind[] = ['rect', 'ellipse', 'triangle', 'star', 'hexagon', 'diamond', 'heart', 'bubble'];
 
 function ShapeGlyph({ shape }: { shape: ShapeKind }) {
@@ -269,6 +385,53 @@ function ElementsPanel() {
             </Tooltip>
           ))}
           {!icons.length && <p className="col-span-5 text-xs text-subtle">No icons match.</p>}
+        </div>
+      </Group_>
+      {(['Stickers', 'Badges', 'Dividers'] as const).map((cat) => (
+        <Group_ key={cat} title={cat}>
+          <div className={`grid gap-1.5 ${cat === 'Dividers' ? 'grid-cols-1' : 'grid-cols-3'}`}>
+            {STICKERS.filter((st) => st.category === cat).map((st) => (
+              <Tooltip key={st.id} label={st.label}>
+                <button
+                  type="button"
+                  aria-label={`Add ${st.label}`}
+                  onClick={() => A.addSticker(st.id)}
+                  className={`${tile} w-full p-1.5 ${cat === 'Dividers' ? 'h-10' : 'aspect-square'}`}
+                  {...dragProps({ kind: 'sticker', id: st.id })}
+                >
+                  <StickerThumb id={st.id} />
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </Group_>
+      ))}
+      <Group_ title="Charts">
+        <div className="grid grid-cols-5 gap-1.5">
+          {CHARTS.map((c) => (
+            <Tooltip key={c.kind} label={`${c.label} chart`}>
+              <button type="button" aria-label={`Add ${c.label} chart`} onClick={() => A.addChart(c.kind)} className={`${tile} aspect-square w-full`}>
+                <c.icon size={18} />
+              </button>
+            </Tooltip>
+          ))}
+        </div>
+      </Group_>
+      <Group_ title="QR code">
+        <button type="button" onClick={A.addQr} className={`${tile} h-11 gap-2 text-xs`}>
+          <QrCode size={16} /> Add a QR code
+        </button>
+      </Group_>
+      <Group_ title="Frames">
+        <p className="-mt-1 text-2xs leading-[14px] text-subtle">Add a frame, then drop a photo onto it.</p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {FRAME_SHAPES.map((m) => (
+            <Tooltip key={m} label={`${SHAPE_LABELS[m]} frame`}>
+              <button type="button" aria-label={`Add ${SHAPE_LABELS[m]} frame`} onClick={() => A.addFrame(m)} className={`${tile} aspect-square w-full border-dashed`}>
+                <FrameShapeGlyph shape={m} />
+              </button>
+            </Tooltip>
+          ))}
         </div>
       </Group_>
       <Group_ title="Images">
@@ -520,91 +683,171 @@ function layerIcon(e: StudioElement) {
           <path d={ICONS[e.icon] ?? ''} />
         </svg>
       );
+    case 'chart':
+      return <ChartColumn size={13} />;
+    case 'qr':
+      return <QrCode size={13} />;
     default:
       return <Shapes size={13} />;
   }
 }
 
+type LayerRow = { kind: 'el'; e: StudioElement; z: number; inGroup: boolean } | { kind: 'group'; gid: string; members: StudioElement[]; z: number };
+
 function LayersPanel() {
-  const { elements, selection } = useStudio((s) => ({ elements: s.doc?.elements ?? [], selection: s.selection }), shallowEqual);
+  const { elements, selection, names } = useStudio((s) => ({ elements: s.doc?.elements ?? [], selection: s.selection, names: s.doc?.groupNames }), shallowEqual);
   const [renaming, setRenaming] = useState<string | null>(null);
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dropAt, setDropAt] = useState<number | null>(null);
-  const list = [...elements].reverse();
-  if (!list.length)
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [drag, setDrag] = useState<{ id: string; group: boolean } | null>(null);
+  const [dropZ, setDropZ] = useState<number | null>(null);
+  if (!elements.length)
     return <p className="text-xs leading-[17px] text-subtle">Nothing on the canvas yet. Add text, shapes or images, and they’ll be listed here from top to bottom.</p>;
+
+  // Top of the list = front. Group members are shown under a group row.
+  const rows: LayerRow[] = [];
+  const seen = new Set<string>();
+  for (let z = elements.length - 1; z >= 0; z--) {
+    const e = elements[z];
+    if (e.groupId) {
+      if (seen.has(e.groupId)) continue;
+      seen.add(e.groupId);
+      const members = elements.filter((x) => x.groupId === e.groupId).reverse();
+      rows.push({ kind: 'group', gid: e.groupId, members, z });
+      if (!collapsed.has(e.groupId)) for (const m of members) rows.push({ kind: 'el', e: m, z: elements.indexOf(m), inGroup: true });
+    } else rows.push({ kind: 'el', e, z, inGroup: false });
+  }
+
+  const toggleCollapse = (gid: string) =>
+    setCollapsed((c) => {
+      const n = new Set(c);
+      if (n.has(gid)) n.delete(gid);
+      else n.add(gid);
+      return n;
+    });
+
+  const finishDrop = () => {
+    if (drag && dropZ !== null) {
+      // dropZ = the element that should end up directly behind the dragged item (-1 = very back)
+      const ids = new Set(drag.group ? elements.filter((x) => x.groupId === drag.id).map((x) => x.id) : [drag.id]);
+      let refZ = dropZ;
+      while (refZ >= 0 && ids.has(elements[refZ].id)) refZ--;
+      A.moveAbove(ids, refZ >= 0 ? elements[refZ].id : null);
+    }
+    setDrag(null);
+    setDropZ(null);
+  };
+
+  const rowDrag = (id: string, group: boolean, z: number) => ({
+    draggable: renaming !== id,
+    onDragStart: (ev: React.DragEvent) => {
+      setDrag({ id, group });
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', id);
+    },
+    onDragOver: (ev: React.DragEvent) => {
+      if (!drag) return;
+      ev.preventDefault();
+      const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+      // Dropping on the upper half puts it in front of this row.
+      setDropZ(ev.clientY < r.top + r.height / 2 ? z : z - 1);
+    },
+    onDrop: (ev: React.DragEvent) => {
+      ev.preventDefault();
+      finishDrop();
+    },
+    onDragEnd: () => {
+      setDrag(null);
+      setDropZ(null);
+    },
+  });
+
+  const nameInput = (initial: string, commit: (v: string) => void) => (
+    <input
+      autoFocus
+      defaultValue={initial}
+      aria-label="Layer name"
+      onClick={(ev) => ev.stopPropagation()}
+      onBlur={(ev) => {
+        commit(ev.target.value);
+        setRenaming(null);
+      }}
+      onKeyDown={(ev) => {
+        ev.stopPropagation();
+        if (ev.key === 'Enter') (ev.target as HTMLInputElement).blur();
+        if (ev.key === 'Escape') setRenaming(null);
+      }}
+      className="h-6 min-w-0 flex-1 rounded-[5px] bg-window px-1.5 text-xs text-fg outline-none ring-1 ring-accent"
+    />
+  );
+
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-2xs leading-[14px] text-subtle">Top of the list is in front. Drag to reorder, double-click to rename.</p>
-      <ul className="flex flex-col gap-px" role="listbox" aria-label="Layers" aria-multiselectable="true">
-        {list.map((e, i) => {
-          const z = elements.length - 1 - i;
+      <p className="text-2xs leading-[14px] text-subtle">Top of the list is in front. Drag to reorder, double-click to rename. Click an item inside a group to select just that item.</p>
+      <ul className="flex flex-col gap-px" role="tree" aria-label="Layers" aria-multiselectable="true">
+        {rows.map((row) => {
+          if (row.kind === 'group') {
+            const allSel = row.members.every((m) => selection.includes(m.id));
+            const hidden = row.members.every((m) => m.hidden);
+            const locked = row.members.every((m) => m.locked);
+            const open = !collapsed.has(row.gid);
+            const name = names?.[row.gid] ?? 'Group';
+            return (
+              <li
+                key={row.gid}
+                role="treeitem"
+                aria-expanded={open}
+                aria-selected={allSel}
+                {...rowDrag(row.gid, true, row.z)}
+                onClick={(ev) => A.select([row.members[0].id], ev.shiftKey || ev.metaKey || ev.ctrlKey)}
+                onDoubleClick={() => setRenaming(row.gid)}
+                className={`group relative flex h-8 items-center gap-1 rounded-[7px] pr-1 pl-0.5 text-xs font-medium transition-colors ${allSel ? 'bg-accent-soft text-fg' : 'text-fg hover:bg-hover'} ${hidden ? 'opacity-50' : ''}`}
+              >
+                {dropZ === row.z && drag && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent" />}
+                <button
+                  type="button"
+                  aria-label={open ? 'Collapse group' : 'Expand group'}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    toggleCollapse(row.gid);
+                  }}
+                  className="flex h-6 w-5 shrink-0 items-center justify-center text-subtle hover:text-fg"
+                >
+                  <ChevronRight size={12} className={`transition-transform ${open ? 'rotate-90' : ''}`} />
+                </button>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] bg-control">
+                  <Group size={12} />
+                </span>
+                {renaming === row.gid ? nameInput(name, (v) => A.renameGroup(row.gid, v)) : <span className="min-w-0 flex-1 truncate">{name}</span>}
+                <span className="text-2xs text-subtle tabular-nums">{row.members.length}</span>
+                <LayerBtn label={hidden ? 'Show group' : 'Hide group'} onClick={() => A.setGroupFlag(row.gid, { hidden: !hidden })} visible={hidden}>
+                  {hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+                </LayerBtn>
+                <LayerBtn label={locked ? 'Unlock group' : 'Lock group'} onClick={() => A.setGroupFlag(row.gid, { locked: !locked })} visible={locked}>
+                  {locked ? <Lock size={13} /> : <Unlock size={13} />}
+                </LayerBtn>
+              </li>
+            );
+          }
+          const e = row.e;
           const active = selection.includes(e.id);
           return (
             <li
               key={e.id}
-              role="option"
+              role="treeitem"
               aria-selected={active}
-              draggable={renaming !== e.id}
-              onDragStart={(ev) => {
-                setDragId(e.id);
-                ev.dataTransfer.effectAllowed = 'move';
-                ev.dataTransfer.setData('text/plain', e.id);
-              }}
-              onDragOver={(ev) => {
-                if (!dragId) return;
-                ev.preventDefault();
-                const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
-                setDropAt(ev.clientY < r.top + r.height / 2 ? i : i + 1);
-              }}
-              onDrop={(ev) => {
-                ev.preventDefault();
-                if (dragId && dropAt !== null) {
-                  const from = list.findIndex((x) => x.id === dragId);
-                  let to = dropAt;
-                  if (from < to) to--;
-                  A.moveLayer(dragId, elements.length - 1 - to);
-                }
-                setDragId(null);
-                setDropAt(null);
-              }}
-              onDragEnd={() => {
-                setDragId(null);
-                setDropAt(null);
-              }}
-              onClick={(ev) => A.select([e.id], ev.shiftKey || ev.metaKey || ev.ctrlKey)}
+              {...rowDrag(e.id, false, row.z)}
+              onClick={(ev) => A.select([e.id], ev.shiftKey || ev.metaKey || ev.ctrlKey, { single: row.inGroup })}
               onDoubleClick={() => setRenaming(e.id)}
-              className={`group relative flex h-8 items-center gap-1.5 rounded-[7px] pr-1 pl-1 text-xs transition-colors ${
+              className={`group relative flex h-8 items-center gap-1.5 rounded-[7px] pr-1 text-xs transition-colors ${row.inGroup ? 'pl-6' : 'pl-1'} ${
                 active ? 'bg-accent-soft text-fg' : 'text-muted hover:bg-hover hover:text-fg'
-              } ${e.hidden ? 'opacity-50' : ''} ${dragId === e.id ? 'opacity-40' : ''}`}
-              data-z={z}
+              } ${e.hidden ? 'opacity-50' : ''} ${drag?.id === e.id ? 'opacity-40' : ''}`}
+              data-z={row.z}
             >
-              {dropAt === i && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent" />}
-              {dropAt === i + 1 && i === list.length - 1 && <span className="absolute inset-x-1 -bottom-px h-0.5 rounded bg-accent" />}
+              {dropZ === row.z && drag && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent" />}
               <GripVertical size={12} className="shrink-0 text-subtle opacity-0 group-hover:opacity-100" />
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] bg-control">{layerIcon(e)}</span>
-              {e.groupId && (
-                <Tooltip label="Grouped">
-                  <Group size={11} className="shrink-0 text-subtle" />
-                </Tooltip>
-              )}
               {renaming === e.id ? (
-                <input
-                  autoFocus
-                  defaultValue={e.name}
-                  aria-label="Layer name"
-                  onClick={(ev) => ev.stopPropagation()}
-                  onBlur={(ev) => {
-                    A.renameElement(e.id, ev.target.value);
-                    setRenaming(null);
-                  }}
-                  onKeyDown={(ev) => {
-                    ev.stopPropagation();
-                    if (ev.key === 'Enter') (ev.target as HTMLInputElement).blur();
-                    if (ev.key === 'Escape') setRenaming(null);
-                  }}
-                  className="h-6 min-w-0 flex-1 rounded-[5px] bg-window px-1.5 text-xs text-fg outline-none ring-1 ring-accent"
-                />
+                nameInput(e.name, (v) => A.renameElement(e.id, v))
               ) : (
                 <span className="min-w-0 flex-1 truncate" title={e.type === 'text' ? e.text : e.name}>
                   {e.type === 'text' && e.name === 'Text' ? e.text.split('\n')[0] || 'Text' : e.name}
@@ -622,6 +865,21 @@ function LayersPanel() {
             </li>
           );
         })}
+        <li
+          aria-hidden="true"
+          className="h-6"
+          onDragOver={(ev) => {
+            if (!drag) return;
+            ev.preventDefault();
+            setDropZ(-1);
+          }}
+          onDrop={(ev) => {
+            ev.preventDefault();
+            finishDrop();
+          }}
+        >
+          {dropZ === -1 && drag && <span className="mx-1 block h-0.5 rounded bg-accent" />}
+        </li>
       </ul>
     </div>
   );

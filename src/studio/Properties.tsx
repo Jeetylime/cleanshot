@@ -37,8 +37,12 @@ import {
   Unlock,
   Image as ImageIcon,
   CaseUpper,
+  Ratio,
+  List,
+  ListOrdered,
 } from 'lucide-react';
-import { Section, Slider, Segmented, Toggle, NumberInput, ColorPicker, Button } from '../components/ui/controls';
+import { Section, Slider, Segmented, Toggle, NumberInput, ColorPicker, ColorWell, Button } from '../components/ui/controls';
+import { styleAt } from './textEngine';
 import { IconButton } from '../components/ui/IconButton';
 import { Popover } from '../components/ui/Popover';
 import { pickFiles } from '../tools/shared/ui';
@@ -49,6 +53,9 @@ import { useStudio, shallowEqual, selectedElements, studio } from './store';
 import * as A from './actions';
 import { FONTS, fontOf } from './fonts';
 import { SOLIDS } from './LeftPanel';
+import { ImageExtras } from './ImageExtras';
+import { getBrand, useBrand } from './brand';
+import { ChartProps, QrProps } from './ExtraProps';
 import { studioFillCss } from './render';
 
 const BG_LABEL = { transparent: 'Transparent', solid: 'Solid color', gradient: 'Gradient', pattern: 'Pattern' } as const;
@@ -56,11 +63,16 @@ import { SIZE_PRESETS, MAX_CANVAS_SIDE } from './templates';
 import { aabb, unionBounds } from './geometry';
 import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, StudioElement, TextElement } from './types';
 
-const PALETTE = SOLIDS.map((c) => ({ value: c, name: c }));
+/** Swatches for color pickers: brand colors first, then the defaults. */
+function palette() {
+  const brand = getBrand().colors.map((c) => ({ value: c, name: `Brand ${c}` }));
+  return [...brand, ...SOLIDS.filter((c) => !getBrand().colors.includes(c)).map((c) => ({ value: c, name: c }))].slice(0, 22);
+}
 
-const TYPE_LABEL: Record<StudioElement['type'], string> = { text: 'Text', shape: 'Shape', line: 'Line', image: 'Image', icon: 'Icon' };
+const TYPE_LABEL: Record<StudioElement['type'], string> = { text: 'Text', shape: 'Shape', line: 'Line', image: 'Image', icon: 'Icon', chart: 'Chart', qr: 'QR code' };
 
 export function Properties() {
+  useBrand(); // re-render pickers when brand colors change
   const sel = useStudio((s) => selectedElements(s), shallowEqual);
   const editing = useStudio((s) => s.editingTextId);
   return (
@@ -121,6 +133,9 @@ function CanvasProps() {
             ))}
           </div>
         </Popover>
+        <Button onClick={() => studio.set({ dialog: 'resize' })} className="w-full">
+          <Ratio size={13} /> Smart resize…
+        </Button>
         <label className="flex items-center justify-between gap-2 text-xs text-muted">
           <span>Scale content with canvas</span>
           <Toggle checked={scale} onChange={setScale} label="Scale content with canvas" />
@@ -187,7 +202,9 @@ function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean
           {single?.type === 'line' && <LineProps e={single} />}
           {single?.type === 'icon' && <IconProps e={single} />}
           {single?.type === 'image' && <ImageProps e={single} />}
-          {!single && sel.every((e) => e.type === sel[0].type && e.type !== 'image') && <ColorForMany sel={sel} />}
+          {single?.type === 'chart' && <ChartProps e={single} palette={palette()} />}
+          {single?.type === 'qr' && <QrProps e={single} palette={palette()} />}
+          {!single && sel.every((e) => e.type === sel[0].type && ['text', 'shape', 'line', 'icon'].includes(e.type)) && <ColorForMany sel={sel} />}
           <ArrangeProps sel={sel} canGroup={canGroup} canUngroup={canUngroup} />
           <Section title="Appearance">
             <Slider label="Opacity" value={Math.round(same((e) => e.opacity) * 100)} min={0} max={100} unit="%" onChange={(v) => A.updateElements(ids, { opacity: v / 100 }, 'opacity')} />
@@ -207,7 +224,7 @@ function ColorForMany({ sel }: { sel: StudioElement[] }) {
     <Section title="Color">
       <ColorPicker
         value={value}
-        colors={PALETTE}
+        colors={palette()}
         onChange={(c) => A.updateElements(ids, (x) => (x.type === 'shape' ? { fill: c } : { color: c }) as Partial<StudioElement>, 'color')}
       />
     </Section>
@@ -216,7 +233,7 @@ function ColorForMany({ sel }: { sel: StudioElement[] }) {
 
 // ---- Text -------------------------------------------------------------------
 
-function FontSelect({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+export function FontSelect({ value, onChange }: { value: string; onChange: (id: string) => void }) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const f = fontOf(value);
@@ -271,6 +288,13 @@ function ToggleIcon({ label, active, onClick, children, shortcut }: { label: str
 function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
   const up = (p: Partial<TextElement>, key?: string) => A.updateElements<TextElement>([e.id], p, key);
   const font = fontOf(e.fontFamily);
+  const sel = useStudio((s) => (s.editingTextId === e.id ? s.textSel : null), shallowEqual);
+  const partial = !!sel && sel.end > sel.start && !(sel.start === 0 && sel.end >= e.text.length);
+  const at = partial ? styleAt(e, sel!.start) : { bold: e.bold, italic: e.italic, underline: e.underline, color: null };
+  const style = (patch: Parameters<typeof A.styleText>[2], key?: string) => A.styleText(e.id, partial ? sel : null, patch, key);
+  // Keep the text field focused (and its selection) while clicking style controls.
+  const keepFocus = (ev: React.MouseEvent) => editing && ev.preventDefault();
+  const grad = e.gradient;
   return (
     <>
       <Section title="Text">
@@ -291,20 +315,23 @@ function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
             </button>
           </div>
         </div>
-        <div className="flex gap-0.5 rounded-[8px] bg-control p-0.5">
-          <ToggleIcon label={font.bold ? 'Bold' : 'Bold (not available for this font)'} active={e.bold && font.bold} onClick={() => up({ bold: !e.bold })}>
+        <div className="flex gap-0.5 rounded-[8px] bg-control p-0.5" onMouseDown={keepFocus}>
+          <ToggleIcon label={font.bold ? 'Bold' : 'Bold (not available for this font)'} active={at.bold && font.bold} onClick={() => style({ bold: !at.bold })}>
             <Bold size={14} />
           </ToggleIcon>
-          <ToggleIcon label="Italic" active={e.italic} onClick={() => up({ italic: !e.italic })}>
+          <ToggleIcon label="Italic" active={at.italic} onClick={() => style({ italic: !at.italic })}>
             <Italic size={14} />
           </ToggleIcon>
-          <ToggleIcon label="Underline" active={e.underline} onClick={() => up({ underline: !e.underline })}>
+          <ToggleIcon label="Underline" active={at.underline} onClick={() => style({ underline: !at.underline })}>
             <Underline size={14} />
           </ToggleIcon>
           <ToggleIcon label="Uppercase" active={e.uppercase} onClick={() => up({ uppercase: !e.uppercase })}>
             <CaseUpper size={15} />
           </ToggleIcon>
         </div>
+        <p className="-mt-1 text-2xs leading-[14px] text-subtle" aria-live="polite">
+          {partial ? 'Styling the selected text.' : editing ? 'Select words to style just them.' : 'Tip: while typing, select words to style just them.'}
+        </p>
         <Segmented
           ariaLabel="Alignment"
           value={e.align}
@@ -315,7 +342,33 @@ function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
             { value: 'right', label: <AlignRight size={14} />, title: 'Align right' },
           ]}
         />
-        <ColorPicker value={e.color} colors={PALETTE} onChange={(c) => up({ color: c }, 'color')} />
+        <div onMouseDown={keepFocus}>
+          <ColorPicker value={at.color ?? e.color} colors={palette()} onChange={(c) => style({ color: c }, 'color')} />
+        </div>
+      </Section>
+      <Section title="Gradient" action={<Toggle checked={!!grad} onChange={(on) => up({ gradient: on ? { from: e.color, to: '#bf5af2', angle: 90 } : null })} label="Gradient text" />}>
+        {grad && (
+          <>
+            <div className="flex gap-1.5">
+              <ColorWell label="Gradient start" value={grad.from} onChange={(c) => up({ gradient: { ...grad, from: c } }, 'tg')} />
+              <ColorWell label="Gradient end" value={grad.to} onChange={(c) => up({ gradient: { ...grad, to: c } }, 'tg')} />
+            </div>
+            <Slider label="Angle" value={grad.angle} min={0} max={360} unit="°" onChange={(v) => up({ gradient: { ...grad, angle: v } }, 'tg')} />
+          </>
+        )}
+      </Section>
+      <Section title="Layout">
+        <Segmented
+          ariaLabel="List"
+          value={e.list ?? 'none'}
+          onChange={(v) => up({ list: v, curve: 0 })}
+          options={[
+            { value: 'none', label: 'No list' },
+            { value: 'bullet', label: <><List size={14} /> Bullets</> },
+            { value: 'number', label: <><ListOrdered size={14} /> Numbers</> },
+          ]}
+        />
+        <Slider label="Curve" value={e.curve ?? 0} min={-100} max={100} format={(v) => (v === 0 ? 'Off' : `${Math.round(v)}`)} onChange={(v) => up({ curve: Math.abs(v) < 2 ? 0 : v, ...(Math.abs(v) >= 2 ? { list: 'none' as const } : {}) }, 'curve')} />
       </Section>
       <Section title="Spacing">
         <Slider label="Letter spacing" value={Math.round((e.letterSpacing / e.fontSize) * 1000) / 10} min={-10} max={60} step={0.5} unit="%" onChange={(v) => up({ letterSpacing: (v / 100) * e.fontSize }, 'ls')} />
@@ -325,7 +378,7 @@ function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
         {e.strokeWidth > 0 && (
           <>
             <Slider label="Width" value={e.strokeWidth} min={0.5} max={Math.max(20, e.fontSize * 0.2)} step={0.5} unit="px" onChange={(v) => up({ strokeWidth: v }, 'sw')} />
-            <ColorPicker value={e.strokeColor} colors={PALETTE} onChange={(c) => up({ strokeColor: c }, 'sc')} />
+            <ColorPicker value={e.strokeColor} colors={palette()} onChange={(c) => up({ strokeColor: c }, 'sc')} />
           </>
         )}
       </Section>
@@ -337,16 +390,41 @@ function TextProps({ e, editing }: { e: TextElement; editing: boolean }) {
 
 function ShapeProps({ e }: { e: ShapeElement }) {
   const up = (p: Partial<ShapeElement>, key?: string) => A.updateElements<ShapeElement>([e.id], p, key);
+  const sg = e.gradient;
   return (
     <>
-      <Section title="Fill" action={<Toggle checked={!!e.fill} onChange={(on) => up({ fill: on ? '#0a84ff' : null, stroke: !on && !e.stroke ? '#1d1d1f' : e.stroke, strokeWidth: !on && !e.strokeWidth ? 4 : e.strokeWidth })} label="Fill" />}>
-        {e.fill && <ColorPicker value={e.fill} colors={PALETTE} onChange={(c) => up({ fill: c }, 'fill')} />}
+      <Section title="Fill" action={<Toggle checked={!!e.fill || !!sg} onChange={(on) => up({ fill: on ? '#0a84ff' : null, gradient: on ? e.gradient : null, stroke: !on && !e.stroke ? '#1d1d1f' : e.stroke, strokeWidth: !on && !e.strokeWidth ? 4 : e.strokeWidth })} label="Fill" />}>
+        {(e.fill || sg) && (
+          <>
+            <Segmented
+              ariaLabel="Fill type"
+              size="sm"
+              value={sg ? 'gradient' : 'solid'}
+              onChange={(v) => up(v === 'gradient' ? { gradient: { from: e.fill ?? '#0a84ff', to: '#bf5af2', angle: 135 } } : { gradient: null, fill: e.fill ?? sg?.from ?? '#0a84ff' })}
+              options={[
+                { value: 'solid', label: 'Solid' },
+                { value: 'gradient', label: 'Gradient' },
+              ]}
+            />
+            {sg ? (
+              <>
+                <div className="flex gap-1.5">
+                  <ColorWell label="Gradient start" value={sg.from} onChange={(c) => up({ gradient: { ...sg, from: c } }, 'sg')} />
+                  <ColorWell label="Gradient end" value={sg.to} onChange={(c) => up({ gradient: { ...sg, to: c } }, 'sg')} />
+                </div>
+                <Slider label="Angle" value={sg.angle} min={0} max={360} unit="°" onChange={(v) => up({ gradient: { ...sg, angle: v } }, 'sg')} />
+              </>
+            ) : (
+              e.fill && <ColorPicker value={e.fill} colors={palette()} onChange={(c) => up({ fill: c }, 'fill')} />
+            )}
+          </>
+        )}
       </Section>
       <Section title="Border" action={<Toggle checked={!!e.stroke && e.strokeWidth > 0} onChange={(on) => up({ stroke: on ? '#1d1d1f' : null, strokeWidth: on ? Math.max(2, e.strokeWidth || 4) : 0, fill: !on && !e.fill ? '#0a84ff' : e.fill })} label="Border" />}>
         {e.stroke && e.strokeWidth > 0 && (
           <>
             <Slider label="Width" value={e.strokeWidth} min={1} max={80} unit="px" onChange={(v) => up({ strokeWidth: v }, 'sw')} />
-            <ColorPicker value={e.stroke} colors={PALETTE} onChange={(c) => up({ stroke: c }, 'stroke')} />
+            <ColorPicker value={e.stroke} colors={palette()} onChange={(c) => up({ stroke: c }, 'stroke')} />
           </>
         )}
       </Section>
@@ -363,7 +441,7 @@ function LineProps({ e }: { e: LineElement }) {
   const up = (p: Partial<LineElement>, key?: string) => A.updateElements<LineElement>([e.id], p, key);
   return (
     <Section title="Line">
-      <ColorPicker value={e.color} colors={PALETTE} onChange={(c) => up({ color: c }, 'color')} />
+      <ColorPicker value={e.color} colors={palette()} onChange={(c) => up({ color: c }, 'color')} />
       <Slider label="Thickness" value={e.strokeWidth} min={1} max={60} unit="px" onChange={(v) => up({ strokeWidth: v, h: Math.max(e.h, v * 4 + 12) }, 'sw')} />
       <Segmented
         ariaLabel="Line style"
@@ -391,7 +469,7 @@ function IconProps({ e }: { e: IconElement }) {
   const up = (p: Partial<IconElement>, key?: string) => A.updateElements<IconElement>([e.id], p, key);
   return (
     <Section title="Icon">
-      <ColorPicker value={e.color} colors={PALETTE} onChange={(c) => up({ color: c }, 'color')} />
+      <ColorPicker value={e.color} colors={palette()} onChange={(c) => up({ color: c }, 'color')} />
       <Slider label="Stroke" value={e.weight} min={0.5} max={4} step={0.25} format={(v) => v.toFixed(2)} onChange={(v) => up({ weight: v }, 'weight')} />
       <label className="flex items-center justify-between text-xs text-muted">
         Filled <Toggle checked={e.filled} onChange={(v) => up({ filled: v })} label="Filled" />
@@ -417,6 +495,7 @@ function ImageProps({ e }: { e: ImageElement }) {
   };
   return (
     <>
+      {e.assetId && (
       <Section title="Image">
         <Button variant={cropping ? 'primary' : 'secondary'} onClick={() => A.setCropMode(cropping ? null : e.id)} className="w-full">
           <Crop size={13} /> {cropping ? 'Done cropping' : 'Crop'}
@@ -456,10 +535,12 @@ function ImageProps({ e }: { e: ImageElement }) {
           </Button>
         </div>
       </Section>
-      <Section title="Frame">
+      )}
+      <ImageExtras e={e} />
+      <Section title="Corners & border">
         <Slider label="Corner radius" value={e.radius} min={0} max={Math.round(Math.min(e.w, e.h) / 2)} unit="px" onChange={(v) => up({ radius: v }, 'radius')} />
         <Slider label="Border" value={e.borderWidth} min={0} max={Math.max(40, Math.round(Math.min(e.w, e.h) / 8))} unit="px" onChange={(v) => up({ borderWidth: v }, 'bw')} />
-        {e.borderWidth > 0 && <ColorPicker value={e.borderColor} colors={PALETTE} onChange={(c) => up({ borderColor: c }, 'bc')} />}
+        {e.borderWidth > 0 && <ColorPicker value={e.borderColor} colors={palette()} onChange={(c) => up({ borderColor: c }, 'bc')} />}
       </Section>
     </>
   );
@@ -581,7 +662,7 @@ function ShadowProps({ ids, shadow }: { ids: string[]; shadow: Shadow }) {
           <Slider label="Offset X" value={shadow.x} min={-100} max={100} unit="px" onChange={(v) => up({ x: v }, 'sh-x')} />
           <Slider label="Offset Y" value={shadow.y} min={-100} max={100} unit="px" onChange={(v) => up({ y: v }, 'sh-y')} />
           <Slider label="Strength" value={Math.round(shadow.opacity * 100)} min={0} max={100} unit="%" onChange={(v) => up({ opacity: v / 100 }, 'sh-o')} />
-          <ColorPicker value={shadow.color} colors={PALETTE.slice(0, 8)} onChange={(c) => up({ color: c }, 'sh-c')} />
+          <ColorPicker value={shadow.color} colors={palette().slice(0, 8)} onChange={(c) => up({ color: c }, 'sh-c')} />
         </div>
       )}
     </div>

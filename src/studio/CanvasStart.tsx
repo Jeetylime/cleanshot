@@ -8,7 +8,7 @@ import { pickFiles, useFileSink } from '../tools/shared/ui';
 import * as A from './actions';
 import * as db from './persistence';
 import { MAX_CANVAS_SIDE, RATIO_PRESETS, SIZE_PRESETS, TEMPLATES } from './templates';
-import { TemplateThumb } from './LeftPanel';
+import { TemplateThumb, UserTemplates } from './LeftPanel';
 import type { StudioFill } from './types';
 
 type Bg = 'white' | 'transparent' | 'color';
@@ -164,6 +164,8 @@ export function CanvasStart() {
               </div>
             </div>
           </section>
+
+          <UserTemplates />
 
           <section aria-labelledby="templates" className="flex flex-col gap-2.5">
             <h2 id="templates" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">

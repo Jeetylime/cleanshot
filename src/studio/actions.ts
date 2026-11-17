@@ -2,12 +2,15 @@ import { uid, clamp } from '../lib/utils';
 import { canvasToBlob, constrainSource, decodeImage, getImage, registerImage, resample } from '../engine/images';
 import { showToast } from '../store/actions';
 import { aabb, center, rotatePoint, unionBounds } from './geometry';
-import { cloneElements, coverCrop, fitText, makeIcon, makeImage, makeLine, makeShape, makeText, newDoc, normalize, type TextKind } from './factory';
+import { cloneElements, coverCrop, fitText, scaleElement, makeChart, makeFrame, makeQr, makeIcon, makeImage, makeLine, makeShape, makeText, newDoc, normalize, type TextKind } from './factory';
 import { ensureFonts } from './fonts';
 import { renderToCanvas } from './render';
 import * as db from './persistence';
 import { beginGesture, commit, elementById, endGesture, replaceLive, resetHistory, selectedElements, studio, type LeftPanel } from './store';
 import { MAX_CANVAS_SIDE, TEMPLATES } from './templates';
+import { STICKERS, buildSticker } from './stickers';
+import { adjustRuns, addRun, resetTextMetrics } from './textEngine';
+import { allPages, migrateDoc, pageDoc, showPage, syncPages } from './pages';
 import type { Asset, ImageElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
 
 // ---------------------------------------------------------------------------
@@ -55,10 +58,11 @@ export function withGroups(ids: string[], doc = docOrNull()): string[] {
   return doc.elements.filter((e) => out.has(e.id)).map((e) => e.id);
 }
 
-export function select(ids: string[], additive = false) {
+export function select(ids: string[], additive = false, opts: { single?: boolean } = {}) {
   if (studio.get().editingTextId) finishTextEdit();
   const s = studio.get();
-  const expanded = withGroups(ids);
+  // `single` picks one element inside a group instead of the whole group.
+  const expanded = opts.single ? ids : withGroups(ids);
   let next: string[];
   if (additive) {
     const cur = new Set(s.selection);
@@ -346,9 +350,37 @@ export function renameElement(id: string, name: string) {
 
 export function groupSelection() {
   const s = studio.get();
-  if (s.selection.length < 2) return;
+  if (s.selection.length < 2 || !s.doc) return;
   const gid = uid('grp');
-  updateElements(s.selection, { groupId: gid });
+  const sel = new Set(s.selection);
+  const n = Object.keys(s.doc.groupNames ?? {}).length + 1;
+  commit((doc) => {
+    // Members become contiguous in z-order, at the topmost member's place.
+    const top = Math.max(...doc.elements.map((e, i) => (sel.has(e.id) ? i : -1)));
+    const members = doc.elements.filter((e) => sel.has(e.id)).map((e) => ({ ...e, groupId: gid }));
+    const before = doc.elements.slice(0, top + 1).filter((e) => !sel.has(e.id));
+    const after = doc.elements.slice(top + 1);
+    return { ...doc, elements: [...before, ...members, ...after], groupNames: { ...doc.groupNames, [gid]: `Group ${n}` } };
+  });
+}
+
+export function renameGroup(gid: string, name: string) {
+  commit((doc) => ({ ...doc, groupNames: { ...doc.groupNames, [gid]: name.trim() || 'Group' } }));
+}
+
+/** Move elements (a group, or one element) to sit just in front of `refId`, or to the very back. */
+export function moveAbove(ids: Set<string>, refId: string | null) {
+  if (refId && ids.has(refId)) return;
+  commit((doc) => {
+    const moving = doc.elements.filter((e) => ids.has(e.id));
+    const rest = doc.elements.filter((e) => !ids.has(e.id));
+    const at = refId ? rest.findIndex((e) => e.id === refId) + 1 : 0;
+    return { ...doc, elements: [...rest.slice(0, at), ...moving, ...rest.slice(at)] };
+  });
+}
+
+export function setGroupFlag(gid: string, patch: { hidden?: boolean; locked?: boolean }) {
+  commit((doc) => ({ ...doc, elements: doc.elements.map((e) => (e.groupId === gid ? { ...e, ...patch } : e)) }));
 }
 
 export function ungroupSelection() {
@@ -441,7 +473,27 @@ export function startTextEdit(id: string) {
 
 /** Called by the text editor overlay on every keystroke (one undo step per edit session). */
 export function setEditingText(id: string, text: string) {
-  updateElements<TextElement>([id], { text }, `text-${id}`);
+  updateElements<TextElement>([id], (e) => ({ text, runs: adjustRuns(e.runs, e.text, text) }), `text-${id}`);
+}
+
+/** Style part of a text box (while editing, with a selection) or all of it. */
+export function styleText(id: string, range: { start: number; end: number } | null, patch: { bold?: boolean; italic?: boolean; underline?: boolean; color?: string }, key?: string) {
+  const el = elementById(id);
+  if (!el || el.type !== 'text') return;
+  if (range && range.end > range.start && !(range.start === 0 && range.end >= el.text.length)) {
+    updateElements<TextElement>([id], (e) => ({ runs: addRun(e, range.start, range.end, patch) }), key);
+    return;
+  }
+  // Whole box: set the base style and drop overrides of the same property
+  const strip = (runs: TextElement['runs']) =>
+    runs
+      ?.map((r) => {
+        const n = { ...r };
+        for (const k of Object.keys(patch) as (keyof typeof patch)[]) delete n[k];
+        return n;
+      })
+      .filter((r) => r.bold !== undefined || r.italic !== undefined || r.underline !== undefined || r.color !== undefined);
+  updateElements<TextElement>([id], (e) => ({ ...patch, runs: strip(e.runs)?.length ? strip(e.runs) : undefined, ...(patch.color ? { gradient: null } : {}) }), key);
 }
 
 export function finishTextEdit() {
@@ -469,35 +521,17 @@ export function renameProject(name: string) {
 export function resizeCanvas(width: number, height: number, scaleContent: boolean) {
   const w = clamp(Math.round(width), 16, MAX_CANVAS_SIDE);
   const h = clamp(Math.round(height), 16, MAX_CANVAS_SIDE);
-  commit((doc) => {
-    if (!scaleContent) {
-      const dx = (w - doc.width) / 2;
-      const dy = (h - doc.height) / 2;
-      return { ...doc, width: w, height: h, elements: doc.elements.map((e) => ({ ...e, x: e.x + dx, y: e.y + dy })) };
-    }
+  commit((d) => {
+    const doc = syncPages(d);
     const k = Math.min(w / doc.width, h / doc.height);
     const ox = (w - doc.width * k) / 2;
     const oy = (h - doc.height * k) / 2;
-    return {
-      ...doc,
-      width: w,
-      height: h,
-      elements: doc.elements.map((e) => {
-        const base = { ...e, x: ox + e.x * k, y: oy + e.y * k, w: e.w * k, h: e.h * k, shadow: { ...e.shadow, blur: e.shadow.blur * k, x: e.shadow.x * k, y: e.shadow.y * k } };
-        switch (e.type) {
-          case 'text':
-            return fitText({ ...(base as typeof e), fontSize: e.fontSize * k, letterSpacing: e.letterSpacing * k, strokeWidth: e.strokeWidth * k });
-          case 'shape':
-            return { ...(base as typeof e), strokeWidth: e.strokeWidth * k, radius: e.radius * k };
-          case 'line':
-            return { ...(base as typeof e), strokeWidth: e.strokeWidth * k };
-          case 'image':
-            return { ...(base as typeof e), radius: e.radius * k, borderWidth: e.borderWidth * k };
-          default:
-            return base;
-        }
-      }),
-    };
+    const dx = (w - doc.width) / 2;
+    const dy = (h - doc.height) / 2;
+    const move = (els: StudioElement[]) =>
+      scaleContent ? els.map((e) => scaleElement(e, k, ox, oy)) : els.map((e) => ({ ...e, x: e.x + dx, y: e.y + dy }));
+    const pages = doc.pages.map((p) => ({ ...p, elements: move(p.elements) }));
+    return showPage({ ...doc, width: w, height: h, pages }, doc.pageIndex);
   });
   requestFit();
 }
@@ -507,12 +541,18 @@ export function resizeCanvas(width: number, height: number, scaleContent: boolea
 
 /** Re-measure text once web fonts arrive (no undo entry). */
 export function refreshFonts() {
+  resetTextMetrics();
   replaceLive((doc) => ({ ...doc, elements: doc.elements.map((e) => (e.type === 'text' ? fitText(e) : e)) }));
   studio.set((s) => ({ paintTick: s.paintTick + 1 }));
 }
 
 export function ensureDocFonts(doc: StudioDoc) {
-  ensureFonts(doc.elements.filter((e): e is TextElement => e.type === 'text'), refreshFonts);
+  ensureFonts(allPages(doc).flatMap((p) => p.elements.filter((e): e is TextElement => e.type === 'text')), refreshFonts);
+}
+
+/** Every image asset a document uses, across all pages. */
+export function docAssetIds(doc: StudioDoc): string[] {
+  return [...new Set(allPages(doc).flatMap((p) => p.elements.filter((e): e is ImageElement => e.type === 'image' && !!e.assetId).map((e) => e.assetId)))];
 }
 
 // ---------------------------------------------------------------------------
@@ -582,13 +622,14 @@ export function setPanel(panel: LeftPanel | null) {
 // ---------------------------------------------------------------------------
 // Projects
 
-export async function openDoc(doc: StudioDoc, opts: { save?: boolean } = {}) {
+export async function openDoc(raw: StudioDoc, opts: { save?: boolean } = {}) {
+  const doc = migrateDoc(raw);
   resetHistory(doc);
   // Open with the canvas front and center; panels open on demand.
   studio.set({ saveState: 'idle', view: { ...studio.get().view, mode: 'fit' }, panel: null });
   requestFit();
   ensureDocFonts(doc);
-  const ids = [...new Set(doc.elements.filter((e): e is ImageElement => e.type === 'image').map((e) => e.assetId))];
+  const ids = docAssetIds(doc);
   if (ids.length) {
     const results = await Promise.all(ids.map(loadAsset));
     if (results.some((r) => !r)) showToast('Some images in this design couldn’t be loaded.', 'error');
@@ -622,13 +663,7 @@ export function applyTemplate(templateId: string, resize: boolean) {
     const oy = (d.height - t.height * k) / 2;
     width = d.width;
     height = d.height;
-    elements = elements.map((e) => {
-      const b = { ...e, x: ox + e.x * k, y: oy + e.y * k, w: e.w * k, h: e.h * k, shadow: { ...e.shadow, blur: e.shadow.blur * k, x: e.shadow.x * k, y: e.shadow.y * k } };
-      if (e.type === 'text') return fitText({ ...(b as typeof e), fontSize: e.fontSize * k, letterSpacing: e.letterSpacing * k, strokeWidth: e.strokeWidth * k });
-      if (e.type === 'shape') return { ...(b as typeof e), strokeWidth: e.strokeWidth * k, radius: e.radius * k };
-      if (e.type === 'line') return { ...(b as typeof e), strokeWidth: e.strokeWidth * k };
-      return b;
-    });
+    elements = elements.map((e) => scaleElement(e, k, ox, oy));
   }
   commit((doc) => ({ ...doc, width, height, background: structuredClone(t.background), elements }));
   studio.set({ selection: [] });
@@ -681,7 +716,7 @@ function reportStorageError(err: unknown) {
 async function makeThumb(doc: StudioDoc): Promise<Blob | null> {
   try {
     const k = Math.min(1, 360 / doc.width, 360 / doc.height);
-    const c = renderToCanvas(doc, k);
+    const c = renderToCanvas(pageDoc(doc, 0), k);
     return await canvasToBlob(c, 'image/webp', 0.8).catch(() => canvasToBlob(c, 'image/png'));
   } catch {
     return null;
@@ -699,7 +734,7 @@ export async function saveNow() {
   studio.set({ saveState: 'saving' });
   saving = (async () => {
     try {
-      await db.saveProject(doc, await makeThumb(doc));
+      await db.saveProject(syncPages(doc), await makeThumb(doc));
       if (studio.get().doc?.id === doc.id) studio.set({ saveState: 'saved', storageWarning: null });
       void db.requestPersistence();
       const est = await db.storageEstimate();
@@ -729,7 +764,7 @@ studio.subscribe(() => {
 export async function downloadProjectFile() {
   const doc = studio.get().doc;
   if (!doc) return;
-  const ids = [...new Set(doc.elements.filter((e): e is ImageElement => e.type === 'image').map((e) => e.assetId))];
+  const ids = docAssetIds(doc);
   const assets: db.AssetRecord[] = [];
   for (const id of ids) {
     const rec = await db.getAsset(id).catch(() => null);
@@ -740,7 +775,7 @@ export async function downloadProjectFile() {
       assets.push({ id, blob, width: img.width, height: img.height, name: 'image' });
     }
   }
-  const blob = await db.buildProjectFile(doc, assets);
+  const blob = await db.buildProjectFile(syncPages(doc), assets);
   const { downloadBlob } = await import('../engine/export');
   await downloadBlob(blob, `${doc.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.studiolo`);
 }
@@ -755,7 +790,9 @@ function renderBitmap(b: ImageBitmap): HTMLCanvasElement {
 
 export async function importProjectFile(file: Blob) {
   try {
-    const { doc, assets } = await db.parseProjectFile(file);
+    const parsed = await db.parseProjectFile(file);
+    const doc = syncPages(migrateDoc(parsed.doc));
+    const assets = parsed.assets;
     // Fresh ids so importing twice doesn't overwrite.
     const idMap = new Map<string, string>();
     for (const a of assets) {
@@ -771,8 +808,9 @@ export async function importProjectFile(file: Blob) {
       id: uid('proj'),
       createdAt: now,
       updatedAt: now,
-      elements: doc.elements.map((e) => (e.type === 'image' ? { ...e, assetId: idMap.get(e.assetId) ?? e.assetId } : e)),
+      pages: doc.pages.map((p) => ({ ...p, elements: p.elements.map((e) => (e.type === 'image' ? { ...e, assetId: idMap.get(e.assetId) ?? e.assetId } : e)) })),
     };
+    Object.assign(imported, showPage(imported, imported.pageIndex));
     await openDoc(imported, { save: true });
     showToast(`Opened “${imported.name}”`, 'success');
   } catch (err) {
@@ -796,4 +834,331 @@ export async function openImageInCanvas(blob: Blob, name = 'Image', opts: { newD
   } catch {
     showToast('Couldn’t open that image.', 'error');
   }
+}
+
+// ---------------------------------------------------------------------------
+// Pages
+
+export function goToPage(i: number) {
+  const s = studio.get();
+  if (!s.doc) return;
+  if (s.editingTextId) finishTextEdit();
+  replaceLive((doc) => showPage(doc, i));
+  studio.set({ selection: [], cropId: null, editingTextId: null });
+  ensureDocFonts(studio.get().doc!);
+}
+
+export function addPage(opts: { duplicate?: boolean } = {}) {
+  const s = studio.get();
+  if (!s.doc) return;
+  commit((d) => {
+    const doc = syncPages(d);
+    const cur = doc.pages[doc.pageIndex];
+    const page = opts.duplicate
+      ? { id: uid('pg'), background: structuredClone(cur.background), elements: cloneElements(cur.elements) }
+      : { id: uid('pg'), background: cur.background.kind === 'transparent' ? cur.background : structuredClone(cur.background), elements: [] };
+    const pages = [...doc.pages];
+    pages.splice(doc.pageIndex + 1, 0, page);
+    return showPage({ ...doc, pages }, doc.pageIndex + 1);
+  });
+  studio.set({ selection: [], cropId: null });
+}
+
+export function deletePage(i = studio.get().doc?.pageIndex ?? 0) {
+  const doc = studio.get().doc;
+  if (!doc) return;
+  const n = allPages(doc).length;
+  if (n <= 1) {
+    showToast('A design needs at least one page.', 'info');
+    return;
+  }
+  commit((d) => {
+    const synced = syncPages(d);
+    const pages = synced.pages.filter((_, k) => k !== i);
+    const a = synced.pageIndex;
+    const next = i === a ? Math.min(i, pages.length - 1) : i < a ? a - 1 : a;
+    // Build directly: showPage would sync the deleted page back into the list.
+    return { ...synced, pages, pageIndex: next, elements: pages[next].elements, background: pages[next].background };
+  });
+  studio.set({ selection: [], cropId: null });
+}
+
+export function movePage(from: number, to: number) {
+  commit((d) => {
+    const doc = syncPages(d);
+    const pages = [...doc.pages];
+    const activeId = pages[doc.pageIndex].id;
+    const [p] = pages.splice(from, 1);
+    pages.splice(clamp(to, 0, pages.length), 0, p);
+    const idx = pages.findIndex((x) => x.id === activeId);
+    return { ...doc, pages, pageIndex: idx };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Image tools: frames, adjustments, AI
+
+export function addFrame(mask: ShapeKind) {
+  const d = docOrNull();
+  if (d) addElements([placeAtViewCenter(makeFrame(d, mask))]);
+}
+
+/** Put an image into an empty frame (or replace a framed image), cropping it to fill. */
+export async function fillFrame(id: string, file: Blob) {
+  await replaceImage(id, file);
+}
+
+async function sourceCanvasOf(assetId: string): Promise<HTMLCanvasElement | null> {
+  if (!(await loadAsset(assetId))) return null;
+  const entry = getImage(assetId)!;
+  if (entry.source instanceof HTMLCanvasElement) return entry.source;
+  const c = document.createElement('canvas');
+  c.width = entry.width;
+  c.height = entry.height;
+  c.getContext('2d')!.drawImage(entry.source, 0, 0);
+  return c;
+}
+
+async function registerResult(canvas: HTMLCanvasElement, name: string): Promise<Asset> {
+  const blob = await canvasToBlob(canvas, 'image/png');
+  return importAsset(blob, name);
+}
+
+export type AiProgress = (label: string, fraction: number | null) => void;
+
+/** Cut out the subject of an image element (the new image replaces the old one; undo restores it). */
+export async function removeBackground(id: string, onProgress: AiProgress) {
+  const el = elementById(id);
+  if (!el || el.type !== 'image' || !el.assetId) return;
+  const src = await sourceCanvasOf(el.assetId);
+  if (!src) throw new Error('This image isn’t loaded.');
+  const { loadSegmenter, predictMask } = await import('../tools/bgremove/segment');
+  const { buildFullMask, composeCutout } = await import('../tools/bgremove/mask');
+  onProgress('Loading model', null);
+  await loadSegmenter((p) => onProgress('Downloading model', p.total ? p.loaded / p.total : null));
+  onProgress('Finding the subject', null);
+  const small = await predictMask(src);
+  const mask = buildFullMask(small, src.width, src.height, 1);
+  const out = document.createElement('canvas');
+  out.width = src.width;
+  out.height = src.height;
+  composeCutout(out, src, mask);
+  const asset = await registerResult(out, `${el.name}-cutout`);
+  updateElements<ImageElement>([id], { assetId: asset.id });
+}
+
+/** Upscale an image element 2× with the super-resolution model. */
+export async function upscaleElement(id: string, onProgress: AiProgress) {
+  const el = elementById(id);
+  if (!el || el.type !== 'image' || !el.assetId) return;
+  let src = await sourceCanvasOf(el.assetId);
+  if (!src) throw new Error('This image isn’t loaded.');
+  const { loadUpscaler, upscale, SR_MODELS } = await import('../tools/upscaler/sr');
+  const max = SR_MODELS[2].maxSide;
+  if (Math.max(src.width, src.height) > max) {
+    const k = max / Math.max(src.width, src.height);
+    src = resample(src, Math.round(src.width * k), Math.round(src.height * k));
+  }
+  onProgress('Loading model', null);
+  await loadUpscaler(2, (p) => onProgress('Downloading model', p.total ? p.loaded / p.total : null));
+  const out = await upscale(src, 2, { onTile: (d, t) => onProgress('Upscaling', t ? d / t : null) });
+  const asset = await registerResult(out, `${el.name}-2x`);
+  const old = getImage(el.assetId)!;
+  const kx = asset.width / old.width;
+  const ky = asset.height / old.height;
+  updateElements<ImageElement>([id], (e) => ({ assetId: asset.id, crop: { x: e.crop.x * kx, y: e.crop.y * ky, w: e.crop.w * kx, h: e.crop.h * ky } }));
+}
+
+// ---------------------------------------------------------------------------
+// Charts, QR codes and stickers
+
+export function addChart(kind: import('./types').ChartKind) {
+  const d = docOrNull();
+  if (d) addElements([placeAtViewCenter(makeChart(d, kind))]);
+}
+
+export function addQr() {
+  const d = docOrNull();
+  if (d) addElements([placeAtViewCenter(makeQr(d))]);
+}
+
+export function addSticker(id: string, at?: { x: number; y: number }) {
+  const d = docOrNull();
+  const st = STICKERS.find((s) => s.id === id);
+  if (!d || !st) return;
+  const s = studio.get();
+  const cx = at?.x ?? (s.viewport.w / 2 - s.view.x) / s.view.zoom;
+  const cy = at?.y ?? (s.viewport.h / 2 - s.view.y) / s.view.zoom;
+  const inside = cx > 0 && cy > 0 && cx < d.width && cy < d.height;
+  const els = buildSticker(st, d, inside ? { x: cx, y: cy } : { x: d.width / 2, y: d.height / 2 });
+  addElements(els);
+  const gid = els[0]?.groupId;
+  if (gid) replaceLive((doc) => ({ ...doc, groupNames: { ...doc.groupNames, [gid]: st.label } }));
+  ensureFonts(els.filter((e): e is TextElement => e.type === 'text'), refreshFonts);
+}
+
+// ---------------------------------------------------------------------------
+// Your templates
+
+export async function saveAsTemplate(name?: string) {
+  const doc = studio.get().doc;
+  if (!doc) return;
+  const synced = syncPages(doc);
+  const now = Date.now();
+  try {
+    await db.saveTemplate({
+      id: uid('tpl'),
+      name: name?.trim() || doc.name,
+      updatedAt: now,
+      width: doc.width,
+      height: doc.height,
+      doc: structuredClone({ ...synced, id: 'template' }),
+      thumb: await makeThumb(synced),
+    });
+    showToast('Saved to Your templates.', 'success');
+    studio.set((s) => ({ paintTick: s.paintTick + 1 }));
+  } catch (err) {
+    reportStorageError(err);
+  }
+}
+
+/** Start a new design from one of your saved templates. */
+export async function createFromUserTemplate(rec: db.ProjectRecord) {
+  const now = Date.now();
+  const copy = migrateDoc({ ...structuredClone(rec.doc), id: uid('proj'), name: rec.name, createdAt: now, updatedAt: now });
+  const fresh = { ...copy, pages: copy.pages.map((p) => ({ ...p, id: uid('pg'), elements: cloneElements(p.elements) })) };
+  // Build the first page directly (showPage would sync the old, un-cloned page back in).
+  await openDoc({ ...fresh, pageIndex: 0, elements: fresh.pages[0].elements, background: fresh.pages[0].background }, { save: true });
+}
+
+// ---------------------------------------------------------------------------
+// Smart resize
+
+/** Re-layout one page for a new size: backgrounds stretch, everything else keeps its relative place. */
+function smartPage(els: StudioElement[], W: number, H: number, W2: number, H2: number): StudioElement[] {
+  const kx = W2 / W;
+  const ky = H2 / H;
+  const s = Math.min(kx, ky) * Math.min(1.25, Math.max(1, Math.sqrt(Math.max(kx, ky) / Math.min(kx, ky)) * 0.9));
+  return els.map((e) => {
+    const full = e.rotation % 180 === 0 && e.x <= W * 0.03 && e.y <= H * 0.03 && e.x + e.w >= W * 0.97 && e.y + e.h >= H * 0.97;
+    if (full) {
+      const out = { ...e, x: (e.x / W) * W2, y: (e.y / H) * H2, w: (e.w / W) * W2, h: (e.h / H) * H2 };
+      if (out.type === 'image') {
+        const img = getImage(out.assetId);
+        if (img) out.crop = coverCrop(img, out.w, out.h);
+      }
+      return out as StudioElement;
+    }
+    const cx = ((e.x + e.w / 2) / W) * W2;
+    const cy = ((e.y + e.h / 2) / H) * H2;
+    let scaled = scaleElement(e, s, 0, 0);
+    // Keep things inside the new page
+    const fit = Math.min(1, (W2 * 0.94) / scaled.w, scaled.type === 'text' ? 1 : (H2 * 0.94) / scaled.h);
+    if (fit < 1) scaled = scaleElement(scaled, fit, 0, 0);
+    let x = cx - scaled.w / 2;
+    let y = cy - scaled.h / 2;
+    if (scaled.w <= W2) x = Math.min(Math.max(x, 0), W2 - scaled.w);
+    if (scaled.h <= H2) y = Math.min(Math.max(y, 0), H2 - scaled.h);
+    return { ...scaled, x, y } as StudioElement;
+  });
+}
+
+export function smartResized(doc: StudioDoc, W2: number, H2: number): StudioDoc {
+  const synced = syncPages(doc);
+  const pages = synced.pages.map((p) => ({ ...p, elements: smartPage(p.elements, doc.width, doc.height, W2, H2) }));
+  return { ...synced, width: Math.round(W2), height: Math.round(H2), pages, elements: pages[synced.pageIndex].elements, background: pages[synced.pageIndex].background };
+}
+
+/** Apply smart resize to the open design (one undo step). */
+export function smartResizeInPlace(W2: number, H2: number) {
+  commit((doc) => smartResized(doc, W2, H2));
+  ensureDocFonts(studio.get().doc!);
+  requestFit();
+}
+
+/** Save resized copies as new designs. Returns how many were made. */
+export async function smartResizeCopies(targets: { label: string; width: number; height: number }[]): Promise<number> {
+  const doc = studio.get().doc;
+  if (!doc) return 0;
+  await saveNow();
+  let n = 0;
+  for (const t of targets) {
+    const now = Date.now();
+    const r = smartResized(doc, t.width, t.height);
+    const copy: StudioDoc = {
+      ...r,
+      id: uid('proj'),
+      name: `${doc.name} – ${t.label}`,
+      createdAt: now,
+      updatedAt: now,
+      pages: r.pages.map((p) => ({ ...p, id: uid('pg') })),
+    };
+    try {
+      await db.saveProject(copy, await makeThumb(copy));
+      n++;
+    } catch (err) {
+      reportStorageError(err);
+      break;
+    }
+  }
+  return n;
+}
+
+// ---------------------------------------------------------------------------
+// Find and replace
+
+export interface FindHit {
+  page: number;
+  id: string;
+  count: number;
+  preview: string;
+}
+
+function escapeRe(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function findText(query: string, caseSensitive: boolean): FindHit[] {
+  const doc = studio.get().doc;
+  if (!doc || !query) return [];
+  const re = new RegExp(escapeRe(query), caseSensitive ? 'g' : 'gi');
+  const hits: FindHit[] = [];
+  allPages(doc).forEach((p, i) =>
+    p.elements.forEach((e) => {
+      if (e.type !== 'text') return;
+      const count = e.text.match(re)?.length ?? 0;
+      if (count) hits.push({ page: i, id: e.id, count, preview: e.text.replace(/\s+/g, ' ').slice(0, 60) });
+    }),
+  );
+  return hits;
+}
+
+/** Replace everywhere (all pages) in one undo step. Returns the number of replacements. */
+export function replaceText(query: string, replacement: string, caseSensitive: boolean): number {
+  const doc = studio.get().doc;
+  if (!doc || !query) return 0;
+  const re = new RegExp(escapeRe(query), caseSensitive ? 'g' : 'gi');
+  let n = 0;
+  commit((d) => {
+    const synced = syncPages(d);
+    const pages = synced.pages.map((p) => ({
+      ...p,
+      elements: p.elements.map((e) => {
+        if (e.type !== 'text' || !re.test(e.text)) return e;
+        re.lastIndex = 0;
+        const text = e.text.replace(re, () => {
+          n++;
+          return replacement;
+        });
+        return fitText({ ...e, text, runs: adjustRuns(e.runs, e.text, text) });
+      }),
+    }));
+    return { ...synced, pages, elements: pages[synced.pageIndex].elements };
+  });
+  return n;
+}
+
+export function revealElement(page: number, id: string) {
+  if (studio.get().doc?.pageIndex !== page) goToPage(page);
+  select([id]);
 }

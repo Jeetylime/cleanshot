@@ -52,7 +52,10 @@ export function PrivacyPolicy() {
         <List>
           <li>
             <Strong>Canvas designs</Strong> (IndexedDB): designs you make on Canvas, including the images you add to them and a thumbnail, so you can reopen them
-            later. They stay until you delete them from “Your designs” or clear this site’s data.
+            later. They stay until you delete them from “Your designs” or clear this site’s data. Designs you save as templates are stored the same way.
+          </li>
+          <li>
+            <Strong>Brand kit</Strong> (local storage and IndexedDB): the colors, fonts and logos you save to your brand kit, so you can reuse them in any design.
           </li>
           <li>
             <Strong>Recent Edit sessions</Strong> (IndexedDB): up to 10 recent sessions from Edit, including the image, your edits and a thumbnail, so you can

@@ -15,6 +15,10 @@ import {
   Minimize,
   Minus,
   PencilLine,
+  Grid3x3,
+  Ratio,
+  Search,
+  BookmarkPlus,
   LayoutTemplate,
   Type,
   Shapes,
@@ -35,6 +39,10 @@ import { setPasteFallback } from '../app/route';
 import { studio, useStudio, shallowEqual, undo, redo } from './store';
 import * as A from './actions';
 import { Stage } from './Stage';
+import { PageStrip } from './PageStrip';
+import { StudioDialogs } from './Dialogs';
+import { isStoryShape, setViewOptions, useViewOptions } from './viewOptions';
+import { NumberInput, Toggle } from '../components/ui/controls';
 import { Rail, LeftDrawer } from './LeftPanel';
 import { Properties } from './Properties';
 import { ExportDialog } from './ExportDialog';
@@ -100,15 +108,19 @@ export function CanvasEditor() {
         {!fullscreen && <Rail />}
         {!fullscreen && <LeftDrawer />}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
-          <div className="relative flex min-h-0 min-w-0 flex-1">
-            <Stage />
-            <EmptyCanvasHint />
-            <ZoomBar />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="relative flex min-h-0 min-w-0 flex-1">
+              <Stage />
+              <EmptyCanvasHint />
+              <ZoomBar />
+            </div>
+            {!fullscreen && <PageStrip />}
           </div>
           {!fullscreen && <div className={`contents ${hasSelection ? '' : 'max-lg:hidden'}`}><Properties /></div>}
         </div>
       </div>
       <ExportDialog />
+      <StudioDialogs />
       {shortcuts && <ShortcutsDialog onClose={() => setShortcuts(false)} />}
     </div>
   );
@@ -241,6 +253,16 @@ function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
             Your designs
           </MenuItem>
           <MenuSeparator />
+          <MenuItem icon={<Ratio size={14} />} onClick={run(() => studio.set({ dialog: 'resize' }))}>
+            Smart resize…
+          </MenuItem>
+          <MenuItem icon={<Search size={14} />} onClick={run(() => studio.set({ dialog: 'find' }))} shortcut={`${modKey}F`}>
+            Find and replace…
+          </MenuItem>
+          <MenuItem icon={<BookmarkPlus size={14} />} onClick={run(() => void A.saveAsTemplate())}>
+            Save as template
+          </MenuItem>
+          <MenuSeparator />
           <MenuItem icon={<FileDown size={14} />} onClick={run(() => void A.downloadProjectFile())}>
             Download project file
           </MenuItem>
@@ -310,6 +332,7 @@ function ZoomBar() {
         <Plus size={14} />
       </IconButton>
       <span className="mx-0.5 h-4 w-px bg-line" />
+      <ViewMenu />
       <IconButton label="Fit to screen" shortcut={[modKey, '0']} onClick={A.fitView} tooltipSide="top">
         <Scan size={14} />
       </IconButton>
@@ -317,6 +340,50 @@ function ZoomBar() {
         {fullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
       </IconButton>
     </div>
+  );
+}
+
+function ViewMenu() {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const o = useViewOptions();
+  const story = useStudio((s) => !!s.doc && isStoryShape(s.doc.width, s.doc.height));
+  const row = (label: string, key: 'rulers' | 'grid' | 'snapToGrid' | 'margins' | 'safeZone', hint?: string) => (
+    <label className="flex h-8 items-center justify-between gap-3 rounded-[6px] px-2 text-sm text-fg hover:bg-hover">
+      <span className="flex flex-col">
+        {label}
+        {hint && <span className="text-2xs text-subtle">{hint}</span>}
+      </span>
+      <Toggle checked={o[key]} onChange={(v) => setViewOptions({ [key]: v })} label={label} />
+    </label>
+  );
+  return (
+    <>
+      <IconButton ref={anchor} label="View options: rulers, grid, margins" onClick={() => setOpen((x) => !x)} tooltipSide="top" active={o.rulers || o.grid || o.margins}>
+        <Grid3x3 size={14} />
+      </IconButton>
+      <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} width={250} label="View options">
+        <div className="flex flex-col gap-0.5 p-1.5">
+          {row('Rulers', 'rulers')}
+          {row('Grid', 'grid')}
+          {o.grid && (
+            <label className="flex items-center gap-2 px-2 pb-1 text-xs text-muted">
+              Size
+              <NumberInput ariaLabel="Grid size" value={o.gridSize} min={4} max={1000} suffix="px" onChange={(v) => setViewOptions({ gridSize: v })} />
+            </label>
+          )}
+          {row('Snap to grid', 'snapToGrid')}
+          {row('Margins', 'margins')}
+          {o.margins && (
+            <label className="flex items-center gap-2 px-2 pb-1 text-xs text-muted">
+              Inset
+              <NumberInput ariaLabel="Margin size" value={o.marginSize} min={0} max={2000} suffix="px" onChange={(v) => setViewOptions({ marginSize: v })} />
+            </label>
+          )}
+          {row('Story safe zone', 'safeZone', story ? 'Shown on 9:16 designs' : 'Only on 9:16 story designs')}
+        </div>
+      </Popover>
+    </>
   );
 }
 
