@@ -1,3 +1,4 @@
+import { shortcutLabel } from '../../lib/utils';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, ChevronRight, Info, Loader2, Trash2, Upload, X } from 'lucide-react';
 import { setToolFileSink } from '../../app/route';
@@ -144,10 +145,11 @@ export function Dropzone({
         <div className="flex flex-col gap-1">
           <p className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{title ?? (multiple ? 'Drop images here' : 'Drop an image here')}</p>
           <p className="text-sm text-muted">
-            or <span className="text-accent">browse</span> · paste with ⌘V / Ctrl+V
+            or <span className="text-accent">browse</span>
+            <span className="keyboard-hint"> · paste with {shortcutLabel('V')}</span>
           </p>
         </div>
-        <p className="text-xs text-subtle">{hint ?? 'PNG, JPEG, WebP, AVIF, GIF or BMP'}</p>
+        <p className="text-xs text-subtle">{hint ?? (accept && /pdf/i.test(accept) && !/image/i.test(accept) ? (multiple ? 'PDF files' : 'A PDF file') : 'PNG, JPEG, WebP, AVIF, GIF or BMP')}</p>
       </div>
     </div>
   );

@@ -33,6 +33,8 @@ export function ExportDialog() {
   const { doc, open, selection } = useStudio((s) => ({ doc: s.doc, open: s.exportOpen, selection: s.selection }), shallowEqual);
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [scope, setScope] = useState<Scope>('page');
+  /** Whether the user picked "What to download" themselves this time (then format changes leave it alone). */
+  const scopeTouched = useRef(false);
   const [scale, setScale] = useState(1);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [lockAspect, setLockAspect] = useState(true);
@@ -49,6 +51,7 @@ export function ExportDialog() {
       setName(doc.name);
       setSize(null);
       setScale(1);
+      scopeTouched.current = false;
       setScope(hasSel ? 'selection' : pages > 1 && prefs.format === 'pdf' ? 'all' : 'page');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,7 +216,7 @@ export function ExportDialog() {
           {scopeOptions.length > 1 && (
             <div className="flex flex-col gap-1.5">
               <span className="text-xs text-muted">What to download</span>
-              <Segmented ariaLabel="What to download" value={scope} onChange={(v) => { setScope(v); setSize(null); }} options={scopeOptions} />
+              <Segmented ariaLabel="What to download" value={scope} onChange={(v) => { scopeTouched.current = true; setScope(v); setSize(null); }} options={scopeOptions} />
             </div>
           )}
           <div className="flex flex-col gap-1.5">
@@ -221,7 +224,11 @@ export function ExportDialog() {
             <Segmented
               ariaLabel="Format"
               value={fmt}
-              onChange={(f) => setPrefs({ ...prefs, format: f })}
+              onChange={(f) => {
+                setPrefs({ ...prefs, format: f });
+                // A multi-page PDF should include every page unless the user chose otherwise.
+                if (!scopeTouched.current && !hasSel && pages > 1) setScope(f === 'pdf' ? 'all' : 'page');
+              }}
               options={[
                 { value: 'png', label: 'PNG' },
                 { value: 'jpeg', label: 'JPG' },

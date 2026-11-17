@@ -131,6 +131,8 @@ export const isMac =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 
 export const modKey = isMac ? '⌘' : 'Ctrl';
+/** A shortcut written for display, e.g. ⌘V on a Mac and Ctrl+V elsewhere. */
+export const shortcutLabel = (key: string) => (isMac ? `⌘${key}` : `Ctrl+${key}`);
 
 export function stripExtension(name: string): string {
   return name.replace(/\.[a-z0-9]{2,5}$/i, '');

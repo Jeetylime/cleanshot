@@ -383,6 +383,12 @@ body {
 }
 /* Links must not rely on color alone (WCAG 1.4.1). On by default via the
    "Underline links" setting; people can turn it off. */
+/* Keyboard shortcut hints are noise on touch-only devices (phones, tablets). */
+@media (hover: none) and (pointer: coarse) {
+  .keyboard-hint {
+    display: none !important;
+  }
+}
 :root[data-underline-links] a:not([data-no-underline]) {
   text-decoration: underline;
   text-underline-offset: 2px;

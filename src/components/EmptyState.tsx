@@ -153,7 +153,7 @@ export function EmptyState() {
             <Button onClick={() => void pasteFromClipboard()} className="h-8 px-3" disabled={!!busy}>
               <Clipboard size={14} />
               Paste
-              <span className="ml-0.5 flex gap-0.5">
+              <span className="keyboard-hint ml-0.5 flex gap-0.5">
                 <Kbd>{modKey}</Kbd>
                 <Kbd>V</Kbd>
               </span>

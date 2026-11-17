@@ -29,7 +29,8 @@ export function getBundledManifest(): Promise<BundledManifest | null> {
       .then(async (r) => {
         if (!r.ok || !/json/.test(r.headers.get('content-type') ?? 'json')) return null;
         const m = (await r.json()) as BundledManifest;
-        return m && typeof m.files === 'object' ? m : null;
+        // The regular build ships an empty manifest (so the probe isn't a 404); no files means not bundled.
+        return m && typeof m.files === 'object' && Object.keys(m.files).length ? m : null;
       })
       .catch(() => null);
   }

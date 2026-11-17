@@ -1,3 +1,4 @@
+import { shortcutLabel } from '../lib/utils';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Eye,
@@ -698,7 +699,9 @@ function UploadsPanel() {
       >
         <Upload size={18} className="text-accent" />
         <span className="text-xs font-semibold text-fg">Upload images</span>
-        <span className="text-2xs text-subtle">Or drop them here, or paste with Ctrl/⌘ V</span>
+        <span className="text-2xs text-subtle">
+          Or drop them here<span className="keyboard-hint">, or paste with {shortcutLabel('V')}</span>
+        </span>
       </button>
       <p className="text-2xs leading-[14px] text-subtle">Images stay on this device. They’re saved with your design in this browser only.</p>
       <Group_ title="Used in this session">

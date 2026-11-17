@@ -85,7 +85,7 @@ export default function PdfToImages() {
   if (!file) {
     return (
       <ToolLayout
-        main={<Dropzone accept={PDF_ACCEPT} onFiles={list.add} title="Drop a PDF to convert to images" icon={<Images size={20} />} />}
+        main={<Dropzone accept={PDF_ACCEPT} onFiles={list.add} title="Drop a PDF to convert to images" hint="Save pages as PNG or JPEG" icon={<Images size={20} />} />}
         panel={<PanelSection title="How it works"><p className="text-xs leading-[17px] text-muted">Every page you select becomes a PNG or JPEG at the resolution you choose. Several pages download together as a ZIP.</p></PanelSection>}
       />
     );

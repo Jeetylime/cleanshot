@@ -119,7 +119,13 @@ export default function Compress() {
               </span>
             </div>
             {progress !== null && mode === 'images' && <ProgressBar value={progress} />}
-            {bigger && <Notice>This PDF is already efficient; the result isn’t smaller. Try the Smaller mode, or keep the original.</Notice>}
+            {bigger && (
+              <Notice>
+                {mode === 'images'
+                  ? 'This PDF is mostly text or vector graphics, so turning its pages into images made it larger. Try Lossless, or keep the original.'
+                  : 'This PDF is already efficient, so the result isn’t smaller. Try Smaller (turns pages into images), or keep the original.'}
+              </Notice>
+            )}
           </div>
         </div>
       }

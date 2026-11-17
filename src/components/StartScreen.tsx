@@ -77,7 +77,7 @@ export function StartScreen() {
                     Open image
                   </button>
                 )}
-                <span className="ml-auto hidden items-center gap-1 text-xs text-subtle sm:flex">
+                <span className="keyboard-hint ml-auto hidden items-center gap-1 text-xs text-subtle sm:flex">
                   or paste <Kbd>{modKey}</Kbd>
                   <Kbd>V</Kbd>
                 </span>

@@ -53,6 +53,9 @@ export function ToolSection({ config, tool }: { config: SectionConfig; tool: str
         <SettingsMenu editorItems={false} />
       </header>
       {meta ? (
+        // Landmark + page heading for screen readers and the skip link; the breadcrumb shows the name visually.
+        <main className="flex min-h-0 flex-1 flex-col">
+          <h1 className="sr-only">{meta.name}</h1>
         <Suspense
           fallback={
             <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted">
@@ -64,6 +67,7 @@ export function ToolSection({ config, tool }: { config: SectionConfig; tool: str
             <meta.component />
           </ToolErrorBoundary>
         </Suspense>
+        </main>
       ) : (
         <Landing config={config} />
       )}
