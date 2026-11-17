@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FolderArchive, Shrink } from 'lucide-react';
-import { Button, Segmented, Slider, Toggle } from '../../components/ui/controls';
+import { Button, NumberInput, Segmented, Slider, Toggle } from '../../components/ui/controls';
+import { fitQuality } from '../shared/targetSize';
 import { formatBytes } from '../../lib/utils';
 import { createCanvas, ctx2d } from '../../engine/images';
 import { encodeCanvas, FORMATS, withExtension, type OutFormat } from '../shared/encode';
@@ -37,6 +38,8 @@ interface Settings {
   dither: boolean;
   maxSide: number | null;
   keepIfLarger: boolean;
+  /** Target file size in KB for lossy formats; null uses the quality slider. */
+  targetKB: number | null;
 }
 
 interface Result {
@@ -49,6 +52,9 @@ interface Result {
   w?: number;
   h?: number;
   error?: string;
+  /** Quality chosen by target-size mode, and whether the target was met. */
+  quality?: number;
+  missed?: boolean;
 }
 
 async function compress(img: LoadedImage, s: Settings): Promise<Omit<Result, 'key' | 'status'>> {
@@ -69,6 +75,9 @@ async function compress(img: LoadedImage, s: Settings): Promise<Omit<Result, 'ke
       // Lossless fallback: the browser's own PNG encoder.
       const plain = await encodeCanvas(canvas, 'png');
       if (!blob || plain.blob.size < blob.size) blob = plain.blob;
+    } else if (s.targetKB) {
+      const fit = await fitQuality(async (q) => (await encodeCanvas(canvas, format, q)).blob, s.targetKB * 1024);
+      return { blob: fit.result, format, w: canvas.width, h: canvas.height, quality: fit.quality, missed: !fit.fits };
     } else {
       blob = (await encodeCanvas(canvas, format, s.quality)).blob;
     }
@@ -93,6 +102,7 @@ export default function Compressor() {
     dither: true,
     maxSide: null,
     keepIfLarger: true,
+    targetKB: null,
   });
   const [results, setResults] = useState<Record<string, Result>>({});
   const [view, setView] = useState<'slider' | 'side'>('slider');
@@ -242,6 +252,7 @@ export default function Compressor() {
                       <span className="flex flex-col items-end">
                         <span className="text-fg">{formatBytes(r.blob!.size)}</span>
                         {r.usedOriginal ? <span className="text-subtle">kept original</span> : <SizeDelta before={img.size} after={r.blob!.size} />}
+                        {r.quality !== undefined && <span className={r.missed ? 'ml-1 text-danger' : 'ml-1 text-subtle'} title={r.missed ? 'Couldn’t reach the target size even at the lowest quality' : undefined}>· q{r.quality}{r.missed ? ' (over target)' : ''}</span>}
                       </span>
                     ) : r?.status === 'error' ? (
                       <span className="text-danger" title={r.error}>Failed</span>
@@ -311,7 +322,27 @@ export default function Compressor() {
               ]}
             />
             {showQuality && (
+              <Segmented<'quality' | 'size'>
+                ariaLabel="Compression target"
+                size="sm"
+                value={s.targetKB ? 'size' : 'quality'}
+                onChange={(m) => set({ targetKB: m === 'size' ? 200 : null })}
+                options={[
+                  { value: 'quality', label: 'By quality' },
+                  { value: 'size', label: 'Target size', title: 'Find the best quality under a file size' },
+                ]}
+              />
+            )}
+            {showQuality && !s.targetKB && (
               <Slider label="Quality" value={s.quality} min={10} max={100} unit="%" onChange={(q) => set({ quality: Math.round(q) })} />
+            )}
+            {showQuality && s.targetKB && (
+              <div className="flex items-center gap-2 text-xs text-muted">
+                Max size
+                <div className="w-28">
+                  <NumberInput ariaLabel="Target size in KB" value={s.targetKB} min={5} max={50000} suffix="KB" onChange={(targetKB) => set({ targetKB })} />
+                </div>
+              </div>
             )}
             {showPng && (
               <div className="flex flex-col gap-2">

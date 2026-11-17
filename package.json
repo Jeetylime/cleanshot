@@ -2,14 +2,16 @@
   "name": "studiolo",
   "private": true,
   "version": "1.0.0",
-  "description": "A premium, local-first screenshot editor for the browser.",
+  "description": "A local-first image, design and PDF workspace for the browser.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "postinstall": "node scripts/copy-assets.mjs"
+    "postinstall": "node scripts/copy-assets.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fontsource-variable/caveat": "^5.3.0",
@@ -36,6 +38,7 @@
     "@vitejs/plugin-react": "^6.3.0",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
-    "vite": "^8.3.8"
+    "vite": "^8.3.8",
+    "vitest": "^3.2.7"
   }
 }

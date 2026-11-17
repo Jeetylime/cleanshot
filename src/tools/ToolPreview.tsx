@@ -28,6 +28,32 @@ const mountains = (x: number, y: number, w: number, h: number, sun = '#ffd60a') 
 );
 
 const PREVIEWS: Record<ToolKey, React.ReactNode> = {
+  watermark: (
+    <g>
+      {mountains(8, 8, 60, 44)}
+      <text x="62" y="47" textAnchor="end" fontSize="7" fontWeight="600" fill="#fff" opacity="0.85">© studio</text>
+    </g>
+  ),
+  collage: (
+    <g>
+      <rect x="6" y="6" width="64" height="48" rx="3" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+      {mountains(10, 10, 27, 19)}
+      {mountains(39, 10, 27, 19, '#ff9f0a')}
+      {mountains(10, 31, 27, 19, '#ff375f')}
+      {mountains(39, 31, 27, 19)}
+    </g>
+  ),
+  favicon: (
+    <g>
+      <rect x="6" y="12" width="64" height="36" rx="4" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+      <rect x="6" y="12" width="64" height="10" rx="4" fill="#e5e5ea" />
+      <rect x="11" y="14.5" width="5" height="5" rx="1.2" fill="#0a84ff" />
+      <rect x="19" y="16" width="20" height="2" rx="1" fill="#aeaeb2" />
+      <rect x="44" y="26" width="18" height="18" rx="4.5" fill="#0a84ff" />
+      <rect x="33" y="34" width="8" height="8" rx="2" fill="#0a84ff" />
+      <rect x="25" y="38" width="4" height="4" rx="1" fill="#0a84ff" />
+    </g>
+  ),
   'background-remover': (
     <g>
       <defs>{checker}</defs>

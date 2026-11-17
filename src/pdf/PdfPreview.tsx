@@ -11,6 +11,22 @@ const page = (x: number, y: number, key?: string, accent = false) => (
 );
 
 const PREVIEWS: Record<string, ReactNode> = {
+  'pdf-stamp': (
+    <g fontFamily="-apple-system, Inter, sans-serif">
+      {page(18, 8)}
+      {page(40, 8, 'st1', true)}
+      <text x="28" y="31" textAnchor="middle" fontSize="4" fill="#8e8e93">1</text>
+      <text x="50" y="31" textAnchor="middle" fontSize="4" fill="#0a84ff">2</text>
+      <text x="50" y="24" textAnchor="middle" fontSize="5" fontWeight="700" fill="#ff375f" opacity="0.5" transform="rotate(-40 50 21)">DRAFT</text>
+    </g>
+  ),
+  'pdf-text': (
+    <g fontFamily="-apple-system, Inter, sans-serif" fontSize="7" fontWeight="700">
+      {page(10, 17)}
+      <path d="M34 30 h7 m-3 -3 l3 3 l-3 3" stroke="#8e8e93" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <text x="56" y="34" textAnchor="middle" fill="#0a84ff">Aa</text>
+    </g>
+  ),
   'pdf-merge': (
     <g>
       {page(8, 9)}

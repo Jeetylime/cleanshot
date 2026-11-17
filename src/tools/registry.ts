@@ -1,5 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import { ArrowLeftRight, Crop, Eraser, Expand, FileSearch, Pipette, Scaling, Shrink, type LucideIcon } from 'lucide-react';
+import { AppWindow, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, LayoutGrid, Pipette, Scaling, Shrink, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -103,6 +103,36 @@ export const TOOLS: ToolMeta[] = [
     ai: false,
     batch: false,
     component: lazy(() => import('./colorpicker/ColorPicker')),
+  },
+  {
+    key: 'watermark',
+    name: 'Watermark',
+    description: 'Stamp text or a logo onto many images at once.',
+    group: 'editing',
+    icon: Droplet,
+    ai: false,
+    batch: true,
+    component: lazy(() => import('./watermark/Watermark')),
+  },
+  {
+    key: 'collage',
+    name: 'Collage Maker',
+    description: 'Arrange several photos into a tidy grid.',
+    group: 'editing',
+    icon: LayoutGrid,
+    ai: false,
+    batch: true,
+    component: lazy(() => import('./collage/Collage')),
+  },
+  {
+    key: 'favicon',
+    name: 'Favicon Generator',
+    description: 'Make favicons, app icons and a .ico from one image.',
+    group: 'utilities',
+    icon: AppWindow,
+    ai: false,
+    batch: false,
+    component: lazy(() => import('./favicon/Favicon')),
   },
 ];
 

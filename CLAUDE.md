@@ -9,10 +9,13 @@ npm install          # also runs scripts/copy-assets.mjs (postinstall)
 npm run dev          # Vite dev server, http://localhost:5173
 npm run typecheck    # tsc -b
 npm run build        # tsc -b && vite build → dist/
-npm run preview      # serve the production build
+npm run preview      # serve the production build (sends the production CSP)
+npm test             # Vitest, once
+npx vitest run src/__tests__/zip.test.ts   # a single file (-t "name" for one test)
+node scripts/check-sizes.mjs               # after a build: no file in dist/ over 25 MiB
 ```
 
-There is no test suite or linter. `npm run typecheck` is the main check; verify behavior by running the app.
+Unit tests live in `src/__tests__/` and run in Node, so they cover pure logic only (no canvas or DOM). Verify UI changes by running the app. CI (`.github/workflows/ci.yml`) runs typecheck, tests, build and the size check.
 
 `postinstall` copies ONNX Runtime WASM into `public/ort` and pdf.js fonts/cmaps/WASM into `public/pdfjs`. Both are gitignored; if they are missing (AI tools or PDF rendering fail), rerun `node scripts/copy-assets.mjs`.
 
@@ -35,7 +38,9 @@ Key invariants:
 - **Immutable documents and snapshot undo.** Every edit returns a new document object. Gestures (drags, slider scrubs, typing) are coalesced into one history step. Destructive ops (crop/rotate/resize) register a new bitmap and keep the old one so they can be undone.
 - **Two render paths in Edit.** The screen draws from a mip pyramid with privacy patches on top. Export composites at full resolution and *erases* the original pixels under privacy regions, so redaction must never become just an overlay.
 - **WYSIWYG text.** A transparent `<textarea>` handles caret and IME while the canvas paints the glyphs. Text measurement is shared (`engine/text.ts`, `studio/textEngine.ts`).
-- Editor keyboard shortcuts and paste/drop apply only inside the editor. Each tool takes window-level paste/drop while it is open.
+- Editor keyboard shortcuts and paste/drop apply only inside the editor. Each tool takes window-level paste/drop while it is open. To send files to a tool that hasn't mounted yet, use `openFilesIn(route, files)` in `route.ts`; the tool receives them when it registers its sink.
+- The CSP (`public/_headers`, `vercel.json`, mirrored in `vite.config.ts` for `preview`) allows only `'self'` plus Hugging Face hosts for `connect-src`, with no inline scripts. That is why the pre-paint theme script lives in `public/theme-init.js`. Any new external request or inline script needs a CSP change, and usually shouldn't be added.
+- `public/sw.js` caches the app shell and same-origin files for offline use (production only). Bump `VERSION` there when its caching rules change.
 
 ## Deployment
 

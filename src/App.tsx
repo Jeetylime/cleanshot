@@ -8,6 +8,7 @@ import { EditorCanvas } from './components/EditorCanvas';
 import { EmptyState } from './components/EmptyState';
 import { StartScreen } from './components/StartScreen';
 import { BusyIndicator, DropOverlay, ShortcutsDialog, Toasts } from './components/Overlays';
+import { CommandPalette } from './components/CommandPalette';
 import { useKeyboardShortcuts, usePasteAndDrop, useThemeSync } from './hooks/useGlobalInput';
 import { getRoute, goEditor, useRoute } from './app/route';
 
@@ -16,6 +17,7 @@ const PdfApp = lazy(() => import('./pdf/PdfApp'));
 const LegalPage = lazy(() => import('./legal/LegalPage'));
 const CanvasApp = lazy(() => import('./studio/StudioApp'));
 const AboutPage = lazy(() => import('./components/AboutPage'));
+const StoragePage = lazy(() => import('./components/StoragePage'));
 
 let booted = false;
 
@@ -78,6 +80,11 @@ export default function App() {
           <AboutPage />
         </Suspense>
       )}
+      {route.section === 'storage' && (
+        <Suspense fallback={<div className="flex-1" />}>
+          <StoragePage />
+        </Suspense>
+      )}
       {route.section === 'legal' && (
         <Suspense fallback={<div className="flex-1" />}>
           <LegalPage doc={route.doc} />
@@ -96,6 +103,7 @@ export default function App() {
       <DropOverlay active={dragging && route.section !== 'canvas'} />
       <BusyIndicator />
       <Toasts />
+      <CommandPalette />
     </div>
   );
 }

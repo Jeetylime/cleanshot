@@ -6,7 +6,7 @@ import { fitView, zoomStep, zoomToCenter } from '../store/view';
 import { TOOL_BY_SHORTCUT } from '../components/tools';
 import { isEditableTarget } from '../lib/utils';
 import { openFilePicker } from '../lib/filePicker';
-import { getPasteFallback, getRoute, getToolFileSink, goEditor } from '../app/route';
+import { getPasteFallback, getRoute, getToolFileSink, goEditor, isPdf, openFilesIn } from '../app/route';
 
 /** Application-wide keyboard shortcuts. */
 export function useKeyboardShortcuts() {
@@ -248,11 +248,16 @@ export function usePasteAndDrop(): boolean {
         return;
       }
       if (getRoute().section === 'tools' || getRoute().section === 'pdf') return;
+      const pdfs = Array.from(e.dataTransfer?.files ?? []).filter(isPdf);
+      if (pdfs.length) {
+        openFilesIn({ section: 'pdf', tool: pdfs.length > 1 ? 'pdf-merge' : 'pdf-organize' }, pdfs);
+        return;
+      }
       const file = firstImageFile(e.dataTransfer);
       if (file) {
         goEditor();
         void actions.openImageBlob(file, file.name);
-      } else actions.showToast('That file isn’t a supported image.', 'error');
+      } else actions.showToast('That file isn’t a supported image or PDF.', 'error');
     };
 
     window.addEventListener('paste', onPaste);

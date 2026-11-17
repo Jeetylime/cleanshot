@@ -1,0 +1,22 @@
+{
+  "name": "Studiolo",
+  "short_name": "Studiolo",
+  "description": "Edit images, design graphics and work with PDFs, privately in your browser.",
+  "start_url": "./#home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1c1c1e",
+  "theme_color": "#1c1c1e",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }],
+  "file_handlers": [
+    {
+      "action": "./#home",
+      "accept": {
+        "image/png": [".png"],
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/webp": [".webp"],
+        "application/pdf": [".pdf"]
+      }
+    }
+  ]
+}

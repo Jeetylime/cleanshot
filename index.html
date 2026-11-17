@@ -8,20 +8,9 @@
     <meta name="theme-color" content="#1c1c1e" />
     <meta name="description" content="Studiolo — edit images, design graphics and work with PDFs, privately in your browser. No uploads, no account." />
     <title>Studiolo</title>
-    <script>
-      // Apply the saved theme before first paint to avoid a flash.
-      try {
-        var t = JSON.parse(localStorage.getItem('cleanshot:prefs') || '{}').theme || 'dark';
-        if (t === 'system') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        document.documentElement.dataset.theme = t;
-        var a = JSON.parse(localStorage.getItem('cleanshot:prefs') || '{}').a11y || {};
-        var d = document.documentElement.dataset;
-        if (a.textSize && a.textSize !== 'default') d.textSize = a.textSize;
-        if (a.reduceMotion) d.reduceMotion = '';
-        if (a.highContrast) d.highContrast = '';
-        if (a.underlineLinks) d.underlineLinks = '';
-      } catch (e) {}
-    </script>
+    <script src="./theme-init.js"></script>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./favicon.svg" />
   </head>
   <body>
     <div id="root"></div>

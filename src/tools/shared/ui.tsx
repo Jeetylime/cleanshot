@@ -207,7 +207,18 @@ export function useImageList(opts: { multiple: boolean; onAdded?: (imgs: LoadedI
     });
   }, []);
 
-  return { items, loading, add, remove, clear };
+  const move = useCallback((id: string, dir: -1 | 1) => {
+    setItems((prev) => {
+      const i = prev.findIndex((p) => p.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = prev.slice();
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }, []);
+
+  return { items, loading, add, remove, clear, move };
 }
 
 // ---------------------------------------------------------------------------

@@ -32,6 +32,7 @@ import {
   LayoutTemplate,
   ChevronRight,
   Info,
+  HardDrive,
 } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
@@ -49,7 +50,7 @@ import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, TextSize, Theme } from '../types';
 import { Toggle } from './ui/controls';
-import { goAboutPage, goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
+import { goAboutPage, goStorage, goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
   return (
@@ -384,6 +385,9 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </MenuItem>
             </>
           )}
+          <MenuItem icon={<HardDrive size={14} />} onClick={run(goStorage)}>
+            Storage on this device
+          </MenuItem>
           <MenuItem icon={<Info size={14} />} onClick={run(goAboutPage)}>
             About Studiolo
           </MenuItem>

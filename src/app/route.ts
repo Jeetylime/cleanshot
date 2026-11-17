@@ -14,7 +14,10 @@ export type ToolKey =
   | 'compressor'
   | 'converter'
   | 'metadata'
-  | 'color-picker';
+  | 'color-picker'
+  | 'watermark'
+  | 'favicon'
+  | 'collage';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -25,11 +28,14 @@ export const TOOL_KEYS: ToolKey[] = [
   'converter',
   'metadata',
   'color-picker',
+  'watermark',
+  'favicon',
+  'collage',
 ];
 
-export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign';
+export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text';
 
-export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign'];
+export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text'];
 
 export type LegalDoc = 'terms' | 'privacy-policy' | 'acceptable-use';
 
@@ -40,6 +46,7 @@ export type Route =
   | { section: 'editor' }
   | { section: 'canvas' }
   | { section: 'about' }
+  | { section: 'storage' }
   | { section: 'legal'; doc: LegalDoc }
   | { section: 'tools'; tool: ToolKey | null }
   | { section: 'pdf'; tool: PdfToolKey | null };
@@ -49,6 +56,7 @@ function parse(hash: string): Route {
   if (h === 'editor' || h === 'edit' || h === 'create') return { section: 'editor' };
   if (h === 'canvas') return { section: 'canvas' };
   if (h === 'about') return { section: 'about' };
+  if (h === 'storage') return { section: 'storage' };
   if (h === 'privacy') return { section: 'legal', doc: 'privacy-policy' }; // old Privacy & Models link
   if ((LEGAL_DOCS as string[]).includes(h)) return { section: 'legal', doc: h as LegalDoc };
   if (h === 'tools') return { section: 'tools', tool: null };
@@ -81,6 +89,7 @@ function toHash(r: Route): string {
   if (r.section === 'editor') return 'editor';
   if (r.section === 'canvas') return 'canvas';
   if (r.section === 'about') return 'about';
+  if (r.section === 'storage') return 'storage';
   if (r.section === 'legal') return r.doc;
   if (r.section === 'pdf') return r.tool ?? 'pdf';
   return r.tool ?? 'tools';
@@ -97,6 +106,7 @@ export const goHome = () => navigate({ section: 'home' });
 export const goEditor = () => navigate({ section: 'editor' });
 export const goCanvas = () => navigate({ section: 'canvas' });
 export const goAboutPage = () => navigate({ section: 'about' });
+export const goStorage = () => navigate({ section: 'storage' });
 export const goLegal = (doc: LegalDoc) => navigate({ section: 'legal', doc });
 export const goPrivacy = () => goLegal('privacy-policy');
 export const goPdf = (tool: PdfToolKey | null = null) => navigate({ section: 'pdf', tool });
@@ -119,9 +129,25 @@ export function useRoute(): Route {
 type FileSink = (files: File[]) => void;
 let toolSink: FileSink | null = null;
 
+let pendingFiles: File[] | null = null;
+
 export function setToolFileSink(sink: FileSink | null) {
   toolSink = sink;
+  // Files sent before the target tool finished loading (see openFilesIn).
+  if (sink && pendingFiles) {
+    const files = pendingFiles;
+    pendingFiles = null;
+    queueMicrotask(() => sink(files));
+  }
 }
+
+/** Navigate to a tool and hand it files once it has mounted and registered its sink. */
+export function openFilesIn(r: Route, files: File[]) {
+  pendingFiles = files;
+  navigate(r);
+}
+
+export const isPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 
 export function getToolFileSink(): FileSink | null {
   return current.section === 'tools' || current.section === 'pdf' || current.section === 'canvas' ? toolSink : null;

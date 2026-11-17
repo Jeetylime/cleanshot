@@ -5,6 +5,9 @@
   Cross-Origin-Embedder-Policy: credentialless
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  # Only the app itself and Hugging Face (model weights) can be contacted.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), display-capture=(self)
 
 # Hashed build files never change; cache them for a year.
 /assets/*
@@ -12,3 +15,7 @@
 
 /ort/*
   Cache-Control: public, max-age=2592000
+
+# The service worker must always be revalidated so updates roll out.
+/sw.js
+  Cache-Control: no-cache

@@ -25,11 +25,17 @@ const isolation = {
   'Cross-Origin-Embedder-Policy': 'credentialless',
 };
 
+// Mirrors public/_headers so `npm run preview` exercises the production CSP.
+const csp = {
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+};
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), dropDuplicateOrtWasm()],
   base: './',
   server: { headers: isolation },
-  preview: { headers: isolation },
+  preview: { headers: { ...isolation, ...csp } },
   optimizeDeps: {
     // Transformers.js is loaded lazily by the AI tools; pre-bundle it so the
     // first visit doesn't trigger a dev-server reload.

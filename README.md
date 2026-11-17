@@ -14,6 +14,7 @@ npm install
 npm run dev       # http://localhost:5173
 npm run build     # type-check + production build into dist/
 npm run preview   # serve the production build
+npm test          # unit tests (Vitest)
 ```
 
 ## Features
@@ -60,6 +61,10 @@ npm run preview   # serve the production build
 
 **Export**: PNG, JPEG, WebP, SVG or PDF; one page, all pages (multi-page PDF, or a ZIP of images) or just the selection; PDFs can include an invisible text layer so text is selectable and searchable; SVG keeps shapes, icons, charts and text as vectors with fonts embedded; paper presets export at real US Letter/A4 size; transparent background for PNG/WebP/SVG, 0.5–3× or custom dimensions, quality for lossy formats, file name, live preview with size estimate, download or copy. Export uses the same renderer as the screen and waits for fonts and images.
 
+**PDF Tools**: merge, split, organize (reorder, rotate, delete), sign, compress, images to PDF, PDF to images, page numbers / headers / footers / diagonal watermark, and text extraction to plain text or Markdown.
+
+**App-wide**: ⌘K / Ctrl+K command palette for every section, tool and setting; a Storage page (`#storage`) showing everything saved on the device, with export and delete; offline support and installable app (service worker, web manifest, opening images and PDFs from the OS); a Content-Security-Policy that blocks every network destination except Hugging Face model downloads.
+
 **Integration**: Edit's “Send to Canvas” places the edited image on the current design; Canvas's “Annotate” opens an image in Edit; the Cropper, Background Remover and Upscaler have a “Design” button that opens the result on Canvas.
 
 ## Image Tools
@@ -73,6 +78,9 @@ npm run preview   # serve the production build
 | Image Compressor | JPEG, WebP or PNG with live before/after sizes, a savings summary, compare slider or side-by-side view, batch, ZIP | PNG optimization uses a built-in median-cut quantizer (optional Floyd–Steinberg dithering), an indexed-PNG encoder on the native `CompressionStream`, and a lossless palette path for ≤256-color images |
 | Image Converter | PNG, JPEG, WebP or AVIF (where the browser can encode it), batch, quality setting, ZIP | Keeps transparency when the target format supports it |
 | Metadata Viewer | File, dimensions, aspect ratio, bit depth, color profile, DPI, full EXIF including GPS; flags sensitive fields; downloads a clean copy | Dependency-free JPEG/PNG/WebP parser. Stripping removes EXIF/XMP/IPTC/text without re-encoding pixels |
+| Watermark | Text or logo, nine positions or tiled, opacity, rotation, batch to ZIP | Drawn on a canvas at full resolution |
+| Collage Maker | Grid of photos with columns, cell shape, spacing, rounded corners and background | Fill or fit each cell, reorder images |
+| Favicon Generator | favicon.ico (16/32/48), PNG icons, Apple touch and Android icons, web manifest, HTML snippet | Built-in multi-size ICO writer |
 | Color Picker | Click to sample with a magnifier; HEX/RGB/HSL copy; dominant palette with coverage; CSS/JSON/PNG export | Median-cut seeds refined with k-means |
 
 The AI runtime is code-split and loads only when an AI tool is opened. ONNX Runtime's WASM is served by the app (`public/ort`), so the only external requests are model weights from `huggingface.co`. The dev and preview servers send cross-origin isolation headers, so inference can use multiple threads.
