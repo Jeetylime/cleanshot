@@ -170,7 +170,7 @@ export default function Watermark() {
                     aria-checked={position === p}
                     aria-label={`Position ${p}`}
                     onClick={() => setPosition(p)}
-                    className={`h-7 rounded-[5px] border ${position === p ? 'border-accent bg-accent' : 'border-line bg-control hover:bg-hover'}`}
+                    className={`h-7 rounded-[5px] border ${position === p ? 'border-accent bg-accent-fill' : 'border-line bg-control hover:bg-hover'}`}
                   />
                 ))}
               </div>

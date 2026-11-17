@@ -153,7 +153,7 @@ function AiActions({ e }: { e: ImageElement }) {
         <div className="flex flex-col gap-1.5" role="status">
           <span className="text-xs text-muted">{job.label}…</span>
           <div className="h-1 overflow-hidden rounded-full bg-control">
-            <div className={`h-full rounded-full bg-accent ${job.fraction === null ? 'w-1/3 animate-pulse' : ''}`} style={job.fraction === null ? undefined : { width: `${Math.round(job.fraction * 100)}%` }} />
+            <div className={`h-full rounded-full bg-accent-fill ${job.fraction === null ? 'w-1/3 animate-pulse' : ''}`} style={job.fraction === null ? undefined : { width: `${Math.round(job.fraction * 100)}%` }} />
           </div>
         </div>
       )}

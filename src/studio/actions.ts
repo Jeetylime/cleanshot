@@ -780,6 +780,16 @@ export async function downloadProjectFile() {
   await downloadBlob(blob, `${doc.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.studiolo`);
 }
 
+/** Download a saved design (from "Your designs") as a .studiolo file without opening it. */
+export async function downloadSavedProject(id: string) {
+  const rec = await db.loadProject(id);
+  if (!rec) return;
+  const assets = (await Promise.all(docAssetIds(rec.doc).map((a) => db.getAsset(a).catch(() => null)))).filter((a): a is db.AssetRecord => !!a);
+  const blob = await db.buildProjectFile(rec.doc, assets);
+  const { downloadBlob } = await import('../engine/export');
+  await downloadBlob(blob, `${rec.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.studiolo`);
+}
+
 function renderBitmap(b: ImageBitmap): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = b.width;

@@ -142,7 +142,7 @@ export default function Frames() {
               <span>#{i + 1}</span>
               <span>{Math.round(f.duration)} ms</span>
             </span>
-            {selected.has(i) && <Check size={14} className="absolute top-2.5 right-2.5 rounded-full bg-accent p-0.5 text-white" />}
+            {selected.has(i) && <Check size={14} className="absolute top-2.5 right-2.5 rounded-full bg-accent-fill p-0.5 text-white" />}
           </button>
         ))}
       </div>

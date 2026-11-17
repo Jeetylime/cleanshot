@@ -93,7 +93,7 @@ export default function Split() {
                 const gi = mode === 'extract' ? -1 : groups.findIndex((g) => g.includes(p));
                 return (
                   <PageTile key={p} page={p} url={thumbs[p]} selected={picked?.has(p)} dimmed={!!picked && picked.size > 0 && !picked.has(p)} onClick={mode === 'extract' ? () => toggle(p) : undefined}>
-                    {gi >= 0 && <span className="absolute top-1.5 left-1.5 rounded-full bg-accent px-1.5 text-[10px] font-semibold text-white">File {gi + 1}</span>}
+                    {gi >= 0 && <span className="absolute top-1.5 left-1.5 rounded-full bg-accent-fill px-1.5 text-[10px] font-semibold text-white">File {gi + 1}</span>}
                   </PageTile>
                 );
               })}

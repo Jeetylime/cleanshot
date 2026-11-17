@@ -41,7 +41,7 @@ export function ToolSidebar() {
                     data-tool={t.id}
                     onClick={() => setTool(t.id)}
                     className={`group relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] transition-[background-color,color,transform] duration-150 active:scale-[0.92] ${
-                      active ? 'bg-accent text-white shadow-soft' : 'text-muted hover:bg-hover hover:text-fg'
+                      active ? 'bg-accent-fill text-white shadow-soft' : 'text-muted hover:bg-hover hover:text-fg'
                     }`}
                   >
                     <Icon size={17} strokeWidth={1.85} />

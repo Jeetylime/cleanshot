@@ -11,7 +11,8 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZES = {
-  sm: 'h-6 w-6 rounded-[6px]',
+  // 24 CSS px minimum target size (WCAG 2.5.8); the root font size is 12px, so rem-based h-6 would be only 18px.
+  sm: 'h-[24px] w-[24px] rounded-[6px]',
   md: 'h-7 w-7 rounded-[7px]',
   lg: 'h-9 w-9 rounded-[8px]',
 };
@@ -30,7 +31,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
         disabled={disabled}
         className={`relative inline-flex shrink-0 items-center justify-center transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.94] disabled:pointer-events-none disabled:opacity-35 ${
           SIZES[size]
-        } ${active ? 'bg-accent text-white shadow-soft' : 'text-muted hover:bg-hover hover:text-fg'} ${className}`}
+        } ${active ? 'bg-accent-fill text-white shadow-soft' : 'text-muted hover:bg-hover hover:text-fg'} ${className}`}
         {...rest}
       >
         {children}

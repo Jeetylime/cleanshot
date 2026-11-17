@@ -39,7 +39,6 @@ export function StartScreen() {
                 onClick={goEditor}
                 className="flex flex-col text-left"
                 data-testid="open-editor"
-                aria-label="Open Edit"
               >
                 <div className="flex h-[176px] items-center justify-center bg-window px-8 pt-6 pb-4">
                   <div className="w-full max-w-[280px] transition-transform duration-300 group-hover:scale-[1.02]">
@@ -59,7 +58,7 @@ export function StartScreen() {
                   <button
                     type="button"
                     onClick={goEditor}
-                    className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
+                    className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-[8px] bg-accent-fill px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
                   >
                     <span className="truncate">Continue “{docName}”</span>
                   </button>
@@ -70,7 +69,7 @@ export function StartScreen() {
                       goEditor();
                       openFilePicker();
                     }}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent-fill px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
                   >
                     <ImagePlus size={14} strokeWidth={2.2} />
                     Open image
@@ -85,7 +84,7 @@ export function StartScreen() {
 
             {/* Canvas */}
             <section className="group flex flex-col overflow-hidden rounded-[16px] border border-line bg-panel transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-pop">
-              <button type="button" onClick={goCanvas} className="flex flex-col text-left" data-testid="open-canvas" aria-label="Open Canvas">
+              <button type="button" onClick={goCanvas} className="flex flex-col text-left" data-testid="open-canvas">
                 <div className="flex h-[176px] items-center justify-center bg-window px-6 transition-transform duration-300 group-hover:scale-[1.02]">
                   <Suspense fallback={null}>
                     <CanvasPreview />
@@ -104,7 +103,7 @@ export function StartScreen() {
                   type="button"
                   onClick={goCanvas}
                   data-testid="start-canvas"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent-fill px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover"
                 >
                   <LayoutTemplate size={14} />
                   New design
@@ -119,7 +118,6 @@ export function StartScreen() {
                 onClick={() => goTools()}
                 className="flex flex-col text-left"
                 data-testid="open-tools"
-                aria-label="Open Image Tools"
               >
                 <div className="flex h-[176px] items-center justify-center bg-window px-8">
                   <div className="grid grid-cols-4 gap-2.5 transition-transform duration-300 group-hover:scale-[1.02]">
@@ -161,7 +159,7 @@ export function StartScreen() {
 
             {/* PDF tools */}
             <section className="group flex flex-col overflow-hidden rounded-[16px] border border-line bg-panel transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-pop">
-              <button type="button" onClick={() => goPdf()} className="flex flex-col text-left" data-testid="open-pdf" aria-label="Open PDF Tools">
+              <button type="button" onClick={() => goPdf()} className="flex flex-col text-left" data-testid="open-pdf">
                 <div className="flex h-[176px] items-center justify-center bg-window px-8">
                   <div className="grid grid-cols-4 gap-2.5 transition-transform duration-300 group-hover:scale-[1.02]">
                     {PDF_TOOLS.map((t) => (

@@ -13,7 +13,7 @@ import type {
 import { store, type ExportPrefs, type ToolStyles } from './store';
 import { beginGesture, cancelGesture, commit, endGesture, inGesture, resetHistory, updateLive } from './history';
 import { fitView } from './view';
-import { styleGroupOf, toolStyleGroup, type StyleGroup, CANVAS_TOOLS } from './factory';
+import { createAnnotation, isAnnotationTool, styleGroupOf, toolStyleGroup, type StyleGroup, CANVAS_TOOLS } from './factory';
 import {
   constrainSource,
   cropImage,
@@ -26,7 +26,7 @@ import {
   rotateImage,
   type ImageEntry,
 } from '../engine/images';
-import { getBounds, moveAnnotation, transformAnnotation } from '../engine/annotations';
+import { getBounds, moveAnnotation, resizeAnnotation, transformAnnotation } from '../engine/annotations';
 import { DEFAULT_BACKGROUND } from '../engine/backgrounds';
 import { clampExportSize, downloadBlob, exportDocument, exportFileName, outputSize, writeImageToClipboard } from '../engine/export';
 import { clearPrivacyCaches } from '../engine/privacy';
@@ -354,6 +354,54 @@ export function nudgeSelection(dx: number, dy: number) {
       annotations: doc.annotations.map((a) => (set.has(a.id) ? moveAnnotation(a, dx, dy) : a)),
     }),
     { key: 'nudge' },
+  );
+}
+
+/**
+ * Keyboard alternative to drawing (WCAG 2.1.1 / 2.5.7): insert the current
+ * tool's annotation in the middle of the visible image at a sensible default
+ * size, selected so arrow keys move it and Alt+arrows resize it. Freehand
+ * pen and marker strokes are path-dependent and excluded.
+ */
+export function insertAnnotationAtCenter(): boolean {
+  const s = store.get();
+  const doc = s.doc;
+  if (!doc || !isAnnotationTool(s.tool) || s.tool === 'pen') return false;
+  if (s.tool === 'highlighter' && s.styles.highlighter.mode === 'stroke') return false;
+  const w = Math.round(doc.width * 0.3);
+  const h = Math.round(doc.height * 0.2);
+  const cx = doc.width / 2;
+  const cy = doc.height / 2;
+  const a = createAnnotation(s.tool, { x: cx - w / 2, y: cy - h / 2 }, s.styles, doc.unit, doc.annotations);
+  let placed: Annotation = a;
+  if (a.type === 'arrow') placed = { ...a, start: { x: cx - w / 2, y: cy + h / 2 }, end: { x: cx + w / 2, y: cy - h / 2 } };
+  else if (a.type === 'step') placed = { ...a, x: cx, y: cy };
+  else if ('w' in a && 'h' in a) placed = { ...a, w, h } as Annotation;
+  addAnnotation(placed);
+  if (placed.type === 'text') startTextEdit(placed.id, true);
+  else showToast('Added. Arrow keys move it, Alt+arrow keys resize it.', 'info');
+  return true;
+}
+
+/** Keyboard resize: grow or shrink the selection from its bottom-right corner (arrows: their end point). */
+export function resizeSelectionBy(dx: number, dy: number) {
+  const s = store.get();
+  if (!s.doc || !s.selection.length) return;
+  const set = new Set(s.selection);
+  const unit = s.doc.unit;
+  commit(
+    (doc) => ({
+      ...doc,
+      annotations: doc.annotations.map((a) => {
+        if (!set.has(a.id)) return a;
+        if (a.type === 'arrow') return resizeAnnotation(a, 'end', { x: a.end.x + dx, y: a.end.y + dy }, { keepAspect: false, fromCenter: false }, unit);
+        if (a.type === 'step') return { ...a, size: clamp(a.size + (dx || dy) / 2, 8, 200) };
+        const b = getBounds(a, unit);
+        if (b.w + dx < 4 || b.h + dy < 4) return a;
+        return resizeAnnotation(a, 'se', { x: b.x + b.w + dx, y: b.y + b.h + dy }, { keepAspect: false, fromCenter: false }, unit);
+      }),
+    }),
+    { key: 'resize-keys' },
   );
 }
 

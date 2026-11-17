@@ -497,7 +497,7 @@ export default function BackgroundRemover() {
                     disabled={!ready}
                     onClick={() => setTool(t.id)}
                     className={`flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-xs font-medium transition-colors disabled:opacity-40 ${
-                      tool === t.id ? 'bg-accent text-white' : 'text-muted hover:bg-hover hover:text-fg'
+                      tool === t.id ? 'bg-accent-fill text-white' : 'text-muted hover:bg-hover hover:text-fg'
                     }`}
                   >
                     <t.icon size={15} /> <span className="hidden sm:inline">{t.label}</span>

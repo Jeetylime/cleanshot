@@ -15,11 +15,13 @@
   --border-strong: rgba(255, 255, 255, 0.12);
   --fg: #ececef;
   --fg-muted: #a3a3ab;
-  --fg-subtle: #6f6f78;
+  /* Contrast: --fg-subtle ≥ 4.5:1 on window/panel/elevated; --accent-fill ≥ 4.5:1 behind white text (WCAG AA). */
+  --fg-subtle: #92929b;
   --accent: #0a84ff;
-  --accent-hover: #2a94ff;
+  --accent-fill: #0a6fd6;
+  --accent-hover: #0a63c2;
   --accent-soft: rgba(10, 132, 255, 0.16);
-  --danger: #ff453a;
+  --danger: #ff6961;
   --success: #32d74b;
   --shadow-pop: 0 12px 32px -10px rgba(0, 0, 0, 0.65), 0 2px 6px -2px rgba(0, 0, 0, 0.4),
     0 0 0 0.5px rgba(255, 255, 255, 0.12);
@@ -39,11 +41,12 @@
   --border-strong: rgba(0, 0, 0, 0.13);
   --fg: #1d1d1f;
   --fg-muted: #5d5d66;
-  --fg-subtle: #8f8f98;
-  --accent: #007aff;
-  --accent-hover: #1a87ff;
+  --fg-subtle: #66666e;
+  --accent: #0066cc;
+  --accent-fill: #0066cc;
+  --accent-hover: #0058b0;
   --accent-soft: rgba(0, 122, 255, 0.12);
-  --danger: #e5352b;
+  --danger: #c0261c;
   --success: #28a745;
   --shadow-pop: 0 12px 32px -10px rgba(0, 0, 0, 0.22), 0 2px 6px -2px rgba(0, 0, 0, 0.1),
     0 0 0 0.5px rgba(0, 0, 0, 0.12);
@@ -77,6 +80,7 @@
   --color-subtle: var(--fg-subtle);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-fill: var(--accent-fill);
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
   --color-success: var(--success);
@@ -370,6 +374,12 @@ body {
 :root[data-high-contrast] :focus-visible {
   outline-width: 3px;
   outline-offset: 2px;
+}
+/* Links inside running text must not rely on color alone (WCAG 1.4.1). */
+:where(p, li, dd) a:not([data-no-underline]) {
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
 }
 :root[data-underline-links] a {
   text-decoration: underline;

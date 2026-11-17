@@ -230,9 +230,9 @@ export function ProgressBar({ value, label }: { value: number | null; label?: Re
       {label && <div className="flex items-center justify-between text-xs text-muted">{label}</div>}
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-active">
         {value === null ? (
-          <div className="h-full w-1/3 animate-[cs-indeterminate_1.2s_ease-in-out_infinite] rounded-full bg-accent" />
+          <div className="h-full w-1/3 animate-[cs-indeterminate_1.2s_ease-in-out_infinite] rounded-full bg-accent-fill" />
         ) : (
-          <div className="h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${Math.round(value * 100)}%` }} />
+          <div className="h-full rounded-full bg-accent-fill transition-[width] duration-200" style={{ width: `${Math.round(value * 100)}%` }} />
         )}
       </div>
     </div>

@@ -212,7 +212,7 @@ class ToolErrorBoundary extends Component<{ name: string; children: ReactNode },
           <button
             type="button"
             onClick={() => this.setState({ error: null })}
-            className="h-8 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white hover:bg-accent-hover"
+            className="h-8 rounded-[8px] bg-accent-fill px-3 text-xs font-semibold text-white hover:bg-accent-hover"
           >
             Reload tool
           </button>

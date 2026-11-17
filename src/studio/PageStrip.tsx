@@ -83,8 +83,8 @@ export function PageStrip() {
             }}
             className={`group relative flex shrink-0 flex-col items-center gap-1 ${drag === i ? 'opacity-40' : ''}`}
           >
-            {over === i && drag !== null && <span className="absolute -left-[5px] top-1 h-[56px] w-0.5 rounded bg-accent" />}
-            {over === i + 1 && i === pages.length - 1 && drag !== null && <span className="absolute -right-[5px] top-1 h-[56px] w-0.5 rounded bg-accent" />}
+            {over === i && drag !== null && <span className="absolute -left-[5px] top-1 h-[56px] w-0.5 rounded bg-accent-fill" />}
+            {over === i + 1 && i === pages.length - 1 && drag !== null && <span className="absolute -right-[5px] top-1 h-[56px] w-0.5 rounded bg-accent-fill" />}
             <button
               type="button"
               onClick={() => A.goToPage(i)}

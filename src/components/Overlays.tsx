@@ -86,6 +86,8 @@ const SHORTCUTS: { title: string; items: [string, string[]][] }[] = [
       ['Select all', [modKey, 'A']],
       ['Nudge', ['←↑→↓']],
       ['Nudge ×10', ['⇧', '←↑→↓']],
+      ['Resize selection', ['⌥', '←↑→↓']],
+      ['Add the current tool’s shape', ['↵']],
       ['Constrain / snap', ['⇧ drag']],
       ['Draw from center', ['⌥ drag']],
       ['Edit text', ['↵']],

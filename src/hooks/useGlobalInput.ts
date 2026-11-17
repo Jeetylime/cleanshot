@@ -81,6 +81,13 @@ export function useKeyboardShortcuts() {
         return;
       }
 
+      // Alt+arrows resize the selection (keyboard alternative to dragging handles).
+      if (e.altKey && !mod && s.doc && s.selection.length && e.key.startsWith('Arrow') && !s.overlay) {
+        e.preventDefault();
+        const d = (e.shiftKey ? 10 : 1) * s.doc.unit;
+        actions.resizeSelectionBy(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0);
+        return;
+      }
       if (e.altKey) return;
 
       if (key === '?' || (e.shiftKey && key === '/')) {
@@ -107,6 +114,8 @@ export function useKeyboardShortcuts() {
               e.preventDefault();
               actions.startTextEdit(a.id, false);
             }
+          } else if (!s.selection.length && !(e.target instanceof Element && e.target.closest('button, a, select, [role="button"], [role="menuitem"]')) && actions.insertAnnotationAtCenter()) {
+            e.preventDefault();
           }
           return;
         case 'Delete':

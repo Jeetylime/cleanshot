@@ -151,7 +151,7 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
         <button
           type="button"
           onClick={() => studio.set({ exportOpen: true })}
-          className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-accent pr-2.5 pl-2 text-xs font-semibold text-white shadow-soft transition-[background-color,transform] duration-150 hover:bg-accent-hover active:scale-[0.97]"
+          className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-accent-fill pr-2.5 pl-2 text-xs font-semibold text-white shadow-soft transition-[background-color,transform] duration-150 hover:bg-accent-hover active:scale-[0.97]"
           data-testid="studio-download"
         >
           <Download size={14} strokeWidth={2.25} />

@@ -81,7 +81,7 @@ export default function AboutPage() {
           </Section>
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={goCanvas} className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover">
+            <button type="button" onClick={goCanvas} className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-accent-fill px-3 text-xs font-semibold text-white shadow-soft hover:bg-accent-hover">
               <LayoutTemplate size={14} /> Start a design
             </button>
             <button type="button" onClick={goEditor} className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-control px-3 text-xs font-semibold text-fg hover:bg-active">

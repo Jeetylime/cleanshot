@@ -159,7 +159,7 @@ function TemplatesPanel() {
             type="button"
             onClick={() => setCat(c)}
             aria-pressed={cat === c}
-            className={`h-6 rounded-full px-2.5 text-2xs font-medium ${cat === c ? 'bg-accent text-white' : 'bg-control text-muted hover:text-fg'}`}
+            className={`h-6 rounded-full px-2.5 text-2xs font-medium ${cat === c ? 'bg-accent-fill text-white' : 'bg-control text-muted hover:text-fg'}`}
           >
             {c}
           </button>
@@ -802,7 +802,7 @@ function LayersPanel() {
                 onDoubleClick={() => setRenaming(row.gid)}
                 className={`group relative flex h-8 items-center gap-1 rounded-[7px] pr-1 pl-0.5 text-xs font-medium transition-colors ${allSel ? 'bg-accent-soft text-fg' : 'text-fg hover:bg-hover'} ${hidden ? 'opacity-50' : ''}`}
               >
-                {dropZ === row.z && drag && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent" />}
+                {dropZ === row.z && drag && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent-fill" />}
                 <button
                   type="button"
                   aria-label={open ? 'Collapse group' : 'Expand group'}
@@ -843,7 +843,7 @@ function LayersPanel() {
               } ${e.hidden ? 'opacity-50' : ''} ${drag?.id === e.id ? 'opacity-40' : ''}`}
               data-z={row.z}
             >
-              {dropZ === row.z && drag && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent" />}
+              {dropZ === row.z && drag && <span className="absolute inset-x-1 -top-px h-0.5 rounded bg-accent-fill" />}
               <GripVertical size={12} className="shrink-0 text-subtle opacity-0 group-hover:opacity-100" />
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] bg-control">{layerIcon(e)}</span>
               {renaming === e.id ? (
@@ -878,7 +878,7 @@ function LayersPanel() {
             finishDrop();
           }}
         >
-          {dropZ === -1 && drag && <span className="mx-1 block h-0.5 rounded bg-accent" />}
+          {dropZ === -1 && drag && <span className="mx-1 block h-0.5 rounded bg-accent-fill" />}
         </li>
       </ul>
     </div>

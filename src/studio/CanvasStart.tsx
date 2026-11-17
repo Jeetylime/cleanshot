@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Copy, FileUp, ImagePlus, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Copy, Download, FileUp, ImagePlus, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
 import { ColorWell, NumberInput, Button } from '../components/ui/controls';
 import { Popover, MenuItem } from '../components/ui/Popover';
@@ -22,6 +22,9 @@ function PresetGlyph({ w, h }: { w: number; h: number }) {
   );
 }
 
+/** Designs shown before "Show all": one row on wide screens. */
+const RECENT_COUNT = 5;
+
 export function CanvasStart() {
   const [projects, setProjects] = useState<db.ProjectSummary[] | null>(null);
   const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
@@ -29,6 +32,7 @@ export function CanvasStart() {
   const [h, setH] = useState(1080);
   const [bg, setBg] = useState<Bg>('white');
   const [color, setColor] = useState('#f5f5f7');
+  const [showAll, setShowAll] = useState(false);
 
   const refresh = async () => {
     try {
@@ -79,6 +83,32 @@ export function CanvasStart() {
               </Button>
             </div>
           </div>
+
+          {projects && projects.length > 0 && (
+            <section aria-labelledby="recent" className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between px-0.5">
+                <h2 id="recent" className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
+                  Your designs
+                </h2>
+                <span className="flex items-center gap-3">
+                  {usage && <span className="hidden text-2xs text-subtle tabular-nums sm:inline">{formatBytes(usage.usage)} of browser storage used</span>}
+                  {projects.length > RECENT_COUNT && (
+                    <button type="button" aria-expanded={showAll} aria-controls="your-designs" onClick={() => setShowAll((v) => !v)} className="text-xs font-medium text-accent hover:underline">
+                      {showAll ? 'Show fewer' : `Show all ${projects.length}`}
+                    </button>
+                  )}
+                </span>
+              </div>
+              <div id="your-designs" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {(showAll ? projects : projects.slice(0, RECENT_COUNT)).map((p) => (
+                  <ProjectCard key={p.id} p={p} onChanged={refresh} />
+                ))}
+              </div>
+              <p className="px-0.5 text-2xs leading-[14px] text-subtle">
+                Designs are stored only in this browser. Clearing site data removes them. To keep a copy or move a design to another device, use “Download project file” from the design’s menu.
+              </p>
+            </section>
+          )}
 
           <section aria-labelledby="sizes" className="flex flex-col gap-2.5">
             <h2 id="sizes" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
@@ -184,28 +214,6 @@ export function CanvasStart() {
             </div>
           </section>
 
-          <section aria-labelledby="recent" className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between px-0.5">
-              <h2 id="recent" className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
-                Your designs
-              </h2>
-              {usage && <span className="text-2xs text-subtle tabular-nums">{formatBytes(usage.usage)} of browser storage used</span>}
-            </div>
-            {projects === null ? null : projects.length ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                {projects.map((p) => (
-                  <ProjectCard key={p.id} p={p} onChanged={refresh} />
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-[12px] border border-dashed border-line px-4 py-6 text-center text-xs text-subtle">
-                Designs you make are saved automatically in this browser and listed here.
-              </p>
-            )}
-            <p className="px-0.5 text-2xs leading-[14px] text-subtle">
-              Designs are stored only in this browser. Clearing site data removes them. To keep a copy or move a design to another device, use “Download project file” from the design’s menu.
-            </p>
-          </section>
         </div>
       </main>
     </div>
@@ -253,6 +261,15 @@ function ProjectCard({ p, onChanged }: { p: db.ProjectSummary; onChanged: () => 
             }}
           >
             Duplicate
+          </MenuItem>
+          <MenuItem
+            icon={<Download size={14} />}
+            onClick={() => {
+              setOpen(false);
+              void A.downloadSavedProject(p.id);
+            }}
+          >
+            Download project file
           </MenuItem>
           <MenuItem
             icon={<Trash2 size={14} />}

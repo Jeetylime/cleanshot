@@ -123,7 +123,7 @@ function CanvasProps() {
                   setOpen(false);
                   A.resizeCanvas(p.width, p.height, scale);
                 }}
-                className="flex w-full items-center justify-between rounded-[6px] px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-white"
+                className="flex w-full items-center justify-between rounded-[6px] px-2 py-1.5 text-left text-xs hover:bg-accent-fill hover:text-white"
               >
                 <span>{p.label}</span>
                 <span className="opacity-60 tabular-nums">

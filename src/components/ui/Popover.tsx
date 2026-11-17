@@ -104,13 +104,13 @@ export function MenuItem({
       disabled={disabled}
       onClick={onClick}
       className={`flex h-7 w-full items-center gap-2.5 rounded-[6px] px-2 text-left text-sm transition-colors duration-100 disabled:opacity-40 ${
-        danger ? 'text-danger hover:bg-danger/12' : 'text-fg hover:bg-accent hover:text-white'
+        danger ? 'text-danger hover:bg-danger/12' : 'text-fg hover:bg-accent-fill hover:text-white'
       } group`}
     >
       <span className={`flex w-4 shrink-0 justify-center ${danger ? '' : 'text-muted group-hover:text-white'}`}>{icon}</span>
       <span className="flex-1 truncate">{children}</span>
       {checked !== undefined && (
-        <span className={`h-1.5 w-1.5 rounded-full ${checked ? 'bg-accent group-hover:bg-white' : ''}`} />
+        <span className={`h-1.5 w-1.5 rounded-full ${checked ? 'bg-accent-fill group-hover:bg-white' : ''}`} />
       )}
       {shortcut && <span className="text-xs text-subtle group-hover:text-white/80">{shortcut}</span>}
     </button>

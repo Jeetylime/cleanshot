@@ -111,7 +111,7 @@ export default function StoragePage() {
               <span className="tabular-nums">{inv?.estimate ? `${formatBytes(inv.estimate.usage)} of ${formatBytes(inv.estimate.quota)}` : 'Unknown'}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-control" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Storage used">
-              <div className={`h-full rounded-full ${pct > 85 ? 'bg-danger' : 'bg-accent'}`} style={{ width: `${Math.max(pct, 0.5)}%` }} />
+              <div className={`h-full rounded-full ${pct > 85 ? 'bg-danger' : 'bg-accent-fill'}`} style={{ width: `${Math.max(pct, 0.5)}%` }} />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1.5 text-xs text-muted">

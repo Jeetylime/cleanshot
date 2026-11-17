@@ -127,18 +127,11 @@ export function EmptyState() {
   return (
     <main className="scroll-thin flex flex-1 items-start justify-center overflow-y-auto px-5 py-8 sm:items-center">
       <div className="flex w-full max-w-[600px] flex-col items-center animate-rise">
+        {/* Clicking anywhere opens the picker for mouse users. Keyboard and screen-reader users get the
+            real buttons inside, so this container isn't itself a button (no nested controls). */}
         <div
-          role="button"
-          tabIndex={0}
-          aria-label="Choose an image to edit"
           data-testid="dropzone"
           onClick={openFilePicker}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openFilePicker();
-            }
-          }}
           className="group relative flex w-full flex-col items-center gap-5 rounded-[18px] border border-dashed border-line-strong bg-panel/60 px-6 pt-7 pb-6 text-center transition-[border-color,background-color] duration-200 hover:border-accent/60 hover:bg-panel"
         >
           <Illustration />

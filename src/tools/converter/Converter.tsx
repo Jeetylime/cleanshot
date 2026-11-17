@@ -141,8 +141,9 @@ export default function Converter() {
               onChange={(f) => (f === 'avif' && avif === false ? undefined : setFormat(f))}
               options={(['png', 'jpeg', 'webp', 'avif'] as OutFormat[]).map((f) => ({
                 value: f,
-                label: <span className={f === 'avif' && avif === false ? 'opacity-40' : ''}>{FORMATS[f].label}</span>,
+                label: FORMATS[f].label,
                 title: f === 'avif' && avif === false ? 'AVIF encoding isn’t supported by this browser' : undefined,
+                disabled: f === 'avif' && avif === false,
               }))}
             />
             {FORMATS[format].lossy && (

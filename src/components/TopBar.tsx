@@ -214,7 +214,7 @@ function ZoomControl() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex h-6 w-[58px] items-center justify-center gap-0.5 rounded-[6px] text-xs font-medium text-fg tabular-nums hover:bg-hover"
-        aria-label="Zoom level"
+        aria-label={`${Math.round(zoom * 100)}%, zoom level`}
         aria-haspopup="menu"
       >
         {Math.round(zoom * 100)}%
@@ -461,7 +461,7 @@ function ExportButton() {
           ref={anchor}
           type="button"
           onClick={() => actions.openOverlay(open ? null : 'export')}
-          className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-accent pr-2.5 pl-2 text-xs font-semibold text-white shadow-soft transition-[background-color,transform] duration-150 hover:bg-accent-hover active:scale-[0.97]"
+          className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-accent-fill pr-2.5 pl-2 text-xs font-semibold text-white shadow-soft transition-[background-color,transform] duration-150 hover:bg-accent-hover active:scale-[0.97]"
           aria-haspopup="dialog"
           aria-expanded={open}
         >

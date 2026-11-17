@@ -97,7 +97,7 @@ export function Slider({ label, value, min, max, step = 1, unit = '', format, on
               setDraft(String(Math.round(value * 100) / 100));
               setEditing(true);
             }}
-            aria-label={`Edit ${typeof label === 'string' ? label : 'value'}`}
+            aria-label={`${display}, edit ${typeof label === 'string' ? label : 'value'}`}
           >
             {display}
           </button>
@@ -126,7 +126,9 @@ export function Slider({ label, value, min, max, step = 1, unit = '', format, on
 export interface SegmentOption<T extends string | number> {
   value: T;
   label: ReactNode;
+  /** Tooltip; also exposed as the accessible description (the visible label stays the name). */
   title?: string;
+  disabled?: boolean;
 }
 
 export function Segmented<T extends string | number>({
@@ -156,12 +158,13 @@ export function Segmented<T extends string | number>({
             type="button"
             role="radio"
             aria-checked={active}
-            aria-label={o.title}
+            aria-description={o.title}
+            disabled={o.disabled}
             onClick={() => onChange(o.value)}
             className={`flex h-full min-w-0 flex-1 items-center justify-center gap-1 rounded-[5px] px-1.5 text-xs font-medium transition-colors duration-150 ${
               active
                 ? 'bg-elevated text-fg shadow-[0_1px_2px_rgba(0,0,0,0.25),0_0_0_0.5px_var(--border-strong)]'
-                : 'text-muted hover:text-fg'
+                : 'text-muted hover:text-fg disabled:opacity-40 disabled:hover:text-muted'
             }`}
           >
             {o.label}
@@ -202,7 +205,7 @@ export function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-[18px] w-[30px] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-40 ${
-        checked ? 'bg-accent' : 'bg-active'
+        checked ? 'bg-accent-fill' : 'bg-active'
       }`}
     >
       <span
@@ -429,7 +432,7 @@ export function Button({
   title?: string;
 }) {
   const styles = {
-    primary: 'bg-accent text-white hover:bg-accent-hover shadow-soft',
+    primary: 'bg-accent-fill text-white hover:bg-accent-hover shadow-soft',
     secondary: 'bg-control text-fg hover:bg-active shadow-[inset_0_0_0_0.5px_var(--border-strong)]',
     ghost: 'text-muted hover:bg-hover hover:text-fg',
     danger: 'bg-control text-danger hover:bg-active',
