@@ -142,7 +142,7 @@ export function Dropzone({
       >
         <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-control text-muted">{icon ?? <Upload size={20} />}</div>
         <div className="flex flex-col gap-1">
-          <p className="text-[15px] font-semibold text-fg">{title ?? (multiple ? 'Drop images here' : 'Drop an image here')}</p>
+          <p className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{title ?? (multiple ? 'Drop images here' : 'Drop an image here')}</p>
           <p className="text-sm text-muted">
             or <span className="text-accent">browse</span> · paste with ⌘V / Ctrl+V
           </p>
@@ -326,7 +326,7 @@ export function CompareSlider({
         draggable={false}
       />
       <div className="pointer-events-none absolute inset-y-0 w-px bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]" style={{ left: `${pos}%` }}>
-        <div className="absolute top-1/2 left-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black shadow-pop">
+        <div className="absolute top-1/2 left-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[length:calc(10px*var(--text-scale))] font-bold text-black shadow-pop">
           ⇆
         </div>
       </div>

@@ -98,7 +98,7 @@ export function ExportPanel() {
   return (
     <div className="flex flex-col" data-testid="export-panel">
       <div className="flex items-center justify-between px-3.5 pt-3 pb-2">
-        <h2 className="text-[13px] font-semibold">Export</h2>
+        <h2 className="text-[length:calc(13px*var(--text-scale))] font-semibold">Export</h2>
         <span className="text-xs text-subtle">Rendered locally</span>
       </div>
 

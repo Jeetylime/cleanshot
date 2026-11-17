@@ -6,7 +6,7 @@ import { goCanvas, goEditor } from '../app/route';
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-[15px] font-semibold text-fg">{title}</h2>
+      <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{title}</h2>
       <div className="flex flex-col gap-3 text-sm leading-[22px] text-muted">{children}</div>
     </section>
   );
@@ -38,10 +38,10 @@ export default function AboutPage() {
         <article className="mx-auto flex w-full max-w-[640px] flex-col gap-9 animate-rise">
           <div className="flex flex-col gap-3">
             <p className="text-2xs font-semibold tracking-[0.08em] text-accent uppercase">About the name</p>
-            <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-fg">
+            <h1 className="text-[length:calc(28px*var(--text-scale))] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-fg">
               Studiolo <span className="font-normal text-subtle">/ stoo-dee-OH-loh /</span>
             </h1>
-            <p className="text-[15px] leading-[24px] text-muted">
+            <p className="text-[length:calc(15px*var(--text-scale))] leading-[24px] text-muted">
               Italian for “little study”: a small private room where Renaissance collectors and scholars kept their books, art and instruments, and did their
               thinking and making away from everyone else.
             </p>
@@ -73,7 +73,7 @@ export default function AboutPage() {
               ].map((c) => (
                 <div key={c.title} className="flex flex-col gap-1.5 rounded-[12px] border border-line bg-panel p-3">
                   <c.icon size={16} className="text-accent" />
-                  <span className="text-[13px] font-semibold text-fg">{c.title}</span>
+                  <span className="text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{c.title}</span>
                   <span className="text-xs leading-[17px] text-muted">{c.text}</span>
                 </div>
               ))}

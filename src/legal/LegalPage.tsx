@@ -76,7 +76,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
         <div className="mx-auto flex w-full max-w-[680px] flex-col gap-10 animate-rise">
           <article className="flex flex-col gap-9">
             <div className="flex flex-col gap-2">
-              <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-balance text-fg">{meta.title}</h1>
+              <h1 className="text-[length:calc(22px*var(--text-scale))] font-semibold tracking-[-0.02em] text-balance text-fg">{meta.title}</h1>
               <p className="text-sm leading-[21px] text-muted">{meta.summary}</p>
               <p className="text-xs text-subtle">
                 Last updated <time dateTime={LEGAL.lastUpdated}>{formatDate(LEGAL.lastUpdated)}</time>
@@ -92,6 +92,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
               {(Object.keys(DOCS) as LegalDoc[]).map((k) => (
                 <a
                   key={k}
+                  data-no-underline
                   href={`#${k}`}
                   aria-current={k === doc ? 'page' : undefined}
                   className={`inline-flex h-7 items-center rounded-[7px] px-2.5 text-xs font-medium transition-colors ${

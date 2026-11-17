@@ -9,5 +9,7 @@ try {
   if (a.textSize && a.textSize !== 'default') d.textSize = a.textSize;
   if (a.reduceMotion) d.reduceMotion = '';
   if (a.highContrast) d.highContrast = '';
-  if (a.underlineLinks) d.underlineLinks = '';
+  // Link underlines default to on; prefs saved before a11yRev 2 stored the old default (off). Mirrors loadA11y in src/store/store.ts.
+  var p = JSON.parse(localStorage.getItem('cleanshot:prefs') || '{}');
+  if (a.underlineLinks !== false || (p.a11yRev || 1) < 2) d.underlineLinks = '';
 } catch (e) {}

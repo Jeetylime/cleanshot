@@ -80,7 +80,7 @@ export function PropertiesPanel() {
     >
       <div className="sticky top-0 z-10 flex min-h-[46px] items-start justify-between gap-2 border-b border-line bg-panel/95 px-3.5 pt-3 pb-2.5 backdrop-blur">
         <div className="min-w-0">
-          <h2 className="truncate text-[13px] font-semibold text-fg" data-testid="panel-title">
+          <h2 className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg" data-testid="panel-title">
             {title}
           </h2>
           {hint && <p className="mt-0.5 text-xs leading-[15px] text-subtle">{hint}</p>}

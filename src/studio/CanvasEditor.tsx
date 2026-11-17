@@ -402,7 +402,7 @@ function ShortcutsDialog({ onClose }: { onClose: () => void }) {
         className="scroll-thin max-h-[86dvh] w-full max-w-[640px] overflow-y-auto rounded-[16px] border border-line-strong bg-elevated p-5 shadow-pop outline-none animate-pop-in"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-fg">Keyboard shortcuts</h2>
+          <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Keyboard shortcuts</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted hover:bg-hover hover:text-fg">
             <X size={15} />
           </button>
@@ -414,7 +414,7 @@ function ShortcutsDialog({ onClose }: { onClose: () => void }) {
               {g.items.map(([label, keys]) => (
                 <div key={label} className="flex items-center justify-between gap-3 text-xs">
                   <span className="text-muted">{label}</span>
-                  <span className="shrink-0 font-mono text-[11px] text-fg">{modKey === 'Ctrl' ? keys.replace(/⌘/g, 'Ctrl ') : keys}</span>
+                  <span className="shrink-0 font-mono text-[length:calc(11px*var(--text-scale))] text-fg">{modKey === 'Ctrl' ? keys.replace(/⌘/g, 'Ctrl ') : keys}</span>
                 </div>
               ))}
             </section>

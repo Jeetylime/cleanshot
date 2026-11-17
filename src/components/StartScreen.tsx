@@ -29,7 +29,7 @@ export function StartScreen() {
       <main className="scroll-thin flex flex-1 justify-center overflow-y-auto px-5 py-10 sm:items-center">
         <div className="flex w-full max-w-[1180px] flex-col gap-8 animate-rise">
           <div className="text-center">
-            <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-balance text-fg">What are you working on?</h1>
+            <h1 className="text-[length:calc(22px*var(--text-scale))] font-semibold tracking-[-0.02em] text-balance text-fg">What are you working on?</h1>
             <p className="mt-1.5 text-sm text-muted">Edit an image, design something new, or reach for a quick image or PDF utility.</p>
           </div>
 
@@ -49,7 +49,7 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[15px] font-semibold text-fg">Edit</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Edit</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
                   <p className="text-sm text-muted">Annotate, blur and redact a screenshot or photo, frame it on a background and export.</p>
@@ -94,7 +94,7 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[15px] font-semibold text-fg">Canvas</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Canvas</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
                   <p className="text-sm text-muted">Design posts, thumbnails, banners and slides from scratch or a template.</p>
@@ -137,7 +137,7 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[15px] font-semibold text-fg">Image Tools</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Image Tools</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
                   <p className="text-sm text-muted">Remove backgrounds, upscale, compress, convert, resize and inspect any image.</p>
@@ -169,14 +169,14 @@ export function StartScreen() {
                         <t.icon size={19} strokeWidth={1.8} />
                       </span>
                     ))}
-                    <span className="flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-dashed border-line text-[10px] font-bold tracking-wide text-subtle">
+                    <span className="flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-dashed border-line text-[length:calc(10px*var(--text-scale))] font-bold tracking-wide text-subtle">
                       PDF
                     </span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[15px] font-semibold text-fg">PDF Tools</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">PDF Tools</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
                   <p className="text-sm text-muted">Merge, split, organize, sign, compress and convert PDFs without uploading them.</p>

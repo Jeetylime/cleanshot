@@ -48,7 +48,7 @@ export function ModelStatus({
                 <HardDriveDownload size={18} />
               </span>
               <div className="flex flex-col gap-1">
-                <p className="text-[13px] font-semibold text-fg">{bundled ? 'Load' : 'Download'} {model.label}</p>
+                <p className="text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{bundled ? 'Load' : 'Download'} {model.label}</p>
                 <p className="text-xs leading-[17px] text-muted">
                   {formatBytes(model.bytes)}
                   {bundled ? ', included with this page.' : ', one time. After that it works offline.'}
@@ -68,7 +68,7 @@ export function ModelStatus({
         )}
         {phase === 'downloading' && (
           <>
-            <p className="flex items-center gap-2 text-[13px] font-semibold text-fg">
+            <p className="flex items-center gap-2 text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">
               <Spinner /> Downloading model…
             </p>
             <ProgressBar
@@ -89,7 +89,7 @@ export function ModelStatus({
         )}
         {phase === 'processing' && (
           <>
-            <p className="flex items-center gap-2 text-[13px] font-semibold text-fg">
+            <p className="flex items-center gap-2 text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">
               <Cpu size={15} className="text-accent" /> {processingLabel}
             </p>
             <ProgressBar value={processingProgress ?? null} label={detail ? <span className="tabular-nums">{detail}</span> : undefined} />
@@ -102,7 +102,7 @@ export function ModelStatus({
         )}
         {phase === 'error' && (
           <>
-            <p className="text-[13px] font-semibold text-fg">Something went wrong</p>
+            <p className="text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">Something went wrong</p>
             <p className="text-xs leading-[17px] text-muted">{error}</p>
             <Button variant="primary" className="h-8" onClick={onRetry}>
               <RotateCcw size={13} /> Try again

@@ -12,7 +12,7 @@ const axeSrc = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const base = (process.argv[2] ?? 'http://localhost:5173/').replace(/\/?$/, '/');
 
 const { TOOL_KEYS, PDF_TOOL_KEYS, LEGAL_DOCS } = await import('../src/app/route.ts').catch(() => ({}));
-const routes = ['home', 'editor', 'editor-doc', 'canvas', 'tools', 'pdf', 'storage', 'about', ...(LEGAL_DOCS ?? []), ...(TOOL_KEYS ?? []), ...(PDF_TOOL_KEYS ?? [])];
+const routes = ['home', 'settings-menu', 'editor', 'editor-doc', 'editor-settings', 'canvas', 'tools', 'pdf', 'storage', 'about', ...(LEGAL_DOCS ?? []), ...(TOOL_KEYS ?? []), ...(PDF_TOOL_KEYS ?? [])];
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
@@ -21,10 +21,15 @@ for (const theme of ['dark', 'light']) {
   await page.goto(base + '#home');
   await page.evaluate((t) => localStorage.setItem('cleanshot:prefs', JSON.stringify({ ...JSON.parse(localStorage.getItem('cleanshot:prefs') || '{}'), theme: t })), theme);
   for (const r of routes) {
-    if (r === 'editor-doc') {
+    if (r === 'editor-doc' || r === 'editor-settings') {
       await page.goto(base + '#editor');
       await page.reload();
       await page.getByRole('button', { name: /Try a sample/ }).click();
+      if (r === 'editor-settings') await page.getByRole('button', { name: 'Settings' }).click();
+    } else if (r === 'settings-menu') {
+      await page.goto(base + '#home');
+      await page.reload();
+      await page.getByRole('button', { name: 'Settings' }).click();
     } else {
       await page.goto(base + '#' + r);
       await page.reload();

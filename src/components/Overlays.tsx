@@ -47,7 +47,7 @@ export function DropOverlay({ active }: { active: boolean }) {
           <ImageDown size={22} />
         </div>
         <div className="text-center">
-          <p className="text-[13px] font-semibold text-fg">Drop to open</p>
+          <p className="text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">Drop to open</p>
           <p className="mt-0.5 text-xs text-muted">{getRoute().section === 'pdf' ? 'PDF files or images' : 'PNG, JPG or WebP'}</p>
         </div>
       </div>
@@ -146,7 +146,7 @@ export function ShortcutsDialog() {
         className="scroll-thin max-h-[86vh] w-full max-w-[760px] overflow-y-auto rounded-[14px] border border-line-strong bg-elevated shadow-pop animate-pop-in"
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-line bg-elevated px-5 py-3.5">
-          <h2 className="text-[14px] font-semibold">Keyboard shortcuts</h2>
+          <h2 className="text-[length:calc(14px*var(--text-scale))] font-semibold">Keyboard shortcuts</h2>
           <button
             type="button"
             aria-label="Close"

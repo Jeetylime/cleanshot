@@ -55,7 +55,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex h-7 items-center gap-2 rounded-[6px] bg-control pr-1 pl-2 text-xs">
       <span className="w-8 shrink-0 text-subtle">{label}</span>
-      <span className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-fg">{value}</span>
+      <span className="min-w-0 flex-1 truncate font-mono text-[length:calc(11.5px*var(--text-scale))] text-fg">{value}</span>
       <Tooltip label={`Copy ${label}`}>
         <button
           type="button"
@@ -264,7 +264,7 @@ export default function ColorPicker() {
                 }}
               >
                 <canvas ref={loupeRef} className="h-[110px] w-[110px] rounded-full border-2 border-white shadow-pop" style={{ imageRendering: 'pixelated' }} />
-                <span className="rounded-full bg-black/75 px-2 py-0.5 font-mono text-[11px] text-white">{hex(hover.c)}</span>
+                <span className="rounded-full bg-black/75 px-2 py-0.5 font-mono text-[length:calc(11px*var(--text-scale))] text-white">{hex(hover.c)}</span>
               </div>
             )}
           </div>

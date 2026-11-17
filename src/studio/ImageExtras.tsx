@@ -81,7 +81,7 @@ export function ImageExtras({ e }: { e: ImageElement }) {
                     type="button"
                     onClick={() => up({ adjust: { ...f.adjust } })}
                     aria-pressed={active}
-                    className={`flex h-8 items-center justify-center rounded-[7px] px-1 text-[10.5px] font-medium ${active ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'}`}
+                    className={`flex h-8 items-center justify-center rounded-[7px] px-1 text-[length:calc(10.5px*var(--text-scale))] font-medium ${active ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'}`}
                   >
                     {f.label}
                   </button>

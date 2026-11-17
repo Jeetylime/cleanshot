@@ -8,7 +8,7 @@ import { LEGAL } from './config';
 export function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section id={id} className="flex scroll-mt-4 flex-col gap-3">
-      <h2 className="text-[15px] font-semibold text-fg">{title}</h2>
+      <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{title}</h2>
       <div className="flex flex-col gap-3 text-sm leading-[22px] text-muted">{children}</div>
     </section>
   );
@@ -25,7 +25,7 @@ export function Strong({ children }: { children: ReactNode }) {
 /** Visible stand-in for information that hasn't been provided yet. */
 export function Placeholder({ children }: { children: ReactNode }) {
   return (
-    <mark className="rounded-[4px] bg-accent-soft px-1 py-px font-mono text-[12px] text-fg" title="To be filled in by the site operator">
+    <mark className="rounded-[4px] bg-accent-soft px-1 py-px font-mono text-[length:calc(12px*var(--text-scale))] text-fg" title="To be filled in by the site operator">
       [{children}]
     </mark>
   );

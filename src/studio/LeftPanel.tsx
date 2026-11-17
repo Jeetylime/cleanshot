@@ -71,7 +71,7 @@ export function Rail() {
             onClick={() => A.setPanel(r.id)}
             aria-pressed={active}
             data-testid={`rail-${r.id}`}
-            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[9px] px-1 py-1.5 text-[10.5px] font-medium transition-colors md:flex-none md:py-2 ${
+            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[9px] px-1 py-1.5 text-[length:calc(10.5px*var(--text-scale))] font-medium transition-colors md:flex-none md:py-2 ${
               active ? 'bg-accent-soft text-fg' : 'text-muted hover:bg-hover hover:text-fg'
             }`}
           >
@@ -94,7 +94,7 @@ export function LeftDrawer() {
       className="flex shrink-0 flex-col border-line bg-panel animate-fade-in max-md:absolute max-md:inset-x-0 max-md:bottom-[58px] max-md:z-30 max-md:h-[min(52vh,calc(100%-120px))] max-md:rounded-t-[16px] max-md:border-t max-md:shadow-pop md:w-[252px] md:border-r"
     >
       <header className="flex h-11 shrink-0 items-center justify-between px-3.5">
-        <h2 className="text-[13px] font-semibold text-fg">{title}</h2>
+        <h2 className="text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{title}</h2>
         <button type="button" aria-label="Close panel" onClick={() => studio.set({ panel: null })} className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg">
           <X size={14} />
         </button>
@@ -459,10 +459,10 @@ function TextPanel() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <button type="button" onClick={() => A.addText('heading')} className={`${tile} h-14 justify-start px-3 text-[22px] font-bold text-fg`} style={{ fontFamily: fontOf('montserrat').css }} {...dragProps({ kind: 'text', text: 'heading' })}>
+        <button type="button" onClick={() => A.addText('heading')} className={`${tile} h-14 justify-start px-3 text-[length:calc(22px*var(--text-scale))] font-bold text-fg`} style={{ fontFamily: fontOf('montserrat').css }} {...dragProps({ kind: 'text', text: 'heading' })}>
           Add a heading
         </button>
-        <button type="button" onClick={() => A.addText('subheading')} className={`${tile} h-11 justify-start px-3 text-[15px] font-semibold text-fg`} style={{ fontFamily: fontOf('inter').css }} {...dragProps({ kind: 'text', text: 'subheading' })}>
+        <button type="button" onClick={() => A.addText('subheading')} className={`${tile} h-11 justify-start px-3 text-[length:calc(15px*var(--text-scale))] font-semibold text-fg`} style={{ fontFamily: fontOf('inter').css }} {...dragProps({ kind: 'text', text: 'subheading' })}>
           Add a subheading
         </button>
         <button type="button" onClick={() => A.addText('body')} className={`${tile} h-10 justify-start px-3 text-xs text-fg`} style={{ fontFamily: fontOf('inter').css }} {...dragProps({ kind: 'text', text: 'body' })}>
@@ -480,7 +480,7 @@ function TextPanel() {
               }}
               className={`${tile} h-[64px] flex-col gap-0.5 px-2`}
             >
-              <span className="truncate text-[17px] leading-tight text-fg" style={{ fontFamily: fontOf(c.heading).css, fontWeight: fontOf(c.heading).bold ? 700 : 400 }}>
+              <span className="truncate text-[length:calc(17px*var(--text-scale))] leading-tight text-fg" style={{ fontFamily: fontOf(c.heading).css, fontWeight: fontOf(c.heading).bold ? 700 : 400 }}>
                 {c.label}
               </span>
               <span className="truncate text-2xs text-subtle" style={{ fontFamily: fontOf(c.body).css }}>
@@ -494,7 +494,7 @@ function TextPanel() {
         <div className="flex flex-col gap-0.5">
           {FONTS.map((f) => (
             <button key={f.id} type="button" onClick={() => A.addText('body', { fontFamily: f.id, text: f.label })} className="flex h-9 items-center justify-between rounded-[8px] px-2 text-left hover:bg-hover">
-              <span className="text-[15px] text-fg" style={{ fontFamily: f.css }}>
+              <span className="text-[length:calc(15px*var(--text-scale))] text-fg" style={{ fontFamily: f.css }}>
                 {f.label}
               </span>
               <span className="text-2xs text-subtle">{f.category}</span>

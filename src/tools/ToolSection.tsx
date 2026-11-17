@@ -152,7 +152,7 @@ function Landing({ config }: { config: SectionConfig }) {
       <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-7 animate-rise">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-fg">{config.label}</h1>
+            <h1 className="text-[length:calc(20px*var(--text-scale))] font-semibold tracking-[-0.02em] text-fg">{config.label}</h1>
             <p className="mt-1 text-sm text-muted">{config.subtitle}</p>
           </div>
           <button type="button" onClick={goPrivacy} className="text-xs text-subtle hover:text-fg hover:underline">
@@ -181,7 +181,7 @@ function Landing({ config }: { config: SectionConfig }) {
                     <span className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
                       <span className="flex items-center gap-1.5">
                         <t.icon size={14} className="text-muted" />
-                        <span className="truncate text-[13px] font-semibold text-fg">{t.name}</span>
+                        <span className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{t.name}</span>
                       </span>
                       <span className="text-xs leading-[16px] text-muted">{t.description}</span>
                       {t.batch && <span className="text-2xs text-subtle">Batch supported</span>}
@@ -207,7 +207,7 @@ class ToolErrorBoundary extends Component<{ name: string; children: ReactNode },
     return (
       <div className="flex flex-1 items-center justify-center p-6">
         <div className="flex max-w-[420px] flex-col items-center gap-3 text-center">
-          <p className="text-[15px] font-semibold text-fg">{this.props.name} ran into a problem</p>
+          <p className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{this.props.name} ran into a problem</p>
           <p className="text-sm text-muted">{this.state.error.message}</p>
           <button
             type="button"

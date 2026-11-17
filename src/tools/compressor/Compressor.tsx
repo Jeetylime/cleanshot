@@ -283,7 +283,7 @@ export default function Compressor() {
           <section className="border-b border-line px-4 py-4" aria-live="polite" data-testid="savings">
             <div className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">You save</div>
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-[26px] font-semibold tracking-[-0.02em] text-fg tabular-nums">{formatBytes(Math.max(0, totals.saved))}</span>
+              <span className="text-[length:calc(26px*var(--text-scale))] font-semibold tracking-[-0.02em] text-fg tabular-nums">{formatBytes(Math.max(0, totals.saved))}</span>
               {totals.before > 0 && <span className={`text-sm font-semibold ${pct > 0 ? 'text-success' : 'text-danger'}`}>{pct}% smaller</span>}
             </div>
             <div className="mt-3 flex flex-col gap-1.5 text-xs">

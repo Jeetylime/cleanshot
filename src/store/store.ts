@@ -94,6 +94,8 @@ interface Prefs {
   theme: Theme;
   backdrop: Backdrop;
   a11y: A11yPrefs;
+  /** Revision of the a11y defaults the prefs were saved under (see loadA11y). */
+  a11yRev?: number;
   styles: ToolStyles;
   exportPrefs: ExportPrefs;
 }
@@ -123,6 +125,19 @@ function mergeStyles(saved: Partial<ToolStyles> | undefined): ToolStyles {
 
 const prefs = loadPrefs();
 
+/**
+ * Accessibility prefs. Link underlines default to ON (WCAG 1.4.1); people can
+ * turn them off. Prefs saved before revision 2 stored the old default (off),
+ * which wasn't a choice anyone made, so it's upgraded to on. public/theme-init.js
+ * mirrors this so the first paint matches.
+ */
+export const A11Y_REV = 2;
+function loadA11y(p: Partial<Prefs>): A11yPrefs {
+  const a = { textSize: 'default' as const, reduceMotion: false, highContrast: false, underlineLinks: true, ...p.a11y };
+  if ((p.a11yRev ?? 1) < A11Y_REV) a.underlineLinks = true;
+  return a;
+}
+
 function initialState(): EditorState {
   return {
     doc: null,
@@ -137,7 +152,7 @@ function initialState(): EditorState {
     crop: null,
     theme: prefs.theme ?? 'dark',
     backdrop: prefs.backdrop ?? 'auto',
-    a11y: { textSize: 'default', reduceMotion: false, highContrast: false, underlineLinks: false, ...prefs.a11y },
+    a11y: loadA11y(prefs),
     exportPrefs: { format: 'png', quality: 92, scale: 1, ...prefs.exportPrefs },
     overlay: null,
     propertiesOpen: false,
@@ -188,17 +203,25 @@ store.subscribe(() => {
     lastPrefs.exportPrefs === s.exportPrefs
   )
     return;
-  lastPrefs = { theme: s.theme, backdrop: s.backdrop, a11y: s.a11y, styles: s.styles, exportPrefs: s.exportPrefs };
+  lastPrefs = { theme: s.theme, backdrop: s.backdrop, a11y: s.a11y, a11yRev: A11Y_REV, styles: s.styles, exportPrefs: s.exportPrefs };
   clearTimeout(prefsTimer);
   const snapshot = lastPrefs;
-  prefsTimer = window.setTimeout(() => {
-    try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(snapshot));
-    } catch {
-      /* storage unavailable */
-    }
-  }, 300);
+  pendingPrefs = snapshot;
+  prefsTimer = window.setTimeout(flushPrefs, 300);
 });
+
+let pendingPrefs: Prefs | null = null;
+function flushPrefs() {
+  if (!pendingPrefs) return;
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(pendingPrefs));
+  } catch {
+    /* storage unavailable */
+  }
+  pendingPrefs = null;
+}
+// Don't lose a change made just before the page is closed or reloaded.
+if (typeof window !== 'undefined') window.addEventListener('pagehide', flushPrefs);
 
 /**
  * Subscribe to a slice of the store. The selector's result is memoized with

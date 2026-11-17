@@ -136,7 +136,7 @@ export function EmptyState() {
         >
           <Illustration />
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-[17px] font-semibold tracking-[-0.01em] text-fg">Drop a screenshot to start editing</h1>
+            <h1 className="text-[length:calc(17px*var(--text-scale))] font-semibold tracking-[-0.01em] text-fg">Drop a screenshot to start editing</h1>
             <p className="text-sm text-muted">
               Annotate, redact and frame screenshots — right in your browser.
             </p>

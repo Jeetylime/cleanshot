@@ -198,7 +198,7 @@ export function ExportDialog() {
         </div>
         <div className="scroll-thin flex w-full shrink-0 flex-col gap-3.5 overflow-y-auto border-line p-4 md:w-[320px] md:border-l">
           <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-fg">Download</h2>
+            <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Download</h2>
             <button type="button" aria-label="Close" onClick={close} className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted hover:bg-hover hover:text-fg">
               <X size={15} />
             </button>
@@ -287,7 +287,7 @@ export function ExportDialog() {
             {preview?.bytes ? ` · about ${formatBytes(preview.bytes)}` : ''}
           </p>
           <div className="mt-auto flex flex-col gap-1.5 pt-1">
-            <Button variant="primary" className="h-9 text-[13px]" onClick={() => void download()} disabled={busy}>
+            <Button variant="primary" className="h-9 text-[length:calc(13px*var(--text-scale))]" onClick={() => void download()} disabled={busy}>
               <Download size={15} /> {busy ? 'Preparing…' : `Download ${zipped ? 'ZIP' : fmt === 'jpeg' ? 'JPG' : fmt.toUpperCase()}`}
             </Button>
             {clipboardSupported() && !isPdf && !isSvg && (

@@ -175,7 +175,7 @@ function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean
   return (
     <>
       <div className="flex h-11 shrink-0 items-center justify-between gap-1 border-b border-line px-3">
-        <span className="truncate text-[13px] font-semibold text-fg">{title}</span>
+        <span className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{title}</span>
         <div className="flex items-center">
           <IconButton label={locked ? 'Unlock' : 'Lock'} shortcut={['⌘', 'L']} onClick={() => A.toggleLock()} size="sm">
             {locked ? <Lock size={13} /> : <Unlock size={13} />}
@@ -245,7 +245,7 @@ export function FontSelect({ value, onChange }: { value: string; onChange: (id: 
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-label="Font"
-        className="flex h-8 w-full items-center justify-between rounded-[7px] bg-control px-2.5 text-[13px] text-fg hover:bg-hover"
+        className="flex h-8 w-full items-center justify-between rounded-[7px] bg-control px-2.5 text-[length:calc(13px*var(--text-scale))] text-fg hover:bg-hover"
         data-testid="font-select"
       >
         <span style={{ fontFamily: f.css }}>{f.label}</span>
@@ -265,7 +265,7 @@ export function FontSelect({ value, onChange }: { value: string; onChange: (id: 
               }}
               className={`flex h-9 w-full items-center justify-between rounded-[6px] px-2 text-left hover:bg-hover ${o.id === value ? 'bg-accent-soft' : ''}`}
             >
-              <span className="text-[16px] text-fg" style={{ fontFamily: o.css }}>
+              <span className="text-[length:calc(16px*var(--text-scale))] text-fg" style={{ fontFamily: o.css }}>
                 {o.label}
               </span>
               {o.id === value ? <Check size={13} className="text-accent" /> : <span className="text-2xs text-subtle">{o.category}</span>}

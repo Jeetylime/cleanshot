@@ -103,7 +103,7 @@ export function MenuItem({
       role="menuitem"
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-7 w-full items-center gap-2.5 rounded-[6px] px-2 text-left text-sm transition-colors duration-100 disabled:opacity-40 ${
+      className={`flex min-h-[24px] w-full items-center gap-2.5 rounded-[6px] px-2 py-0.5 text-left text-sm transition-colors duration-100 disabled:opacity-40 ${
         danger ? 'text-danger hover:bg-danger/12' : 'text-fg hover:bg-accent-fill hover:text-white'
       } group`}
     >
@@ -118,9 +118,13 @@ export function MenuItem({
 }
 
 export function MenuSeparator() {
-  return <div className="mx-2 my-1 h-px bg-line" />;
+  return <div role="separator" className="mx-2 my-1 h-px bg-line" />;
 }
 
-export function MenuLabel({ children }: { children: ReactNode }) {
-  return <div className="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">{children}</div>;
+export function MenuLabel({ children, id }: { children: ReactNode; id?: string }) {
+  return (
+    <div id={id} className="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
+      {children}
+    </div>
+  );
 }

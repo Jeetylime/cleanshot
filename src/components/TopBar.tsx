@@ -52,6 +52,7 @@ import { openFilePicker } from '../lib/filePicker';
 import { modKey } from '../lib/utils';
 import type { Backdrop, TextSize, Theme } from '../types';
 import { Toggle } from './ui/controls';
+import { LEGAL } from '../legal/config';
 import { goAboutPage, goStorage, goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
@@ -69,7 +70,7 @@ export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compac
         <circle cx="16" cy="16" r="2.4" fill="#fff" />
       </svg>
       {!compact && (
-        <span className={`text-[13px] font-semibold tracking-[-0.01em] text-fg ${hideWordmarkOnMobile ? 'hidden sm:inline' : ''}`}>
+        <span className={`text-[length:calc(13px*var(--text-scale))] font-semibold tracking-[-0.01em] text-fg ${hideWordmarkOnMobile ? 'hidden sm:inline' : ''}`}>
           Studiolo
         </span>
       )}
@@ -295,13 +296,17 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
         <Settings size={16} />
       </IconButton>
       <Popover open={open} onClose={close} anchor={anchor} width={268} label="Settings">
-        <div className="p-1" role="menu">
-          <MenuLabel>Appearance</MenuLabel>
-          <div className="flex gap-1 px-1 pb-1.5">
+        {/* Settings controls first (radio groups and switches), then a menu of actions and links.
+            Only the second part is an ARIA menu, which may contain only menu items. */}
+        <div className="p-1 pb-0">
+          <MenuLabel id="settings-theme">Appearance</MenuLabel>
+          <div className="flex gap-1 px-1 pb-1.5" role="radiogroup" aria-labelledby="settings-theme">
             {themes.map((t) => (
               <button
                 key={t.id}
                 type="button"
+                role="radio"
+                aria-checked={theme === t.id}
                 onClick={() => actions.setTheme(t.id)}
                 className={`flex h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-[7px] text-xs transition-colors ${
                   theme === t.id ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
@@ -312,12 +317,17 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </button>
             ))}
           </div>
-          <MenuLabel>Canvas backdrop</MenuLabel>
-          <div className="flex gap-1 px-1 pb-1.5">
+          {editorItems && (
+            <>
+          <MenuLabel id="settings-backdrop">Workspace background</MenuLabel>
+          <div className="flex gap-1 px-1 pb-1.5" role="radiogroup" aria-labelledby="settings-backdrop">
             {backdrops.map((b) => (
               <button
                 key={b.id}
                 type="button"
+                role="radio"
+                aria-checked={backdrop === b.id}
+                title={b.id === 'auto' ? 'Contrasts with the image you are editing' : undefined}
                 onClick={() => actions.setBackdrop(b.id)}
                 className={`flex h-8 flex-1 items-center justify-center gap-1 rounded-[7px] text-xs transition-colors ${
                   backdrop === b.id ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
@@ -328,6 +338,8 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </button>
             ))}
           </div>
+            </>
+          )}
           <MenuLabel>Accessibility</MenuLabel>
           <div className="flex flex-col gap-1 px-1 pb-1.5">
             <div className="flex gap-1" role="radiogroup" aria-label="Text size">
@@ -348,7 +360,7 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               ))}
             </div>
             {a11yToggles.map((t) => (
-              <label key={t.key} className="flex h-7 items-center justify-between gap-2 rounded-[6px] px-1.5 text-sm text-fg hover:bg-hover">
+              <label key={t.key} className="flex min-h-[24px] items-center justify-between gap-2 rounded-[6px] px-1.5 text-sm text-fg hover:bg-hover">
                 <span className="flex items-center gap-2.5">
                   <span className="flex w-4 justify-center text-muted">{t.icon}</span>
                   {t.label}
@@ -357,6 +369,8 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </label>
             ))}
           </div>
+        </div>
+        <div className="p-1 pt-0" role="menu" aria-label="Studiolo">
           <MenuSeparator />
           {editorItems && (
             <>
@@ -368,11 +382,13 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               </MenuItem>
             </>
           )}
-          <MenuItem icon={<MessageSquare size={14} />} onClick={run(() => (location.href = 'mailto:hello@studiolo.page?subject=Studiolo%20feedback'))}>
+          <MenuItem icon={<MessageSquare size={14} />} onClick={run(() => (location.href = `mailto:${LEGAL.contactEmail ?? ''}?subject=Studiolo%20feedback`))}>
             Send feedback
           </MenuItem>
           {hasRecents && (
-            <MenuItem icon={<Trash2 size={14} />} danger onClick={run(() => void actions.clearRecents())}>
+            <MenuItem icon={<Trash2 size={14} />} danger onClick={run(() => {
+              if (confirm('Clear your recent Edit sessions? They can’t be recovered.')) void actions.clearRecents();
+            })}>
               Clear recent sessions
             </MenuItem>
           )}

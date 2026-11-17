@@ -24,7 +24,7 @@ function Modal({ title, onClose, children, width = 440 }: { title: string; onClo
         style={{ maxWidth: width }}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-fg">{title}</h2>
+          <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{title}</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted hover:bg-hover hover:text-fg">
             <X size={15} />
           </button>

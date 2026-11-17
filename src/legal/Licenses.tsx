@@ -65,7 +65,7 @@ export function Licenses() {
                   </a>
                 )}
                 {p.text ? (
-                  <pre className="scroll-thin max-h-[320px] overflow-auto font-mono text-[11px] leading-[16px] whitespace-pre-wrap text-muted">{p.text}</pre>
+                  <pre className="scroll-thin max-h-[320px] overflow-auto font-mono text-[length:calc(11px*var(--text-scale))] leading-[16px] whitespace-pre-wrap text-muted">{p.text}</pre>
                 ) : (
                   <p className="text-xs text-subtle">This package doesn’t include a license file. It is published under the {p.license} license; see its homepage for details.</p>
                 )}

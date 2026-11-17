@@ -33,11 +33,12 @@ export function Accessibility() {
       <Section id="features" title="Accessibility features">
         <p>From the settings menu (the gear icon at the top right) you can:</p>
         <List>
-          <li>Make interface text larger (Large or Larger).</li>
+          <li>Make all interface text larger (Large or Larger), including headings.</li>
           <li>Increase contrast.</li>
           <li>Reduce motion. Animations are also reduced automatically when your device asks for reduced motion.</li>
-          <li>Underline all links.</li>
-          <li>Choose a dark, light or system color theme.</li>
+          <li>Turn link underlines off. Links are underlined by default so they can be told apart without relying on color.</li>
+          <li>Choose a dark, light or system color theme. In Edit, you can also change the background around the image.</li>
+          <li>Your settings are remembered in this browser.</li>
         </List>
         <p>Throughout Studiolo:</p>
         <List>

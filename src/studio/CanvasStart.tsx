@@ -71,7 +71,7 @@ export function CanvasStart() {
         <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-8 animate-rise">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-fg">New design</h1>
+              <h1 className="text-[length:calc(20px*var(--text-scale))] font-semibold tracking-[-0.02em] text-fg">New design</h1>
               <p className="mt-1 text-sm text-muted">Pick a size or a template. You can change the size later.</p>
             </div>
             <div className="flex gap-1.5">
@@ -127,7 +127,7 @@ export function CanvasStart() {
                     <PresetGlyph w={p.width} h={p.height} />
                   </span>
                   <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-[13px] font-semibold text-fg">{p.label}</span>
+                    <span className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{p.label}</span>
                     <span className="truncate text-2xs text-subtle tabular-nums">
                       {p.width} × {p.height} · {p.hint}
                     </span>

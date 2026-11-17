@@ -334,7 +334,12 @@ body {
 }
 
 /* ---- Accessibility settings (Settings menu → Accessibility) ---- */
+:root {
+  /* Scales headings and other fixed-size text with the Text size setting. */
+  --text-scale: 1;
+}
 :root[data-text-size='large'] {
+  --text-scale: 1.12;
   --text-2xs: 11.5px;
   --text-2xs--line-height: 15px;
   --text-xs: 12px;
@@ -345,6 +350,7 @@ body {
   --text-base--line-height: 20px;
 }
 :root[data-text-size='larger'] {
+  --text-scale: 1.25;
   --text-2xs: 12.5px;
   --text-2xs--line-height: 17px;
   --text-xs: 13.5px;
@@ -375,13 +381,9 @@ body {
   outline-width: 3px;
   outline-offset: 2px;
 }
-/* Links inside running text must not rely on color alone (WCAG 1.4.1). */
-:where(p, li, dd) a:not([data-no-underline]) {
-  text-decoration-line: underline;
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
-}
-:root[data-underline-links] a {
+/* Links must not rely on color alone (WCAG 1.4.1). On by default via the
+   "Underline links" setting; people can turn it off. */
+:root[data-underline-links] a:not([data-no-underline]) {
   text-decoration: underline;
   text-underline-offset: 2px;
 }

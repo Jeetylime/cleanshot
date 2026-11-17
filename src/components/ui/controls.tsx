@@ -330,7 +330,7 @@ export function ColorWell({ value, onChange, label }: { value: string; onChange:
           className="cs-color absolute inset-0 h-full w-full opacity-0"
         />
       </span>
-      <span className="truncate font-mono text-[11px] text-muted uppercase">{local}</span>
+      <span className="truncate font-mono text-[length:calc(11px*var(--text-scale))] text-muted uppercase">{local}</span>
     </label>
   );
 }
