@@ -47,12 +47,14 @@ import { Rail, LeftDrawer } from './LeftPanel';
 import { Properties } from './Properties';
 import { ExportDialog } from './ExportDialog';
 import { STUDIO_SHORTCUTS, useStudioShortcuts } from './shortcuts';
+import { useCanvasCommands } from './canvasCommands';
 
 export function CanvasEditor() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [shortcuts, setShortcuts] = useState(false);
   const openShortcuts = useCallback(() => setShortcuts(true), []);
   useStudioShortcuts(openShortcuts);
+  useCanvasCommands(openShortcuts);
   const { fullscreen, warning, hasSelection } = useStudio((s) => ({ fullscreen: s.fullscreen, warning: s.storageWarning, hasSelection: s.selection.length > 0 }), shallowEqual);
 
   // Files pasted or dropped anywhere go onto the canvas; plain paste pastes copied elements.

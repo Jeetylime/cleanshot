@@ -34,6 +34,7 @@ import {
   HardDrive,
   Accessibility,
   BookOpen,
+  Search,
 } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
@@ -48,10 +49,12 @@ import { Popover, MenuItem, MenuLabel, MenuSeparator } from './ui/Popover';
 import { Tooltip } from './ui/Tooltip';
 import { ExportPanel } from './ExportPanel';
 import { openFilePicker } from '../lib/filePicker';
-import { modKey } from '../lib/utils';
+import { isMac, modKey } from '../lib/utils';
 import type { Backdrop, TextSize, Theme } from '../types';
 import { Toggle } from './ui/controls';
 import { LEGAL } from '../legal/config';
+import { openCommandPalette } from '../app/commands';
+import { useRecentItems, type RecentItem, type RecentKind } from './recentItems';
 import { goAboutPage, goStorage, goCanvas, goEditor, goHome, goLegal, goPdf, goTools, useRoute } from '../app/route';
 
 export function Logo({ compact = false, hideWordmarkOnMobile = false }: { compact?: boolean; hideWordmarkOnMobile?: boolean }) {
@@ -134,7 +137,68 @@ export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobil
             );
           })}
         </div>
+        <MenuRecents onPick={() => setOpen(false)} />
       </Popover>
+    </>
+  );
+}
+
+/** The latest edit, design and tools, so you can jump back from anywhere. */
+function MenuRecents({ onPick }: { onPick: () => void }) {
+  const { items } = useRecentItems();
+  const list = (['edit', 'design', 'tool', 'pdf'] as RecentKind[]).map((k) => items[k]).filter((x): x is RecentItem => !!x);
+  if (!list.length) return null;
+  return (
+    <div className="border-t border-line p-1.5" role="group" aria-labelledby="menu-recent-label">
+      <div id="menu-recent-label" className="px-2 pt-1 pb-1.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
+        Recent
+      </div>
+      {list.map((it) => (
+        <button
+          key={it.kind}
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onPick();
+            it.open();
+          }}
+          className="flex w-full items-center gap-2.5 rounded-[8px] px-2 py-1.5 text-left hover:bg-hover"
+        >
+          <span className="flex h-7 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[5px] border border-line bg-window text-muted">{it.thumb}</span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-xs font-medium text-fg">{it.title}</span>
+            <span className="truncate text-2xs text-subtle">
+              {it.label} · {it.meta}
+            </span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Opens the command palette. An icon on small screens, a "Search ⌘K" field on wider ones. */
+function SearchButton() {
+  return (
+    <>
+      <span className="lg:hidden">
+        <IconButton label="Search" shortcut={[modKey, 'K']} onClick={openCommandPalette} data-testid="search-button">
+          <Search size={16} />
+        </IconButton>
+      </span>
+      <button
+        type="button"
+        onClick={openCommandPalette}
+        aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}
+        data-testid="search-field"
+        className="mr-1 hidden h-[28px] w-[200px] items-center gap-2 rounded-[8px] bg-control px-2.5 text-left text-xs text-subtle transition-colors hover:bg-hover hover:text-muted lg:flex"
+      >
+        <Search size={13} className="shrink-0" aria-hidden="true" />
+        <span className="flex-1">Search…</span>
+        <kbd className="rounded-[4px] border border-line px-1 text-2xs" aria-hidden="true">
+          {modKey === '⌘' ? '⌘K' : 'Ctrl K'}
+        </kbd>
+      </button>
     </>
   );
 }
@@ -290,7 +354,8 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
   ];
 
   return (
-    <>
+    <div className="flex shrink-0 items-center">
+      <SearchButton />
       <IconButton ref={anchor} label="Settings" onClick={() => setOpen((o) => !o)} active={false} aria-haspopup="menu">
         <Settings size={16} />
       </IconButton>
@@ -424,7 +489,7 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
           </MenuItem>
         </div>
       </Popover>
-    </>
+    </div>
   );
 }
 

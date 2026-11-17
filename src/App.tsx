@@ -9,6 +9,7 @@ import { EmptyState } from './components/EmptyState';
 import { StartScreen } from './components/StartScreen';
 import { BusyIndicator, DropOverlay, ShortcutsDialog, Toasts } from './components/Overlays';
 import { CommandPalette } from './components/CommandPalette';
+import { useEditorCommands } from './components/editorCommands';
 import { useKeyboardShortcuts, usePasteAndDrop, useThemeSync } from './hooks/useGlobalInput';
 import { getRoute, goEditor, useRoute, type Route } from './app/route';
 import { TOOLS } from './tools/registry';
@@ -43,6 +44,7 @@ function pageTitle(route: Route): string | null {
 
 function Editor() {
   const hasDoc = useEditor((s) => !!s.doc);
+  useEditorCommands();
   return (
     <>
       <TopBar />

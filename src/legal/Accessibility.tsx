@@ -44,7 +44,7 @@ export function Accessibility() {
         <List>
           <li>A “Skip to main content” link is the first thing you reach with the Tab key.</li>
           <li>Every page has its own title, and every control has a visible focus outline.</li>
-          <li>⌘K (Ctrl+K on Windows and Linux) opens a searchable menu of every section, tool and setting.</li>
+          <li>⌘K (Ctrl+K on Windows and Linux), or the search button at the top right, opens a searchable list of every section, tool and setting, recent work, and the actions of the editor you’re in.</li>
           <li>Files can be opened by browsing, pasting or dragging and dropping.</li>
         </List>
         <p>In Edit, without a mouse:</p>

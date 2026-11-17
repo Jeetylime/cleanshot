@@ -1,16 +1,14 @@
-import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
+import { Suspense, lazy, type ReactNode } from 'react';
 import { ArrowRight, ImagePlus, LayoutTemplate } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
-import * as actions from '../store/actions';
 import { goCanvas, goEditor, goPdf, goTools, type PdfToolKey } from '../app/route';
-import { getRecentTools } from '../app/recentTools';
-import type { ProjectSummary } from '../studio/persistence';
+import { RECENT_LABELS, useRecentItems, type RecentKind } from './recentItems';
 import { PDF_TOOLS } from '../pdf/registry';
 import { TOOLS } from '../tools/registry';
 import { HomeLogo, SettingsMenu } from './TopBar';
 import { Illustration } from './EmptyState';
 import { Kbd } from './ui/Kbd';
-import { modKey, timeAgo } from '../lib/utils';
+import { modKey } from '../lib/utils';
 import { openFilePicker } from '../lib/filePicker';
 
 const CanvasPreview = lazy(() => import('../studio/CanvasPreview'));
@@ -244,91 +242,28 @@ function Empty({ label, text }: { label: string; text: string }) {
   );
 }
 
-function useLatestDesign(): ProjectSummary | null | undefined {
-  const [design, setDesign] = useState<ProjectSummary | null | undefined>(undefined);
-  useEffect(() => {
-    let cancelled = false;
-    import('../studio/persistence')
-      .then((db) => db.listProjects())
-      .then((list) => !cancelled && setDesign(list[0] ?? null))
-      .catch(() => !cancelled && setDesign(null));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return design;
-}
-
-function useBlobUrl(blob: Blob | null | undefined) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!blob) return setUrl(null);
-    const u = URL.createObjectURL(blob);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [blob]);
-  return url;
-}
-
 function ContinueRow() {
-  const recents = useEditor((s) => s.recents);
-  const design = useLatestDesign();
-  const designThumb = useBlobUrl(design?.thumb);
-  const [recentTools] = useState(getRecentTools);
-  const tool = recentTools.tools && TOOLS.find((t) => t.key === recentTools.tools!.key);
-  const pdfTool = recentTools.pdf && PDF_TOOLS.find((t) => t.key === recentTools.pdf!.key);
-  const edit = recents[0];
-
+  const { ready, items, editCount } = useRecentItems();
   // Wait for the design lookup so the row doesn't appear and then reflow.
-  if (design === undefined) return null;
-  if (!edit && !design && !tool && !pdfTool) return null;
-
-  const img = (src: string | null) => (src ? <img src={src} alt="" className="max-h-full max-w-full object-contain" draggable={false} /> : null);
-
+  if (!ready || !Object.keys(items).length) return null;
+  const empty: Record<RecentKind, string> = {
+    edit: 'Images you edit will appear here.',
+    design: 'Designs you make will appear here.',
+    tool: 'The image tool you use last will appear here.',
+    pdf: 'The PDF tool you use last will appear here.',
+  };
   return (
     <section aria-labelledby="continue-heading" className="flex flex-col gap-2.5">
       <h2 id="continue-heading" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
         Pick up where you left off
       </h2>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {edit ? (
-          <ContinueCard
-            label={recents.length > 1 ? `Latest edit · ${recents.length} recent` : 'Latest edit'}
-            title={edit.name}
-            meta={timeAgo(edit.updatedAt)}
-            thumb={img(edit.thumbUrl)}
-            onClick={() => {
-              goEditor();
-              void actions.openSession(edit.id);
-            }}
-          />
-        ) : (
-          <Empty label="Latest edit" text="Images you edit will appear here." />
-        )}
-        {design ? (
-          <ContinueCard
-            label="Latest design"
-            title={design.name || 'Untitled design'}
-            meta={`${design.width} × ${design.height} · ${timeAgo(design.updatedAt)}`}
-            thumb={img(designThumb)}
-            onClick={() => {
-              goCanvas();
-              void import('../studio/actions').then((A) => A.openProject(design.id));
-            }}
-          />
-        ) : (
-          <Empty label="Latest design" text="Designs you make will appear here." />
-        )}
-        {tool ? (
-          <ContinueCard label="Last image tool" title={tool.name} meta={timeAgo(recentTools.tools!.at)} thumb={<tool.icon size={18} />} onClick={() => goTools(tool.key)} />
-        ) : (
-          <Empty label="Last image tool" text="The image tool you use last will appear here." />
-        )}
-        {pdfTool ? (
-          <ContinueCard label="Last PDF tool" title={pdfTool.name} meta={timeAgo(recentTools.pdf!.at)} thumb={<pdfTool.icon size={18} />} onClick={() => goPdf(pdfTool.key as PdfToolKey)} />
-        ) : (
-          <Empty label="Last PDF tool" text="The PDF tool you use last will appear here." />
-        )}
+        {(['edit', 'design', 'tool', 'pdf'] as RecentKind[]).map((k) => {
+          const it = items[k];
+          if (!it) return <Empty key={k} label={RECENT_LABELS[k]} text={empty[k]} />;
+          const label = k === 'edit' && editCount > 1 ? `${it.label} · ${editCount} recent` : it.label;
+          return <ContinueCard key={k} label={label} title={it.title} meta={it.meta} thumb={it.thumb} onClick={it.open} />;
+        })}
       </div>
     </section>
   );

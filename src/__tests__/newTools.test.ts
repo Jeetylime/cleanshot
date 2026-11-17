@@ -62,3 +62,10 @@ describe('itemsToText', () => {
     expect(t).toBe('Hello world\nNext line');
   });
 });
+
+describe('scoreCommand strictness', () => {
+  it('rejects letters scattered far apart', () => {
+    expect(scoreCommand('align', 'Add icon: dollar sign')).toBeNull();
+    expect(scoreCommand('align', 'Align left')).toBe(0);
+  });
+});
