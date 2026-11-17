@@ -151,7 +151,7 @@ export function ShortcutsDialog() {
             type="button"
             aria-label="Close"
             onClick={() => actions.openOverlay(null)}
-            className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg"
+            className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg"
           >
             <X size={14} />
           </button>

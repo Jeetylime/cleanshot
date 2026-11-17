@@ -30,7 +30,7 @@ export function BrandPanel() {
       if (p.background.kind === 'solid') bump(p.background.color);
       for (const e of p.elements) {
         if (e.type === 'shape') bump(e.fill);
-        if (e.type === 'text' || e.type === 'line' || e.type === 'icon') bump(e.color);
+        if (e.type === 'text' || e.type === 'line' || e.type === 'icon' || e.type === 'draw') bump(e.color);
       }
     }
     const top = [...found.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);

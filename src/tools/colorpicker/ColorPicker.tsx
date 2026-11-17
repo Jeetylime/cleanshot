@@ -65,7 +65,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
             setDone(true);
             setTimeout(() => setDone(false), 1200);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded-[5px] text-muted hover:bg-hover hover:text-fg"
+          className="flex h-[24px] w-[24px] items-center justify-center rounded-[5px] text-muted hover:bg-hover hover:text-fg"
         >
           {done ? <Check size={12} className="text-success" /> : <Copy size={12} />}
         </button>

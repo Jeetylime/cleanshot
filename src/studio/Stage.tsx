@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Point, Rect } from '../types';
 import { getImage } from '../engine/images';
 import { clamp } from '../lib/utils';
-import { studio, useStudio, shallowEqual, beginGesture, endGesture, cancelGesture, selectedElements, elementById } from './store';
+import { studio, useStudio, shallowEqual, beginGesture, endGesture, cancelGesture, commit, selectedElements, elementById } from './store';
+import { defaultWidth, makeDraw, simplify } from './draw';
 import * as A from './actions';
 import { aabb, center, corners, hitTest, rotatePoint, snapBox, snapTargets, snapValue, toLocal, unionBounds, type Guide } from './geometry';
 import { paintStudioFill, renderScene } from './render';
@@ -81,7 +82,9 @@ type Drag =
   | { kind: 'marquee'; start: Point; additive: boolean; initial: string[] }
   | { kind: 'pan'; sx: number; sy: number; vx: number; vy: number }
   | { kind: 'crop-pan'; start: Point; base: ImageElement }
-  | { kind: 'crop-resize'; handle: Exclude<Handle, 'rot'>; start: Point; base: ImageElement };
+  | { kind: 'crop-resize'; handle: Exclude<Handle, 'rot'>; start: Point; base: ImageElement }
+  | { kind: 'draw'; id: string; pts: Point[] }
+  | { kind: 'erase' };
 
 function accent() {
   return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0a84ff';
@@ -383,6 +386,15 @@ export function Stage() {
     return null;
   };
 
+  /** Remove every visible, unlocked stroke under canvas point `p`. */
+  const eraseAt = (p: Point) => {
+    const s = studio.get();
+    if (!s.doc) return;
+    const tol = 6 / s.view.zoom;
+    const hits = new Set(s.doc.elements.filter((el) => el.type === 'draw' && !el.hidden && !el.locked && hitTest(el, p, tol)).map((el) => el.id));
+    if (hits.size) commit((doc) => ({ ...doc, elements: doc.elements.filter((el) => !hits.has(el.id)) }));
+  };
+
   // ---- Pointer handlers ----------------------------------------------------
   const onPointerDown = (e: React.PointerEvent) => {
     const s = studio.get();
@@ -408,6 +420,22 @@ export function Stage() {
       return;
     }
     if (e.button === 2) return;
+
+    // Draw panel open: the pointer draws (or erases) instead of selecting.
+    if (s.panel === 'draw' && e.button === 0) {
+      if (s.selection.length) A.clearSelection();
+      beginGesture();
+      if (s.draw.eraser) {
+        drag.current = { kind: 'erase' };
+        eraseAt(p);
+        return;
+      }
+      const brush = s.draw.brush;
+      const el = makeDraw([p], { brush, color: s.draw.colors[brush], strokeWidth: s.draw.widths[brush] ?? defaultWidth(s.doc, brush) });
+      commit((doc) => ({ ...doc, elements: [...doc.elements, el] }));
+      drag.current = { kind: 'draw', id: el.id, pts: [p] };
+      return;
+    }
 
     // Crop mode
     if (s.cropId) {
@@ -483,6 +511,11 @@ export function Stage() {
     const zoom = s.view.zoom;
     const snapT = 6 / zoom;
     if (!d) {
+      if (s.panel === 'draw') {
+        setHover(null);
+        setCursor(spaceDown.current ? 'grab' : s.draw.eraser ? 'cell' : 'crosshair');
+        return;
+      }
       // Hover feedback & cursors
       const sp = screenOf(e.clientX, e.clientY);
       const hh = hitHandle(sp);
@@ -498,6 +531,19 @@ export function Stage() {
       return;
     }
 
+    if (d.kind === 'draw') {
+      const last = d.pts[d.pts.length - 1];
+      if (Math.hypot(p.x - last.x, p.y - last.y) < 0.75 / zoom) return;
+      d.pts.push(p);
+      const draw = s.draw;
+      const next = makeDraw(d.pts, { id: d.id, brush: draw.brush, color: draw.colors[draw.brush], strokeWidth: draw.widths[draw.brush] ?? defaultWidth(s.doc, draw.brush) });
+      commit((doc) => ({ ...doc, elements: doc.elements.map((el) => (el.id === d.id ? { ...next, name: el.name } : el)) }));
+      return;
+    }
+    if (d.kind === 'erase') {
+      eraseAt(p);
+      return;
+    }
     switch (d.kind) {
       case 'pan':
         studio.set({ view: { ...s.view, x: d.vx + (e.clientX - d.sx), y: d.vy + (e.clientY - d.sy), mode: 'manual' } });
@@ -762,11 +808,21 @@ export function Stage() {
       // Plain click on an already-selected group member selects just the group again
       return;
     }
+    if (d.kind === 'draw' && d.pts.length > 2) {
+      // Thin out the samples (about one per 1.5 screen px) so saved designs stay small.
+      const s = studio.get();
+      const brush = s.draw.brush;
+      const pts = simplify(d.pts, 1.5 / s.view.zoom);
+      const next = makeDraw(pts, { id: d.id, brush, color: s.draw.colors[brush], strokeWidth: s.draw.widths[brush] ?? defaultWidth(s.doc!, brush) });
+      commit((doc) => ({ ...doc, elements: doc.elements.map((el) => (el.id === d.id ? { ...next, name: el.name } : el)) }));
+    }
     endGesture();
     setCursor('default');
   };
 
   const onDoubleClick = (e: React.MouseEvent) => {
+    // Two quick strokes register as a double-click; don't start editing what's underneath.
+    if (studio.get().panel === 'draw') return;
     const p = toCanvas(e.clientX, e.clientY);
     const hit = hitElement(p);
     if (!hit || hit.locked) return;

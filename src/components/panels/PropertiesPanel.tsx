@@ -89,7 +89,7 @@ export function PropertiesPanel() {
           type="button"
           aria-label="Close properties"
           onClick={actions.toggleProperties}
-          className="-mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg lg:hidden"
+          className="-mr-1 flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg lg:hidden"
         >
           <X size={14} />
         </button>

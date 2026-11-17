@@ -26,6 +26,12 @@ import {
   Briefcase,
   BookmarkPlus,
   ChevronRight,
+  Brush,
+  Eraser,
+  Highlighter,
+  PenLine,
+  Search,
+  PencilLine,
 } from 'lucide-react';
 import { Tooltip } from '../components/ui/Tooltip';
 import { Button, ColorWell, Slider, Toggle } from '../components/ui/controls';
@@ -43,12 +49,15 @@ import { SHAPE_LABELS, fitText, newDoc } from './factory';
 import { TEMPLATES } from './templates';
 import { renderToCanvas, studioFillCss } from './render';
 import { FONTS, fontOf, loadFontsFor } from './fonts';
-import type { ChartKind, PatternKind, ShapeKind, StudioElement, StudioFill, TextElement } from './types';
+import { BRUSHES, defaultWidth } from './draw';
+import { matchesQuery } from './search';
+import type { Brush as BrushId, ChartKind, PatternKind, ShapeKind, StudioElement, StudioFill, TextElement } from './types';
 
 const RAIL: { id: PanelId; label: string; icon: typeof Shapes }[] = [
   { id: 'templates', label: 'Templates', icon: LayoutTemplate },
   { id: 'elements', label: 'Elements', icon: Shapes },
   { id: 'text', label: 'Text', icon: Type },
+  { id: 'draw', label: 'Draw', icon: Brush },
   { id: 'uploads', label: 'Uploads', icon: Upload },
   { id: 'backgrounds', label: 'Background', icon: Palette },
   { id: 'brand', label: 'Brand', icon: Briefcase },
@@ -95,7 +104,7 @@ export function LeftDrawer() {
     >
       <header className="flex h-11 shrink-0 items-center justify-between px-3.5">
         <h2 className="text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{title}</h2>
-        <button type="button" aria-label="Close panel" onClick={() => studio.set({ panel: null })} className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg">
+        <button type="button" aria-label="Close panel" onClick={() => studio.set({ panel: null })} className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg">
           <X size={14} />
         </button>
       </header>
@@ -103,6 +112,7 @@ export function LeftDrawer() {
         {panel === 'templates' && <TemplatesPanel />}
         {panel === 'elements' && <ElementsPanel />}
         {panel === 'text' && <TextPanel />}
+        {panel === 'draw' && <DrawPanel />}
         {panel === 'uploads' && <UploadsPanel />}
         {panel === 'backgrounds' && <BackgroundPanel />}
         {panel === 'brand' && <BrandPanel />}
@@ -236,7 +246,7 @@ function UserTemplateCard({ t, onDeleted }: { t: ProjectRecord; onDeleted: () =>
           await deleteTemplate(t.id);
           onDeleted();
         }}
-        className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-[6px] bg-elevated text-muted shadow-pop group-hover:flex hover:text-danger"
+        className="absolute top-1 right-1 hidden h-[24px] w-[24px] items-center justify-center rounded-[6px] bg-elevated text-muted shadow-pop group-hover:flex hover:text-danger"
       >
         <Trash2 size={12} />
       </button>
@@ -337,108 +347,258 @@ function ShapeGlyph({ shape }: { shape: ShapeKind }) {
   }
 }
 
+/** Extra search words so people find elements by what they call them. */
+const SHAPE_WORDS: Record<ShapeKind, string> = {
+  rect: 'rectangle square box',
+  ellipse: 'circle oval round dot',
+  triangle: 'triangle',
+  star: 'star',
+  hexagon: 'hexagon polygon',
+  diamond: 'diamond rhombus',
+  heart: 'heart love',
+  bubble: 'speech bubble chat callout comment',
+};
+
 function ElementsPanel() {
   const [q, setQ] = useState('');
-  const icons = Object.keys(ICONS).filter((n) => n.includes(q.trim().toLowerCase()));
+  const m = (...terms: string[]) => matchesQuery(q, ...terms);
+  const shapes = SHAPES.filter((s) => m(SHAPE_LABELS[s], SHAPE_WORDS[s], 'shape'));
+  const lines = [
+    { arrow: false, label: 'Line', words: 'line divider rule stroke', icon: Minus },
+    { arrow: true, label: 'Arrow', words: 'arrow pointer direction line', icon: MoveRight },
+  ].filter((l) => m(l.label, l.words));
+  const icons = Object.keys(ICONS).filter((n) => m(n, 'icon'));
+  const stickers = STICKERS.filter((st) => m(st.label, st.category, 'sticker'));
+  const charts = CHARTS.filter((c) => m(c.label, 'chart graph data'));
+  const showQr = m('qr code link url barcode scan');
+  const frames = FRAME_SHAPES.filter((f) => m(SHAPE_LABELS[f], SHAPE_WORDS[f], 'frame photo mask placeholder'));
+  const showImages = m('image photo picture upload');
+  const showDraw = !!q.trim() && m('draw drawing pen marker highlighter brush sketch freehand doodle');
+  const empty = !shapes.length && !lines.length && !icons.length && !stickers.length && !charts.length && !showQr && !frames.length && !showImages && !showDraw;
   return (
     <div className="flex flex-col gap-4">
-      <Group_ title="Shapes">
-        <div className="grid grid-cols-4 gap-1.5">
-          {SHAPES.map((s) => (
-            <Tooltip key={s} label={SHAPE_LABELS[s]}>
-              <button type="button" aria-label={`Add ${SHAPE_LABELS[s]}`} onClick={() => A.addShape(s)} className={`${tile} aspect-square w-full`} {...dragProps({ kind: 'shape', shape: s })}>
-                <svg viewBox="0 0 32 32" className="h-7 w-7">
-                  <ShapeGlyph shape={s} />
-                </svg>
-              </button>
-            </Tooltip>
-          ))}
-        </div>
-      </Group_>
-      <Group_ title="Lines">
-        <div className="grid grid-cols-2 gap-1.5">
-          <button type="button" onClick={() => A.addLine(false)} className={`${tile} h-11 gap-2 text-xs`} {...dragProps({ kind: 'line', arrow: false })}>
-            <Minus size={18} /> Line
+      <div className="sticky top-0 z-10 -mx-3.5 bg-panel px-3.5 pb-1">
+        <label className="flex h-8 items-center gap-2 rounded-[8px] bg-control px-2.5 focus-within:ring-1 focus-within:ring-accent">
+          <Search size={13} className="shrink-0 text-subtle" aria-hidden="true" />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Escape' && q) {
+                e.preventDefault();
+                setQ('');
+              }
+            }}
+            placeholder="Search shapes, icons, stickers…"
+            aria-label="Search elements"
+            className="min-w-0 flex-1 bg-transparent text-xs text-fg outline-none placeholder:text-subtle"
+          />
+        </label>
+      </div>
+      {empty && (
+        <p className="text-xs leading-[17px] text-subtle" role="status">
+          Nothing matches “{q.trim()}”. Try a shape, icon or sticker name, like “star”, “arrow” or “badge”.
+        </p>
+      )}
+      {showDraw && (
+        <Group_ title="Draw">
+          <button type="button" onClick={() => A.setPanel('draw')} className={`${tile} h-11 gap-2 text-xs`}>
+            <Brush size={16} /> Draw with pen, marker or highlighter
           </button>
-          <button type="button" onClick={() => A.addLine(true)} className={`${tile} h-11 gap-2 text-xs`} {...dragProps({ kind: 'line', arrow: true })}>
-            <MoveRight size={18} /> Arrow
-          </button>
-        </div>
-      </Group_>
-      <Group_ title="Icons">
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search icons"
-          aria-label="Search icons"
-          className="h-8 rounded-[8px] bg-control px-2.5 text-xs text-fg outline-none placeholder:text-subtle focus:ring-1 focus:ring-accent"
-        />
-        <div className="grid grid-cols-5 gap-1.5">
-          {icons.map((name) => (
-            <Tooltip key={name} label={name.replace(/-/g, ' ')}>
-              <button type="button" aria-label={`Add ${name} icon`} onClick={() => A.addIcon(name)} className={`${tile} aspect-square w-full`} {...dragProps({ kind: 'icon', icon: name })}>
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d={ICONS[name]} />
-                </svg>
-              </button>
-            </Tooltip>
-          ))}
-          {!icons.length && <p className="col-span-5 text-xs text-subtle">No icons match.</p>}
-        </div>
-      </Group_>
-      {(['Stickers', 'Badges', 'Dividers'] as const).map((cat) => (
-        <Group_ key={cat} title={cat}>
-          <div className={`grid gap-1.5 ${cat === 'Dividers' ? 'grid-cols-1' : 'grid-cols-3'}`}>
-            {STICKERS.filter((st) => st.category === cat).map((st) => (
-              <Tooltip key={st.id} label={st.label}>
-                <button
-                  type="button"
-                  aria-label={`Add ${st.label}`}
-                  onClick={() => A.addSticker(st.id)}
-                  className={`${tile} w-full p-1.5 ${cat === 'Dividers' ? 'h-10' : 'aspect-square'}`}
-                  {...dragProps({ kind: 'sticker', id: st.id })}
-                >
-                  <StickerThumb id={st.id} />
+        </Group_>
+      )}
+      {shapes.length > 0 && (
+        <Group_ title="Shapes">
+          <div className="grid grid-cols-4 gap-1.5">
+            {shapes.map((s) => (
+              <Tooltip key={s} label={SHAPE_LABELS[s]}>
+                <button type="button" aria-label={`Add ${SHAPE_LABELS[s]}`} onClick={() => A.addShape(s)} className={`${tile} aspect-square w-full`} {...dragProps({ kind: 'shape', shape: s })}>
+                  <svg viewBox="0 0 32 32" className="h-7 w-7">
+                    <ShapeGlyph shape={s} />
+                  </svg>
                 </button>
               </Tooltip>
             ))}
           </div>
         </Group_>
-      ))}
-      <Group_ title="Charts">
-        <div className="grid grid-cols-5 gap-1.5">
-          {CHARTS.map((c) => (
-            <Tooltip key={c.kind} label={`${c.label} chart`}>
-              <button type="button" aria-label={`Add ${c.label} chart`} onClick={() => A.addChart(c.kind)} className={`${tile} aspect-square w-full`}>
-                <c.icon size={18} />
+      )}
+      {lines.length > 0 && (
+        <Group_ title="Lines">
+          <div className="grid grid-cols-2 gap-1.5">
+            {lines.map((l) => (
+              <button key={l.label} type="button" onClick={() => A.addLine(l.arrow)} className={`${tile} h-11 gap-2 text-xs`} {...dragProps({ kind: 'line', arrow: l.arrow })}>
+                <l.icon size={18} /> {l.label}
               </button>
-            </Tooltip>
-          ))}
-        </div>
-      </Group_>
-      <Group_ title="QR code">
-        <button type="button" onClick={A.addQr} className={`${tile} h-11 gap-2 text-xs`}>
-          <QrCode size={16} /> Add a QR code
-        </button>
-      </Group_>
-      <Group_ title="Frames">
-        <p className="-mt-1 text-2xs leading-[14px] text-subtle">Add a frame, then drop a photo onto it.</p>
-        <div className="grid grid-cols-4 gap-1.5">
-          {FRAME_SHAPES.map((m) => (
-            <Tooltip key={m} label={`${SHAPE_LABELS[m]} frame`}>
-              <button type="button" aria-label={`Add ${SHAPE_LABELS[m]} frame`} onClick={() => A.addFrame(m)} className={`${tile} aspect-square w-full border-dashed`}>
-                <FrameShapeGlyph shape={m} />
+            ))}
+          </div>
+        </Group_>
+      )}
+      {icons.length > 0 && (
+        <Group_ title="Icons" aside={q.trim() ? <span className="text-2xs text-subtle tabular-nums">{icons.length}</span> : undefined}>
+          <div className="grid grid-cols-5 gap-1.5">
+            {icons.map((name) => (
+              <Tooltip key={name} label={name.replace(/-/g, ' ')}>
+                <button type="button" aria-label={`Add ${name.replace(/-/g, ' ')} icon`} onClick={() => A.addIcon(name)} className={`${tile} aspect-square w-full`} {...dragProps({ kind: 'icon', icon: name })}>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d={ICONS[name]} />
+                  </svg>
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </Group_>
+      )}
+      {(['Stickers', 'Badges', 'Dividers'] as const).map((cat) => {
+        const items = stickers.filter((st) => st.category === cat);
+        if (!items.length) return null;
+        return (
+          <Group_ key={cat} title={cat}>
+            <div className={`grid gap-1.5 ${cat === 'Dividers' ? 'grid-cols-1' : 'grid-cols-3'}`}>
+              {items.map((st) => (
+                <Tooltip key={st.id} label={st.label}>
+                  <button
+                    type="button"
+                    aria-label={`Add ${st.label}`}
+                    onClick={() => A.addSticker(st.id)}
+                    className={`${tile} w-full p-1.5 ${cat === 'Dividers' ? 'h-10' : 'aspect-square'}`}
+                    {...dragProps({ kind: 'sticker', id: st.id })}
+                  >
+                    <StickerThumb id={st.id} />
+                  </button>
+                </Tooltip>
+              ))}
+            </div>
+          </Group_>
+        );
+      })}
+      {charts.length > 0 && (
+        <Group_ title="Charts">
+          <div className="grid grid-cols-5 gap-1.5">
+            {charts.map((c) => (
+              <Tooltip key={c.kind} label={`${c.label} chart`}>
+                <button type="button" aria-label={`Add ${c.label} chart`} onClick={() => A.addChart(c.kind)} className={`${tile} aspect-square w-full`}>
+                  <c.icon size={18} />
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </Group_>
+      )}
+      {showQr && (
+        <Group_ title="QR code">
+          <button type="button" onClick={A.addQr} className={`${tile} h-11 gap-2 text-xs`}>
+            <QrCode size={16} /> Add a QR code
+          </button>
+        </Group_>
+      )}
+      {frames.length > 0 && (
+        <Group_ title="Frames">
+          <p className="-mt-1 text-2xs leading-[14px] text-subtle">Add a frame, then drop a photo onto it.</p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {frames.map((f) => (
+              <Tooltip key={f} label={`${SHAPE_LABELS[f]} frame`}>
+                <button type="button" aria-label={`Add ${SHAPE_LABELS[f]} frame`} onClick={() => A.addFrame(f)} className={`${tile} aspect-square w-full border-dashed`}>
+                  <FrameShapeGlyph shape={f} />
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </Group_>
+      )}
+      {showImages && (
+        <Group_ title="Images">
+          <button type="button" onClick={() => pickFiles(true, (f) => void A.addImageFiles(f))} className={`${tile} h-11 gap-2 text-xs`}>
+            <ImageIcon size={16} /> Add an image
+          </button>
+        </Group_>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Draw
+
+const BRUSH_ICONS: Record<BrushId, typeof Brush> = { pen: PenLine, marker: Brush, highlighter: Highlighter };
+const INK_NAMES: Record<string, string> = { '#1d1d1f': 'black', '#ffffff': 'white', '#ff375f': 'pink', '#ff9f0a': 'orange', '#ffd60a': 'yellow', '#30d158': 'green', '#0a84ff': 'blue', '#bf5af2': 'purple' };
+const INKS = ['#1d1d1f', '#ffffff', '#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#0a84ff', '#bf5af2'];
+
+function DrawPanel() {
+  const draw = useStudio((s) => s.draw);
+  const doc = useStudio((s) => s.doc);
+  const set = (p: Partial<typeof draw>) => studio.set({ draw: { ...studio.get().draw, ...p } });
+  const width = draw.widths[draw.brush] ?? (doc ? defaultWidth(doc, draw.brush) : 8);
+  const color = draw.colors[draw.brush];
+  const max = doc ? Math.max(40, Math.round(Math.min(doc.width, doc.height) * 0.1)) : 120;
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs leading-[17px] text-muted">
+        Draw anywhere on the page. Each stroke becomes its own element you can move, resize or recolor later. Press Esc or close this panel when you’re done.
+      </p>
+      <Group_ title="Brush">
+        <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Brush">
+          {BRUSHES.map((b) => {
+            const Icon = BRUSH_ICONS[b.id];
+            const on = !draw.eraser && draw.brush === b.id;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => set({ brush: b.id, eraser: false })}
+                className={`${tile} h-14 flex-col gap-1 text-2xs ${on ? 'border-accent bg-accent-soft text-fg' : ''}`}
+              >
+                <Icon size={18} />
+                {b.label}
               </button>
-            </Tooltip>
-          ))}
+            );
+          })}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={draw.eraser}
+            onClick={() => set({ eraser: true })}
+            className={`${tile} h-14 flex-col gap-1 text-2xs ${draw.eraser ? 'border-accent bg-accent-soft text-fg' : ''}`}
+          >
+            <Eraser size={18} />
+            Eraser
+          </button>
         </div>
+        {draw.eraser && <p className="text-2xs leading-[14px] text-subtle">Click or drag across strokes to remove them. Only drawings are erased.</p>}
       </Group_>
-      <Group_ title="Images">
-        <button type="button" onClick={() => pickFiles(true, (f) => void A.addImageFiles(f))} className={`${tile} h-11 gap-2 text-xs`}>
-          <ImageIcon size={16} /> Add an image
-        </button>
-      </Group_>
+      {!draw.eraser && (
+        <>
+          <Group_ title="Color">
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Ink color">
+              {INKS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={color.toLowerCase() === c}
+                  aria-label={`Ink ${INK_NAMES[c] ?? c}`}
+                  onClick={() => set({ colors: { ...draw.colors, [draw.brush]: c } })}
+                  className={`h-[24px] w-[24px] shrink-0 rounded-full ring-1 ring-line-strong ${color.toLowerCase() === c ? 'outline-2 outline-offset-2 outline-accent' : ''}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
+            <ColorWell label="Custom ink color" value={color} onChange={(c) => set({ colors: { ...draw.colors, [draw.brush]: c } })} />
+          </Group_>
+          <Group_ title="Size">
+            <Slider label="Thickness" value={width} min={1} max={max} unit="px" onChange={(v) => set({ widths: { ...draw.widths, [draw.brush]: Math.round(v) } })} />
+            <div className="flex h-10 items-center justify-center rounded-[8px] bg-white" aria-hidden="true">
+              <span className="rounded-full" style={{ width: 120, height: Math.min(28, Math.max(1, width * 0.6)), background: color, opacity: draw.brush === 'highlighter' ? 0.45 : 1 }} />
+            </div>
+          </Group_>
+        </>
+      )}
+      <Button className="h-8" onClick={() => studio.set({ panel: null })}>
+        Done drawing
+      </Button>
     </div>
   );
 }
@@ -687,6 +847,8 @@ function layerIcon(e: StudioElement) {
       return <ChartColumn size={13} />;
     case 'qr':
       return <QrCode size={13} />;
+    case 'draw':
+      return e.brush === 'highlighter' ? <Highlighter size={13} /> : <PencilLine size={13} />;
     default:
       return <Shapes size={13} />;
   }
@@ -810,7 +972,7 @@ function LayersPanel() {
                     ev.stopPropagation();
                     toggleCollapse(row.gid);
                   }}
-                  className="flex h-6 w-5 shrink-0 items-center justify-center text-subtle hover:text-fg"
+                  className="flex h-[24px] w-[20px] shrink-0 items-center justify-center text-subtle hover:text-fg"
                 >
                   <ChevronRight size={12} className={`transition-transform ${open ? 'rotate-90' : ''}`} />
                 </button>

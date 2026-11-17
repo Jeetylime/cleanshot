@@ -246,7 +246,7 @@ function ProjectCard({ p, onChanged }: { p: db.ProjectSummary; onChanged: () => 
         type="button"
         aria-label={`More actions for ${p.name}`}
         onClick={() => setOpen((o) => !o)}
-        className="absolute right-0 bottom-[22px] flex h-6 w-6 items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg"
+        className="absolute right-0 bottom-[22px] flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-muted hover:bg-hover hover:text-fg"
       >
         <MoreHorizontal size={14} />
       </button>

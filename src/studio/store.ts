@@ -1,10 +1,21 @@
 import { useRef, useSyncExternalStore } from 'react';
 import type { Rect } from '../types';
-import type { Asset, StudioDoc, StudioElement, StudioFill, StudioView } from './types';
+import type { Asset, Brush, StudioDoc, StudioElement, StudioFill, StudioView } from './types';
 import type { Guide } from './geometry';
 import { shallowEqual } from '../store/store';
 
-export type LeftPanel = 'templates' | 'elements' | 'text' | 'uploads' | 'backgrounds' | 'brand' | 'layers';
+export type LeftPanel = 'templates' | 'elements' | 'text' | 'draw' | 'uploads' | 'backgrounds' | 'brand' | 'layers';
+
+/** Freehand drawing settings. Drawing is active while the Draw panel is open. */
+export interface DrawSettings {
+  brush: Brush;
+  /** Erase whole strokes instead of drawing. */
+  eraser: boolean;
+  /** Ink color per brush. */
+  colors: Record<Brush, string>;
+  /** Width per brush in design px; null = brush default for the page size. */
+  widths: Record<Brush, number | null>;
+}
 
 export interface StudioState {
   doc: StudioDoc | null;
@@ -32,6 +43,7 @@ export interface StudioState {
   /** Selected character range in the text being edited. */
   textSel: { start: number; end: number } | null;
   dialog: 'resize' | 'find' | null;
+  draw: DrawSettings;
 }
 
 type Listener = () => void;
@@ -74,6 +86,7 @@ export const studio = createStore({
   paintTick: 0,
   textSel: null,
   dialog: null,
+  draw: { brush: 'marker', eraser: false, colors: { pen: '#1d1d1f', marker: '#ff375f', highlighter: '#ffd60a' }, widths: { pen: null, marker: null, highlighter: null } },
 });
 
 export function useStudio<T>(selector: (s: StudioState) => T, equal: (a: T, b: T) => boolean = Object.is): T {

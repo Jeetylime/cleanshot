@@ -61,7 +61,8 @@ import { studioFillCss } from './render';
 const BG_LABEL = { transparent: 'Transparent', solid: 'Solid color', gradient: 'Gradient', pattern: 'Pattern' } as const;
 import { SIZE_PRESETS, MAX_CANVAS_SIDE } from './templates';
 import { aabb, unionBounds } from './geometry';
-import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, StudioElement, TextElement } from './types';
+import type { IconElement, ImageElement, LineElement, Shadow, ShapeElement, StudioElement, TextElement, DrawElement, Brush } from './types';
+import { BRUSHES, brushOf } from './draw';
 
 /** Swatches for color pickers: brand colors first, then the defaults. */
 function palette() {
@@ -69,7 +70,7 @@ function palette() {
   return [...brand, ...SOLIDS.filter((c) => !getBrand().colors.includes(c)).map((c) => ({ value: c, name: c }))].slice(0, 22);
 }
 
-const TYPE_LABEL: Record<StudioElement['type'], string> = { text: 'Text', shape: 'Shape', line: 'Line', image: 'Image', icon: 'Icon', chart: 'Chart', qr: 'QR code' };
+const TYPE_LABEL: Record<StudioElement['type'], string> = { text: 'Text', shape: 'Shape', line: 'Line', image: 'Image', icon: 'Icon', chart: 'Chart', qr: 'QR code', draw: 'Drawing' };
 
 export function Properties() {
   useBrand(); // re-render pickers when brand colors change
@@ -204,7 +205,8 @@ function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean
           {single?.type === 'image' && <ImageProps e={single} />}
           {single?.type === 'chart' && <ChartProps e={single} palette={palette()} />}
           {single?.type === 'qr' && <QrProps e={single} palette={palette()} />}
-          {!single && sel.every((e) => e.type === sel[0].type && ['text', 'shape', 'line', 'icon'].includes(e.type)) && <ColorForMany sel={sel} />}
+          {single?.type === 'draw' && <DrawProps e={single} />}
+          {!single && sel.every((e) => e.type === sel[0].type && ['text', 'shape', 'line', 'icon', 'draw'].includes(e.type)) && <ColorForMany sel={sel} />}
           <ArrangeProps sel={sel} canGroup={canGroup} canUngroup={canUngroup} />
           <Section title="Appearance">
             <Slider label="Opacity" value={Math.round(same((e) => e.opacity) * 100)} min={0} max={100} unit="%" onChange={(v) => A.updateElements(ids, { opacity: v / 100 }, 'opacity')} />
@@ -219,7 +221,7 @@ function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean
 function ColorForMany({ sel }: { sel: StudioElement[] }) {
   const ids = sel.map((e) => e.id);
   const e = sel[0];
-  const value = e.type === 'shape' ? e.fill ?? '#000000' : e.type === 'text' || e.type === 'line' || e.type === 'icon' ? e.color : '#000000';
+  const value = e.type === 'shape' ? e.fill ?? '#000000' : e.type === 'text' || e.type === 'line' || e.type === 'icon' || e.type === 'draw' ? e.color : '#000000';
   return (
     <Section title="Color">
       <ColorPicker
@@ -461,6 +463,22 @@ function LineProps({ e }: { e: LineElement }) {
           End arrow <Toggle checked={e.endHead} onChange={(v) => up({ endHead: v })} label="End arrow" />
         </label>
       </div>
+    </Section>
+  );
+}
+
+function DrawProps({ e }: { e: DrawElement }) {
+  const up = (p: Partial<DrawElement>, key?: string) => A.updateElements<DrawElement>([e.id], p, key);
+  return (
+    <Section title="Drawing">
+      <Segmented<Brush>
+        ariaLabel="Brush"
+        value={e.brush}
+        onChange={(b) => up({ brush: b, name: brushOf(b).label, opacity: brushOf(b).opacity })}
+        options={BRUSHES.map((b) => ({ value: b.id, label: b.label }))}
+      />
+      <ColorPicker value={e.color} colors={palette()} onChange={(c) => up({ color: c }, 'color')} />
+      <Slider label="Thickness" value={e.strokeWidth} min={1} max={120} unit="px" onChange={(v) => up({ strokeWidth: v }, 'sw')} />
     </Section>
   );
 }

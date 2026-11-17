@@ -1,3 +1,4 @@
+import { hitStroke } from './draw';
 import type { Point, Rect } from '../types';
 import type { StudioElement } from './types';
 
@@ -69,6 +70,8 @@ export function hitTest(e: StudioElement, p: Point, tol: number): boolean {
     return l.x >= -tol && l.x <= e.w + tol && Math.abs(l.y - e.h / 2) <= half + tol;
   }
   if (l.x < -tol || l.y < -tol || l.x > e.w + tol || l.y > e.h + tol) return false;
+  // Strokes are mostly empty space: only the ink itself is clickable.
+  if (e.type === 'draw') return hitStroke(e, l, tol);
   if (e.type === 'shape' && e.shape === 'ellipse') {
     const rx = e.w / 2 + tol;
     const ry = e.h / 2 + tol;

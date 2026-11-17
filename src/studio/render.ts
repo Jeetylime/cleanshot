@@ -1,3 +1,4 @@
+import { brushOf, strokePathD } from './draw';
 import { createCanvas, ctx2d, getImage, getMipLevel } from '../engine/images';
 import { paintFill } from '../engine/backgrounds';
 import { ICONS } from './iconData';
@@ -5,7 +6,7 @@ import { adjustedImage, isIdentity } from './imageFx';
 import { drawChart, drawQr } from './extraRender';
 import { layoutText, linearGradientFor, type CharStyle } from './textEngine';
 import { fontCss } from './fonts';
-import type { IconElement, ImageElement, LineElement, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
+import type { DrawElement, IconElement, ImageElement, LineElement, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
 
 /**
  * Scene renderer shared by the editor stage, thumbnails and export, so what
@@ -506,6 +507,20 @@ function drawText(ctx: CanvasRenderingContext2D, e: TextElement, scale: number) 
   });
 }
 
+function drawStroke(ctx: CanvasRenderingContext2D, e: DrawElement, scale: number) {
+  const d = strokePathD(e);
+  if (!d) return;
+  const preset = brushOf(e.brush);
+  applyShadow(ctx, e, scale);
+  ctx.globalCompositeOperation = preset.blend;
+  ctx.strokeStyle = e.color;
+  ctx.lineWidth = e.strokeWidth;
+  ctx.lineCap = e.points.length <= 2 ? 'round' : preset.cap;
+  ctx.lineJoin = 'round';
+  ctx.stroke(new Path2D(d));
+  clearShadow(ctx);
+}
+
 /** Draw one element with its transform applied. */
 export function drawElement(ctx: CanvasRenderingContext2D, e: StudioElement, scale: number) {
   if (e.hidden || e.opacity <= 0) return;
@@ -537,6 +552,9 @@ export function drawElement(ctx: CanvasRenderingContext2D, e: StudioElement, sca
       break;
     case 'qr':
       drawQr(ctx, e);
+      break;
+    case 'draw':
+      drawStroke(ctx, e, scale);
       break;
   }
   ctx.restore();

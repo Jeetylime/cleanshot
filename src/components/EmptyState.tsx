@@ -206,7 +206,7 @@ export function EmptyState() {
                       type="button"
                       aria-label={`Remove ${r.name}`}
                       onClick={() => void actions.removeRecent(r.id)}
-                      className="flex h-5 w-5 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      className="flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     >
                       <X size={11} strokeWidth={2.5} />
                     </button>

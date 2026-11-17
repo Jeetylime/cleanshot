@@ -243,6 +243,7 @@ export function scaleElement(e: StudioElement, k: number, ox = 0, oy = 0): Studi
     case 'shape':
       return { ...(base as typeof e), strokeWidth: e.strokeWidth * k, radius: e.radius * k };
     case 'line':
+    case 'draw':
       return { ...(base as typeof e), strokeWidth: e.strokeWidth * k };
     case 'image':
       return { ...(base as typeof e), radius: e.radius * k, borderWidth: e.borderWidth * k };

@@ -39,7 +39,9 @@ npm test          # unit tests (Vitest)
 
 **Start**: preset sizes (square, portrait and story posts, YouTube thumbnail, presentation, web banner, US Letter, A4), custom width and height with ratio shortcuts, white/transparent/solid backgrounds, eight editable templates, starting from an image, and reopening saved designs.
 
-**Elements**: text (heading, subheading, body, font pairings), eight shapes, lines and arrows, 34 icons, and images (upload, drag and drop, paste, or reuse from the session). Panels can also be dragged onto the canvas.
+**Elements**: one search box covers every element (shapes, lines, icons, stickers, badges, dividers, charts, QR codes, frames), with synonyms such as “circle” or “speech bubble”. Text (heading, subheading, body, font pairings), eight shapes, lines and arrows, 34 icons, and images (upload, drag and drop, paste, or reuse from the session). Panels can also be dragged onto the canvas.
+
+**Draw**: freehand Pen, Marker and Highlighter brushes (the highlighter multiplies like real ink) with colors and sizes, plus a stroke eraser. Each stroke is a normal element you can move, resize, rotate, recolor and export, including as SVG.
 
 **Editing**: select, multi-select (shift-click or marquee), move, resize, rotate (snaps to 45°, Shift for 15°), snapping guides to the page and other elements, align and distribute, layer order, group/ungroup, lock, hide, duplicate, copy/paste, undo/redo, right-click menu and keyboard shortcuts (press `?`).
 

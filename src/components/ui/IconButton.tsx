@@ -13,7 +13,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const SIZES = {
   // 24 CSS px minimum target size (WCAG 2.5.8); the root font size is 12px, so rem-based h-6 would be only 18px.
   sm: 'h-[24px] w-[24px] rounded-[6px]',
-  md: 'h-7 w-7 rounded-[7px]',
+  md: 'h-[24px] w-[24px] rounded-[7px]',
   lg: 'h-9 w-9 rounded-[8px]',
 };
 

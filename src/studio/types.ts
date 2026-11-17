@@ -171,7 +171,20 @@ export interface QrElement extends ElementBase {
   rounded: boolean;
 }
 
-export type StudioElement = TextElement | ShapeElement | LineElement | ImageElement | IconElement | ChartElement | QrElement;
+export type Brush = 'pen' | 'marker' | 'highlighter';
+
+/** A freehand stroke. Points are stored relative to the element box, so it moves, scales and rotates like any element. */
+export interface DrawElement extends ElementBase {
+  type: 'draw';
+  brush: Brush;
+  /** Flat [x0, y0, x1, y1, …] list, each coordinate 0–1 within the box. */
+  points: number[];
+  color: string;
+  /** Stroke width in design px. */
+  strokeWidth: number;
+}
+
+export type StudioElement = TextElement | ShapeElement | LineElement | ImageElement | IconElement | ChartElement | QrElement | DrawElement;
 export type ElementType = StudioElement['type'];
 
 export interface PageData {

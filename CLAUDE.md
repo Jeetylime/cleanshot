@@ -32,6 +32,7 @@ Sections are selected by hash routing in `src/app/route.ts` (`#home`, `#editor`,
 - **Canvas** (design editor): `src/studio/`, with its own `types.ts`, store/actions/history, `render.ts` (one scene renderer shared by screen, thumbnails and export), `geometry.ts`, `Stage.tsx` (interaction), `persistence.ts` (IndexedDB projects and `.studiolo` files; legacy `.cleanshot` still loads), plus `svgExport.ts` and `exportCore.ts`.
 - **Image Tools**: `src/tools/registry.ts` lists them. Each tool lives in `src/tools/<tool>/`, with shared helpers in `src/tools/shared/` and the on-demand Transformers.js runtime in `src/tools/ai/`.
 - **PDF tools**: `src/pdf/registry.ts` and `src/pdf/tools/*`, built on pdf-lib (write) and pdfjs-dist (render), with shared logic in `src/pdf/engine.ts`.
+- **Canvas drawing**: `draw` elements store points normalized to their box (`src/studio/draw.ts` builds the stroke path once for canvas, SVG and hit-testing). Drawing is active while the Draw panel is open (`studio.draw` settings); `Stage.tsx` turns the pointer into strokes inside one undo gesture.
 - **Cross-section handoff**: `src/studio/handoff.ts` sends images to Canvas. Edit's "Send to Canvas", Canvas's "Annotate" and the tools' "Design" buttons go through it.
 
 Key invariants:

@@ -54,7 +54,7 @@ export function Accessibility() {
           <li>Alt (Option on a Mac) plus the arrow keys resizes the selection.</li>
           <li>Press ? to see every keyboard shortcut.</li>
         </List>
-        <p>In Canvas, elements are added with buttons, moved with the arrow keys, and positioned, sized and rotated precisely with the number fields in the side panel.</p>
+        <p>In Canvas, elements are found with the search box and added with buttons, moved with the arrow keys, and positioned, sized and rotated precisely with the number fields in the side panel.</p>
       </Section>
 
       <Section id="limitations" title="Known limitations">

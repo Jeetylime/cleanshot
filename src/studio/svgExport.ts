@@ -1,3 +1,4 @@
+import { brushOf, strokePathD } from './draw';
 import { getImage, createCanvas, ctx2d } from '../engine/images';
 import { ICONS } from './iconData';
 import { fontCss, fontOf } from './fonts';
@@ -169,6 +170,11 @@ function elementBody(defs: string[], e: StudioElement): string {
       if (!d) return '';
       const k = Math.min(e.w, e.h) / 24;
       return `<path transform="translate(${n((e.w - 24 * k) / 2)} ${n((e.h - 24 * k) / 2)}) scale(${n(k)})" d="${d}" fill="${e.filled ? esc(e.color) : 'none'}" stroke="${esc(e.color)}" stroke-width="${n(e.weight)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+    case 'draw': {
+      const preset = brushOf(e.brush);
+      const blend = preset.blend === 'multiply' ? ' style="mix-blend-mode:multiply"' : '';
+      return `<path d="${strokePathD(e)}" fill="none" stroke="${esc(e.color)}" stroke-width="${n(e.strokeWidth)}" stroke-linecap="${e.points.length <= 2 ? 'round' : preset.cap}" stroke-linejoin="round"${blend}/>`;
     }
     case 'image':
       return imageSvg(defs, e);

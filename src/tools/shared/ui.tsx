@@ -399,7 +399,7 @@ export function FileRow({
             type="button"
             aria-label={`Remove ${img.name}`}
             onClick={onRemove}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] text-subtle opacity-60 hover:bg-hover hover:text-danger group-hover:opacity-100"
+            className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-subtle opacity-60 hover:bg-hover hover:text-danger group-hover:opacity-100"
           >
             <Trash2 size={13} />
           </button>

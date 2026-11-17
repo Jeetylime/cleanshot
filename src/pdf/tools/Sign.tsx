@@ -415,7 +415,7 @@ export default function Sign() {
                         type="button"
                         aria-label="Delete saved signature"
                         onClick={() => setSaved(deleteSignature(s.id))}
-                        className="absolute -top-1.5 -right-1.5 hidden h-5 w-5 items-center justify-center rounded-full bg-panel text-subtle shadow ring-1 ring-line group-hover:flex hover:text-danger focus:flex"
+                        className="absolute -top-1.5 -right-1.5 hidden h-[24px] w-[24px] items-center justify-center rounded-full bg-panel text-subtle shadow ring-1 ring-line group-hover:flex hover:text-danger focus:flex"
                       >
                         <X size={11} />
                       </button>

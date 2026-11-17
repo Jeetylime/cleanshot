@@ -99,6 +99,7 @@ export function useStudioShortcuts(openShortcuts: () => void) {
         case 'Escape':
           if (s.gesturing) return;
           if (s.exportOpen) studio.set({ exportOpen: false });
+          else if (s.panel === 'draw') studio.set({ panel: null });
           else if (s.cropId) A.setCropMode(null);
           else if (s.selection.length) A.clearSelection();
           else if (s.fullscreen) studio.set({ fullscreen: false });

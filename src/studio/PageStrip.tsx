@@ -52,13 +52,12 @@ export function PageStrip() {
 
   return (
     <div className="flex h-[84px] shrink-0 items-center gap-2 border-t border-line bg-panel px-3" aria-label="Pages" data-testid="page-strip">
-      <div ref={scroller} className="scroll-thin flex min-w-0 items-center gap-2 overflow-x-auto py-1.5" role="listbox" aria-label="Pages" aria-orientation="horizontal">
+      <div ref={scroller} className="scroll-thin flex min-w-0 items-center gap-2 overflow-x-auto py-1.5" role="list" aria-label="Pages">
         {pages.map((p, i) => (
           <div
             key={p.id}
             data-page={i}
-            role="option"
-            aria-selected={i === active}
+            role="listitem"
             draggable
             onDragStart={(e) => {
               setDrag(i);
@@ -89,6 +88,7 @@ export function PageStrip() {
               type="button"
               onClick={() => A.goToPage(i)}
               aria-label={`Page ${i + 1}`}
+              aria-current={i === active ? 'page' : undefined}
               className={`cs-checker flex items-center justify-center overflow-hidden rounded-[6px] p-0.5 transition-shadow ${
                 i === active ? 'ring-2 ring-accent' : 'ring-1 ring-line hover:ring-line-strong'
               }`}
@@ -98,15 +98,15 @@ export function PageStrip() {
             </button>
             <span className={`text-2xs tabular-nums ${i === active ? 'font-semibold text-fg' : 'text-subtle'}`}>{i + 1}</span>
             {i === active && (
-              <div className="absolute -top-1 -right-1 hidden gap-0.5 group-hover:flex">
+              <div className="absolute -top-2 -right-2 hidden gap-0.5 group-focus-within:flex group-hover:flex">
                 <Tooltip label="Duplicate page">
-                  <button type="button" aria-label="Duplicate page" onClick={() => A.addPage({ duplicate: true })} className="flex h-5 w-5 items-center justify-center rounded-[5px] bg-elevated text-muted shadow-pop hover:text-fg">
+                  <button type="button" aria-label="Duplicate page" onClick={() => A.addPage({ duplicate: true })} className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] bg-elevated text-muted shadow-pop hover:text-fg">
                     <CopyPlus size={11} />
                   </button>
                 </Tooltip>
                 {pages.length > 1 && (
                   <Tooltip label="Delete page">
-                    <button type="button" aria-label="Delete page" onClick={() => A.deletePage(i)} className="flex h-5 w-5 items-center justify-center rounded-[5px] bg-elevated text-muted shadow-pop hover:text-danger">
+                    <button type="button" aria-label="Delete page" onClick={() => A.deletePage(i)} className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] bg-elevated text-muted shadow-pop hover:text-danger">
                       <Trash2 size={11} />
                     </button>
                   </Tooltip>
