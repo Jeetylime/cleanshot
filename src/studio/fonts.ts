@@ -1,3 +1,4 @@
+import { resetTextMetrics } from './textEngine';
 /**
  * Built-in fonts. All are self-hosted (bundled from @fontsource packages), so
  * using them never contacts a third-party font server. The CSS is imported
@@ -75,4 +76,6 @@ export function ensureFonts(specs: { fontFamily: string; bold: boolean; italic: 
 export async function loadFontsFor(specs: { fontFamily: string; bold: boolean; italic: boolean }[]) {
   if (typeof document === 'undefined' || !document.fonts) return;
   await Promise.all(specs.map((s) => document.fonts.load(fontCss(s.fontFamily, 32, s.bold, s.italic), 'AaBb').catch(() => null)));
+  // Text measured before the fonts arrived used fallback metrics; drop those cached widths.
+  resetTextMetrics();
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Copy, Download, FileUp, ImagePlus, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
-import { ColorWell, NumberInput, Button } from '../components/ui/controls';
+import { ColorWell, NumberInput, Button, Segmented } from '../components/ui/controls';
 import { Popover, MenuItem } from '../components/ui/Popover';
 import { formatBytes, timeAgo } from '../lib/utils';
 import { pickFiles, useFileSink } from '../tools/shared/ui';
@@ -24,6 +24,9 @@ function PresetGlyph({ w, h }: { w: number; h: number }) {
 
 /** Designs shown before "Show all": one row on wide screens. */
 const RECENT_COUNT = 5;
+const RECENT_COUNT_PHONE = 4;
+
+type StartTab = 'sizes' | 'templates';
 
 export function CanvasStart() {
   const [projects, setProjects] = useState<db.ProjectSummary[] | null>(null);
@@ -33,6 +36,7 @@ export function CanvasStart() {
   const [bg, setBg] = useState<Bg>('white');
   const [color, setColor] = useState('#f5f5f7');
   const [showAll, setShowAll] = useState(false);
+  const [tab, setTab] = useState<StartTab>('sizes');
 
   const refresh = async () => {
     try {
@@ -69,51 +73,68 @@ export function CanvasStart() {
       </header>
       <main className="scroll-thin flex-1 overflow-y-auto px-5 py-8">
         <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-8 animate-rise">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-[length:calc(20px*var(--text-scale))] font-semibold tracking-[-0.02em] text-fg">New design</h1>
-              <p className="mt-1 text-sm text-muted">Pick a size or a template. You can change the size later.</p>
-            </div>
-            <div className="flex gap-1.5">
-              <Button onClick={() => pickFiles(false, (f) => f[0] && void A.openImageInCanvas(f[0], f[0].name, { newDesign: true }))}>
-                <ImagePlus size={13} /> Start from an image
-              </Button>
-              <Button onClick={() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.studiolo,.cleanshot,application/json')}>
-                <FileUp size={13} /> Open project file
-              </Button>
-            </div>
-          </div>
+          <h1 className="sr-only">Canvas</h1>
 
           {projects && projects.length > 0 && (
-            <section aria-labelledby="recent" className="flex flex-col gap-2.5">
+            <section aria-labelledby="recent" className="flex flex-col gap-3">
               <div className="flex items-center justify-between px-0.5">
-                <h2 id="recent" className="text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
+                <h2 id="recent" className="text-[length:calc(16px*var(--text-scale))] font-semibold tracking-[-0.01em] text-fg">
                   Your designs
                 </h2>
                 <span className="flex items-center gap-3">
-                  {usage && <span className="hidden text-2xs text-subtle tabular-nums sm:inline">{formatBytes(usage.usage)} of browser storage used</span>}
-                  {projects.length > RECENT_COUNT && (
-                    <button type="button" aria-expanded={showAll} aria-controls="your-designs" onClick={() => setShowAll((v) => !v)} className="text-xs font-medium text-accent hover:underline">
+                  {projects.length > RECENT_COUNT_PHONE && (
+                    <button type="button" aria-expanded={showAll} aria-controls="your-designs" onClick={() => setShowAll((v) => !v)} className={`text-xs font-medium text-accent hover:underline ${projects.length <= RECENT_COUNT && !showAll ? 'sm:hidden' : ''}`}>
                       {showAll ? 'Show fewer' : `Show all ${projects.length}`}
                     </button>
                   )}
                 </span>
               </div>
               <div id="your-designs" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                {(showAll ? projects : projects.slice(0, RECENT_COUNT)).map((p) => (
-                  <ProjectCard key={p.id} p={p} onChanged={refresh} />
+                {(showAll ? projects : projects.slice(0, RECENT_COUNT)).map((p, i) => (
+                  // Two rows on phones, one row on wider screens.
+                  <div key={p.id} className={!showAll && i >= RECENT_COUNT_PHONE ? 'max-sm:hidden' : ''}>
+                    <ProjectCard p={p} onChanged={refresh} />
+                  </div>
                 ))}
               </div>
               <p className="px-0.5 text-2xs leading-[14px] text-subtle">
-                Designs are stored only in this browser. Clearing site data removes them. To keep a copy or move a design to another device, use “Download project file” from the design’s menu.
+                Saved only in this browser{usage ? ` (${formatBytes(usage.usage)} used)` : ''}. To keep a copy or move a design to another device, use “Download project file” in its ⋯ menu.
               </p>
             </section>
           )}
 
-          <section aria-labelledby="sizes" className="flex flex-col gap-2.5">
-            <h2 id="sizes" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
-              Sizes
-            </h2>
+          <section aria-labelledby="new-design" className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 id="new-design" className="text-[length:calc(16px*var(--text-scale))] font-semibold tracking-[-0.01em] text-fg">
+                  Start a new design
+                </h2>
+                <p className="mt-0.5 text-sm text-muted">Pick a size or a template. You can change the size later.</p>
+              </div>
+              <div className="flex gap-1.5">
+                <Button onClick={() => pickFiles(false, (f) => f[0] && void A.openImageInCanvas(f[0], f[0].name, { newDesign: true }))}>
+                  <ImagePlus size={13} /> Start from an image
+                </Button>
+                <Button onClick={() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.studiolo,.cleanshot,application/json')}>
+                  <FileUp size={13} /> Open project file
+                </Button>
+              </div>
+            </div>
+            <div className="w-full max-w-[300px]">
+            <Segmented<StartTab>
+              ariaLabel="Start from"
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'sizes', label: 'Sizes' },
+                { value: 'templates', label: `Templates (${TEMPLATES.length})` },
+              ]}
+            />
+            </div>
+            {tab === 'sizes' ? (
+              <>
+          <div className="flex flex-col gap-2.5">
+            <h3 className="sr-only">Preset sizes</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {SIZE_PRESETS.map((p) => (
                 <button
@@ -135,12 +156,11 @@ export function CanvasStart() {
                 </button>
               ))}
             </div>
-          </section>
-
-          <section aria-labelledby="custom" className="flex flex-col gap-2.5">
-            <h2 id="custom" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
-              Custom size
-            </h2>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <h3 className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
+              Or a custom size
+            </h3>
             <div className="flex flex-col gap-3 rounded-[14px] border border-line bg-panel p-3.5 lg:flex-row lg:items-center">
               <div className="flex items-center gap-1.5 lg:w-[260px]">
                 <NumberInput ariaLabel="Width" prefix="W" suffix="px" value={w} min={16} max={MAX_CANVAS_SIDE} onChange={setW} />
@@ -193,14 +213,15 @@ export function CanvasStart() {
                 </Button>
               </div>
             </div>
-          </section>
+          </div>
 
+              </>
+            ) : (
+              <>
           <UserTemplates />
 
-          <section aria-labelledby="templates" className="flex flex-col gap-2.5">
-            <h2 id="templates" className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
-              Templates
-            </h2>
+          <div className="flex flex-col gap-2.5">
+            <h3 className="sr-only">Templates</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {TEMPLATES.map((t) => (
                 <button key={t.id} type="button" onClick={() => A.createProject({ width: t.width, height: t.height, templateId: t.id })} className="group flex flex-col gap-1.5 text-left" data-testid={`start-template-${t.id}`}>
@@ -212,8 +233,11 @@ export function CanvasStart() {
                 </button>
               ))}
             </div>
-          </section>
+          </div>
 
+              </>
+            )}
+          </section>
         </div>
       </main>
     </div>

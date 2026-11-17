@@ -263,8 +263,9 @@ export function TemplateThumb({ id }: { id: string }) {
     if (url) return;
     let cancelled = false;
     void (async () => {
+      // Load the template's fonts first, then build it, so text is laid out with real metrics.
+      await loadFontsFor(t.build({ width: t.width, height: t.height }).filter((e): e is TextElement => e.type === 'text'));
       const els = t.build({ width: t.width, height: t.height });
-      await loadFontsFor(els.filter((e): e is TextElement => e.type === 'text'));
       const doc = newDoc({ width: t.width, height: t.height, background: t.background, elements: els.map((e) => (e.type === 'text' ? fitText(e) : e)) });
       const k = 240 / Math.max(t.width, t.height);
       const c = renderToCanvas(doc, k);
