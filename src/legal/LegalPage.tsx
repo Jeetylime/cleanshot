@@ -1,11 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from '../components/TopBar';
-import type { LegalDoc } from '../app/route';
+import { POLICY_DOCS, type LegalDoc } from '../app/route';
 import { LEGAL, LEGAL_COMPLETE } from './config';
 import { TermsOfService } from './TermsOfService';
 import { PrivacyPolicy } from './PrivacyPolicy';
-import { AcceptableUse } from './AcceptableUse';
 import { Accessibility } from './Accessibility';
 import { Licenses } from './Licenses';
 
@@ -22,11 +21,6 @@ const DOCS: Record<LegalDoc, { title: string; summary: string; body: () => React
     title: 'Privacy Policy',
     summary: 'What information is involved when you use Studiolo, where it goes, and the choices you have.',
     body: PrivacyPolicy,
-  },
-  'acceptable-use': {
-    title: 'Acceptable Use Policy',
-    summary: 'What you may not use Studiolo for, and what can happen if you do.',
-    body: AcceptableUse,
   },
   accessibility: {
     title: 'Accessibility',
@@ -54,7 +48,9 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
   useEffect(() => {
     const prev = document.title;
     document.title = `${meta.title} · Studiolo`;
-    document.getElementById('legal-scroll')?.scrollTo(0, 0);
+    // Old #acceptable-use links land on the Terms; jump to that section.
+    if (location.hash === '#acceptable-use') requestAnimationFrame(() => document.getElementById('acceptable-use')?.scrollIntoView());
+    else document.getElementById('legal-scroll')?.scrollTo(0, 0);
     return () => {
       document.title = prev;
     };
@@ -88,8 +84,9 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
               )}
             </div>
 
-            <nav aria-label="Other policies" className="flex flex-wrap gap-1.5">
-              {(Object.keys(DOCS) as LegalDoc[]).map((k) => (
+            {meta.policy !== false && (
+            <nav aria-label="Policies" className="flex flex-wrap gap-1.5">
+              {POLICY_DOCS.map((k) => (
                 <a
                   key={k}
                   data-no-underline
@@ -103,6 +100,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
                 </a>
               ))}
             </nav>
+            )}
 
             <Body />
 

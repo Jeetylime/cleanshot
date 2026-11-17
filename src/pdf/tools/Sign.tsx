@@ -254,7 +254,7 @@ export default function Sign() {
     return (
       <ToolLayout
         main={<Dropzone accept={PDF_ACCEPT} onFiles={list.add} title="Drop a PDF to sign" hint="Draw, type or upload a signature, then place it" icon={<PenLine size={20} />} />}
-        panel={<PanelSection title="How it works"><p className="text-xs leading-[17px] text-muted">Draw, type or upload your signature, click where it should go, adjust its size, and download the signed PDF. Your signature isn’t saved anywhere unless you choose Save, which keeps it only in this browser.</p><p className="text-xs leading-[17px] text-muted">Only sign documents you’re authorized to sign. Forged or altered documents are prohibited by the <a href="#acceptable-use" className="text-accent hover:underline">Acceptable Use Policy</a>.</p></PanelSection>}
+        panel={<PanelSection title="How it works"><p className="text-xs leading-[17px] text-muted">Draw, type or upload your signature, click where it should go, adjust its size, and download the signed PDF. Your signature isn’t saved anywhere unless you choose Save, which keeps it only in this browser.</p><p className="text-xs leading-[17px] text-muted">Only sign documents you’re authorized to sign. Forged or altered documents are prohibited by the <a href="#acceptable-use" className="text-accent hover:underline">Terms of Service</a>.</p></PanelSection>}
       />
     );
   }

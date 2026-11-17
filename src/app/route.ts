@@ -39,9 +39,11 @@ export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compr
 
 export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop', 'pdf-form'];
 
-export type LegalDoc = 'terms' | 'privacy-policy' | 'acceptable-use' | 'accessibility' | 'licenses';
+export type LegalDoc = 'terms' | 'privacy-policy' | 'accessibility' | 'licenses';
 
-export const LEGAL_DOCS: LegalDoc[] = ['terms', 'privacy-policy', 'acceptable-use', 'accessibility', 'licenses'];
+export const LEGAL_DOCS: LegalDoc[] = ['terms', 'privacy-policy', 'accessibility', 'licenses'];
+/** Policies proper (the other legal docs are informational pages). */
+export const POLICY_DOCS: LegalDoc[] = ['terms', 'privacy-policy'];
 
 export type Route =
   | { section: 'home' }
@@ -60,6 +62,8 @@ function parse(hash: string): Route {
   if (h === 'about') return { section: 'about' };
   if (h === 'storage') return { section: 'storage' };
   if (h === 'privacy') return { section: 'legal', doc: 'privacy-policy' }; // old Privacy & Models link
+  // The Acceptable Use Policy is now section 4 of the Terms; LegalPage scrolls to it.
+  if (h === 'acceptable-use') return { section: 'legal', doc: 'terms' };
   if ((LEGAL_DOCS as string[]).includes(h)) return { section: 'legal', doc: h as LegalDoc };
   if (h === 'tools') return { section: 'tools', tool: null };
   if (h === 'pdf') return { section: 'pdf', tool: null };

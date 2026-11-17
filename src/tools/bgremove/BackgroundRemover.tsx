@@ -466,7 +466,7 @@ export default function BackgroundRemover() {
                 Model and privacy
               </button>
               <a href="#acceptable-use" className="text-xs text-accent hover:underline">
-                Acceptable Use
+                Acceptable use
               </a>
             </div>
           </PanelSection>

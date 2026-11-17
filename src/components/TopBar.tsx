@@ -28,7 +28,6 @@ import {
   Underline,
   MessageSquare,
   Lock,
-  FileCheck,
   LayoutTemplate,
   ChevronRight,
   Info,
@@ -409,6 +408,12 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
           <MenuItem icon={<Info size={14} />} onClick={run(goAboutPage)}>
             About Studiolo
           </MenuItem>
+          <MenuItem icon={<Accessibility size={14} />} onClick={run(() => goLegal('accessibility'))}>
+            Accessibility
+          </MenuItem>
+          <MenuItem icon={<BookOpen size={14} />} onClick={run(() => goLegal('licenses'))}>
+            Open Source Licenses
+          </MenuItem>
           <MenuSeparator />
           <MenuLabel>Legal</MenuLabel>
           <MenuItem icon={<Scale size={14} />} onClick={run(() => goLegal('terms'))}>
@@ -416,15 +421,6 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
           </MenuItem>
           <MenuItem icon={<Lock size={14} />} onClick={run(() => goLegal('privacy-policy'))}>
             Privacy Policy
-          </MenuItem>
-          <MenuItem icon={<FileCheck size={14} />} onClick={run(() => goLegal('acceptable-use'))}>
-            Acceptable Use Policy
-          </MenuItem>
-          <MenuItem icon={<Accessibility size={14} />} onClick={run(() => goLegal('accessibility'))}>
-            Accessibility
-          </MenuItem>
-          <MenuItem icon={<BookOpen size={14} />} onClick={run(() => goLegal('licenses'))}>
-            Open Source Licenses
           </MenuItem>
         </div>
       </Popover>

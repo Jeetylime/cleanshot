@@ -7,7 +7,7 @@
  */
 export const LEGAL = {
   /** Date shown as "Last updated" on all three policies. Change it whenever a policy changes. */
-  lastUpdated: '2026-11-16',
+  lastUpdated: '2026-11-17',
 
   /** Email address for general, legal and privacy questions. */
   contactEmail: 'hello@studiolo.page' as string | null,

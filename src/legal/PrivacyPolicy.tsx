@@ -216,7 +216,7 @@ export function PrivacyPolicy() {
         <p>For privacy questions or requests, contact:</p>
         <ContactBlock />
         <p>
-          See also the <DocLink doc="terms">Terms of Service</DocLink> and <DocLink doc="acceptable-use">Acceptable Use Policy</DocLink>.
+          See also the <DocLink doc="terms">Terms of Service</DocLink>, which include the acceptable use rules.
         </p>
       </Section>
     </>
