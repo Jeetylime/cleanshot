@@ -1,4 +1,5 @@
-import { Clipboard, ImagePlus, Lock, Sparkles, X } from 'lucide-react';
+import { Clipboard, ImagePlus, Lock, MonitorUp, Sparkles, X } from 'lucide-react';
+import { captureScreen, screenCaptureSupported } from '../lib/screenCapture';
 import { useEditor } from '../store/store';
 import * as actions from '../store/actions';
 import { openFilePicker } from '../lib/filePicker';
@@ -22,6 +23,16 @@ async function pasteFromClipboard() {
     actions.showToast('No image on the clipboard. Take a screenshot, then paste.', 'info');
   } catch {
     actions.showToast(`Press ${modKey}V to paste a screenshot.`, 'info');
+  }
+}
+
+async function captureFromScreen() {
+  try {
+    const blob = await captureScreen();
+    await actions.openImageBlob(blob, `Screen capture ${new Date().toLocaleString().replace(/[/:]/g, '-')}.png`);
+  } catch (err) {
+    // Cancelling the browser's picker throws NotAllowedError; that's not worth a toast.
+    if ((err as Error)?.name !== 'NotAllowedError') actions.showToast(`Screen capture failed: ${(err as Error)?.message ?? err}`, 'error');
   }
 }
 
@@ -154,6 +165,12 @@ export function EmptyState() {
                 <Kbd>V</Kbd>
               </span>
             </Button>
+            {screenCaptureSupported() && (
+              <Button onClick={() => void captureFromScreen()} className="h-8 px-3" disabled={!!busy}>
+                <MonitorUp size={14} />
+                Capture screen
+              </Button>
+            )}
           </div>
           <p className="text-xs text-subtle">PNG, JPG or WebP · any size</p>
         </div>

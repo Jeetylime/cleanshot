@@ -111,6 +111,8 @@ function FindDialog({ onClose }: { onClose: () => void }) {
   const [rep, setRep] = useState('');
   const [cs, setCs] = useState(false);
   const tick = useStudio((s) => s.doc);
+  // findText reads the live store; `tick` re-runs the search whenever the document changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const hits = useMemo(() => A.findText(q, cs), [q, cs, tick]);
   const total = hits.reduce((s, h) => s + h.count, 0);
   return (

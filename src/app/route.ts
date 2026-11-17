@@ -17,7 +17,8 @@ export type ToolKey =
   | 'color-picker'
   | 'watermark'
   | 'favicon'
-  | 'collage';
+  | 'collage'
+  | 'frames';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -31,11 +32,12 @@ export const TOOL_KEYS: ToolKey[] = [
   'watermark',
   'favicon',
   'collage',
+  'frames',
 ];
 
-export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text';
+export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop';
 
-export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text'];
+export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop'];
 
 export type LegalDoc = 'terms' | 'privacy-policy' | 'acceptable-use';
 

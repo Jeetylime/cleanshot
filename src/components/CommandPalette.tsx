@@ -123,8 +123,13 @@ export function CommandPalette() {
             onKeyDown={(e) => {
               e.stopPropagation();
               if (e.key === 'Escape') setOpen(false);
-              else if (e.key === 'ArrowDown') (e.preventDefault(), setActive((a) => Math.min(results.length - 1, a + 1)));
-              else if (e.key === 'ArrowUp') (e.preventDefault(), setActive((a) => Math.max(0, a - 1)));
+              else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActive((a) => Math.min(results.length - 1, a + 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActive((a) => Math.max(0, a - 1));
+              }
               else if (e.key === 'Enter') run(results[active]);
             }}
             placeholder="Search tools, sections and settings…"

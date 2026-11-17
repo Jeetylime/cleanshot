@@ -59,11 +59,13 @@ export function PresetGrid({ bg, compact = false }: { bg: BackgroundSettings; co
 
 export function BackgroundPanel() {
   const bg = useBackground();
+  // Hooks must run before the early return, or toggling the background between
+  // unset and set changes the hook count and React throws.
+  const [tab, setTab] = useState<'solid' | 'gradient'>(() => (bg?.fill.kind === 'gradient' ? 'gradient' : 'solid'));
   if (!bg) return null;
   const fill = bg.fill;
   const mode: 'solid' | 'gradient' | 'preset' =
     fill.kind === 'gradient' && !bg.presetId ? 'gradient' : fill.kind === 'solid' && !bg.presetId ? 'solid' : 'preset';
-  const [tab, setTab] = useState<'solid' | 'gradient'>(fill.kind === 'gradient' ? 'gradient' : 'solid');
   const shown = mode === 'preset' ? tab : mode;
   const solidColor = fill.kind === 'solid' ? fill.color : '#ffffff';
   const grad = fill.kind === 'gradient' ? fill : { kind: 'gradient' as const, from: '#a5c8ff', to: '#6f8ff8', angle: 150 };

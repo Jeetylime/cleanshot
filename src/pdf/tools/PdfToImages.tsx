@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Images } from 'lucide-react';
+import { Images, LayoutTemplate } from 'lucide-react';
+import { sendToCanvas } from '../../studio/handoff';
 import { Button, Segmented, Slider } from '../../components/ui/controls';
 import { showToast } from '../../store/actions';
 import { errorMessage } from '../../tools/shared/batch';
@@ -54,6 +55,28 @@ export default function PdfToImages() {
       else await saveBlob(await createZip(outputs), `${baseName(file.name)}-images.zip`);
     } catch (err) {
       showToast(`Conversion failed: ${errorMessage(err)}`, 'error');
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  /** Render the first selected page and open it on Canvas as a new design. */
+  const toCanvas = async () => {
+    if (!file) return;
+    const p = Math.min(...selected);
+    setProgress(0);
+    try {
+      const { doc, close } = await openForRender(file.bytes);
+      try {
+        const c = await renderPage(doc, p, { scale: 150 / 72 });
+        const blob = await canvasToBlob(c, 'image/png');
+        c.width = c.height = 0;
+        sendToCanvas(blob, `${baseName(file.name)}-page-${p}.png`, { newDesign: true });
+      } finally {
+        close();
+      }
+    } catch (err) {
+      showToast(`Couldn’t open the page: ${errorMessage(err)}`, 'error');
     } finally {
       setProgress(null);
     }
@@ -120,6 +143,9 @@ export default function PdfToImages() {
       footer={
         <>
           {progress !== null && <ProgressBar value={progress} />}
+          <Button className="h-8" disabled={selected.size !== 1 || progress !== null} title={selected.size === 1 ? 'Open this page as a new Canvas design' : 'Select exactly one page'} onClick={() => void toCanvas()}>
+            <LayoutTemplate size={14} /> Design on Canvas
+          </Button>
           <Button variant="primary" className="h-8" disabled={!selected.size || progress !== null} onClick={() => void run()}>
             <Images size={14} />
             {selected.size ? `Convert ${selected.size} ${selected.size === 1 ? 'page' : 'pages'}` : 'Select pages'}

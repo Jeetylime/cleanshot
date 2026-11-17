@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Download, Eraser, PenLine, Trash2, Upload } from 'lucide-react';
+import { deleteSignature, listSignatures, loadSignatureCanvas, saveSignature, type SavedSignature } from '../savedSignatures';
+import { CalendarDays, ChevronLeft, ChevronRight, Download, Eraser, PenLine, Trash2, Save, Upload, X } from 'lucide-react';
+import { Tooltip } from '../../components/ui/Tooltip';
 import { Button, ColorPicker, Segmented } from '../../components/ui/controls';
 import { showToast } from '../../store/actions';
 import { errorMessage } from '../../tools/shared/batch';
@@ -119,6 +121,7 @@ export default function Sign() {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [active, setActive] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState<SavedSignature[]>(() => listSignatures());
   const stage = useRef<HTMLDivElement>(null);
   const seq = useRef(1);
 
@@ -251,7 +254,7 @@ export default function Sign() {
     return (
       <ToolLayout
         main={<Dropzone accept={PDF_ACCEPT} onFiles={list.add} title="Drop a PDF to sign" icon={<PenLine size={20} />} />}
-        panel={<PanelSection title="How it works"><p className="text-xs leading-[17px] text-muted">Draw, type or upload your signature, click where it should go, adjust its size, and download the signed PDF. Your signature isn’t saved anywhere.</p><p className="text-xs leading-[17px] text-muted">Only sign documents you’re authorized to sign. Forged or altered documents are prohibited by the <a href="#acceptable-use" className="text-accent hover:underline">Acceptable Use Policy</a>.</p></PanelSection>}
+        panel={<PanelSection title="How it works"><p className="text-xs leading-[17px] text-muted">Draw, type or upload your signature, click where it should go, adjust its size, and download the signed PDF. Your signature isn’t saved anywhere unless you choose Save, which keeps it only in this browser.</p><p className="text-xs leading-[17px] text-muted">Only sign documents you’re authorized to sign. Forged or altered documents are prohibited by the <a href="#acceptable-use" className="text-accent hover:underline">Acceptable Use Policy</a>.</p></PanelSection>}
       />
     );
   }
@@ -375,7 +378,50 @@ export default function Sign() {
             )}
             {sig && (
               <div className="flex items-center gap-2 rounded-[8px] border border-line bg-white p-2">
-                <img src={sig.url} alt="Your signature" className="max-h-12 max-w-full" />
+                <img src={sig.url} alt="Your signature" className="max-h-12 min-w-0 flex-1 object-contain object-left" />
+                <Tooltip label="Keep this signature in this browser for next time">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        setSaved(saveSignature(sig.canvas.toDataURL('image/png')));
+                        showToast('Signature saved on this device');
+                      } catch {
+                        showToast('Couldn’t save: browser storage is full or blocked.', 'error');
+                      }
+                    }}
+                    className="flex h-7 shrink-0 items-center gap-1 rounded-[6px] px-2 text-xs text-[#3a3a3c] hover:bg-black/5"
+                  >
+                    <Save size={12} /> Save
+                  </button>
+                </Tooltip>
+              </div>
+            )}
+            {saved.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs text-muted">Saved on this device</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {saved.map((s) => (
+                    <div key={s.id} className="group relative">
+                      <button
+                        type="button"
+                        aria-label="Use saved signature"
+                        onClick={() => void loadSignatureCanvas(s.url).then(setSignature).catch((e) => showToast(String(e.message), 'error'))}
+                        className="flex h-12 w-full items-center justify-center rounded-[7px] border border-line bg-white p-1.5 hover:border-accent"
+                      >
+                        <img src={s.url} alt="" className="max-h-full max-w-full object-contain" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Delete saved signature"
+                        onClick={() => setSaved(deleteSignature(s.id))}
+                        className="absolute -top-1.5 -right-1.5 hidden h-5 w-5 items-center justify-center rounded-full bg-panel text-subtle shadow ring-1 ring-line group-hover:flex hover:text-danger focus:flex"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </PanelSection>

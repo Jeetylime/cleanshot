@@ -326,6 +326,8 @@ export function Stage() {
       mq.removeEventListener?.('change', schedule);
       cancelAnimationFrame(raf);
     };
+    // hoverListeners comes from a ref, so it is stable for the component's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasDoc]);
 
   const hoverRef = useRef<string | null>(null);
@@ -712,10 +714,22 @@ export function Stage() {
     const R = (v: number) => clamp(v, left + minS, img.width);
     const Tp = (v: number) => clamp(v, 0, bottom - minS);
     const B = (v: number) => clamp(v, top + minS, img.height);
-    if (h.includes('w')) b.flipX ? (right = R(right - dx)) : (left = L(left + dx));
-    if (h.includes('e')) b.flipX ? (left = L(left - dx)) : (right = R(right + dx));
-    if (h.includes('n')) b.flipY ? (bottom = B(bottom - dy)) : (top = Tp(top + dy));
-    if (h.includes('s')) b.flipY ? (top = Tp(top - dy)) : (bottom = B(bottom + dy));
+    if (h.includes('w')) {
+      if (b.flipX) right = R(right - dx);
+      else left = L(left + dx);
+    }
+    if (h.includes('e')) {
+      if (b.flipX) left = L(left - dx);
+      else right = R(right + dx);
+    }
+    if (h.includes('n')) {
+      if (b.flipY) bottom = B(bottom - dy);
+      else top = Tp(top + dy);
+    }
+    if (h.includes('s')) {
+      if (b.flipY) top = Tp(top - dy);
+      else bottom = B(bottom + dy);
+    }
     const crop = { x: left, y: top, w: right - left, h: bottom - top };
     const nw = crop.w / kx;
     const nh = crop.h / ky;

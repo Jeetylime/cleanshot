@@ -43,6 +43,18 @@ const PREVIEWS: Record<ToolKey, React.ReactNode> = {
       {mountains(39, 31, 27, 19)}
     </g>
   ),
+  frames: (
+    <g>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x={6 + i * 22} y="16" width="20" height="28" rx="2" fill="#2c2c2e" />
+          <rect x={8 + i * 22} y="22" width="16" height="16" rx="1.5" fill="#8fc7e8" />
+          <circle cx={12 + i * 22 + i * 3} cy="32" r="3" fill="#ff9f0a" />
+          {[0, 1, 2].map((j) => <rect key={j} x={8 + i * 22 + j * 6} y="18" width="3" height="2" rx="0.5" fill="#636366" />)}
+        </g>
+      ))}
+    </g>
+  ),
   favicon: (
     <g>
       <rect x="6" y="12" width="64" height="36" rx="4" fill="#fff" stroke="rgba(0,0,0,0.12)" />

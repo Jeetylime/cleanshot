@@ -20,6 +20,13 @@ const PREVIEWS: Record<string, ReactNode> = {
       <text x="50" y="24" textAnchor="middle" fontSize="5" fontWeight="700" fill="#ff375f" opacity="0.5" transform="rotate(-40 50 21)">DRAFT</text>
     </g>
   ),
+  'pdf-crop': (
+    <g>
+      {page(28, 17)}
+      <path d="M24 13 v34 h32" stroke="#0a84ff" strokeWidth="1.6" fill="none" />
+      <path d="M32 21 h20 v24" stroke="#0a84ff" strokeWidth="1.6" fill="none" strokeDasharray="2 1.5" />
+    </g>
+  ),
   'pdf-text': (
     <g fontFamily="-apple-system, Inter, sans-serif" fontSize="7" fontWeight="700">
       {page(10, 17)}

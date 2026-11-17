@@ -1,5 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import { AppWindow, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, LayoutGrid, Pipette, Scaling, Shrink, type LucideIcon } from 'lucide-react';
+import { AppWindow, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, LayoutGrid, Pipette, Scaling, Shrink, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -133,6 +133,16 @@ export const TOOLS: ToolMeta[] = [
     ai: false,
     batch: false,
     component: lazy(() => import('./favicon/Favicon')),
+  },
+  {
+    key: 'frames',
+    name: 'GIF Frame Extractor',
+    description: 'Split animated GIF, WebP or PNG into individual frames.',
+    group: 'utilities',
+    icon: Film,
+    ai: false,
+    batch: false,
+    component: lazy(() => import('./frames/Frames')),
   },
 ];
 
