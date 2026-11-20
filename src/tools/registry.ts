@@ -1,6 +1,6 @@
 import { lazyTool } from './lazyTool';
 import { type ComponentType, type LazyExoticComponent } from 'react';
-import { AppWindow, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, LayoutGrid, Pipette, Scaling, Shrink, type LucideIcon } from 'lucide-react';
+import { AppWindow, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -146,6 +146,66 @@ export const TOOLS: ToolMeta[] = [
     ai: false,
     batch: false,
     ...lazyTool(() => import('./frames/Frames')),
+  },
+  {
+    key: 'photo-filters',
+    name: 'Photo Filters',
+    description: 'Adjust light and color, or apply film looks, to many photos at once.',
+    group: 'editing',
+    icon: SlidersHorizontal,
+    ai: false,
+    batch: true,
+    ...lazyTool(() => import('./filters/Filters')),
+  },
+  {
+    key: 'splitter',
+    name: 'Image Splitter',
+    description: 'Cut an image into a grid of tiles, such as carousel slides.',
+    group: 'editing',
+    icon: Grid2x2,
+    ai: false,
+    batch: false,
+    ...lazyTool(() => import('./splitter/Splitter')),
+  },
+  {
+    key: 'social-sizes',
+    name: 'Social Media Sizes',
+    description: 'Make every social size at once from one image or a branded placeholder.',
+    group: 'editing',
+    icon: Share2,
+    ai: false,
+    batch: false,
+    ...lazyTool(() => import('./social/SocialSizes')),
+  },
+  {
+    key: 'sprite-sheet',
+    name: 'Sprite Sheet Builder',
+    description: 'Pack icons or frames into one image with CSS and a JSON atlas.',
+    group: 'utilities',
+    icon: LayoutDashboard,
+    ai: false,
+    batch: true,
+    ...lazyTool(() => import('./sprites/SpriteSheet')),
+  },
+  {
+    key: 'batch-rename',
+    name: 'Batch Rename',
+    description: 'Rename many images with a pattern, numbers and dates.',
+    group: 'utilities',
+    icon: FileText,
+    ai: false,
+    batch: true,
+    ...lazyTool(() => import('./rename/BatchRename')),
+  },
+  {
+    key: 'image-diff',
+    name: 'Image Diff',
+    description: 'Compare two images: highlight changed pixels, overlay or slide.',
+    group: 'utilities',
+    icon: GitCompareArrows,
+    ai: false,
+    batch: false,
+    ...lazyTool(() => import('./diff/ImageDiff')),
   },
 ];
 

@@ -18,7 +18,13 @@ export type ToolKey =
   | 'watermark'
   | 'favicon'
   | 'collage'
-  | 'frames';
+  | 'frames'
+  | 'splitter'
+  | 'sprite-sheet'
+  | 'batch-rename'
+  | 'social-sizes'
+  | 'image-diff'
+  | 'photo-filters';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -33,6 +39,12 @@ export const TOOL_KEYS: ToolKey[] = [
   'favicon',
   'collage',
   'frames',
+  'splitter',
+  'sprite-sheet',
+  'batch-rename',
+  'social-sizes',
+  'image-diff',
+  'photo-filters',
 ];
 
 export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form';

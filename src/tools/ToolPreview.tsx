@@ -137,6 +137,62 @@ const PREVIEWS: Record<ToolKey, React.ReactNode> = {
       ))}
     </g>
   ),
+  'photo-filters': (
+    <g>
+      <clipPath id="tp-half">
+        <rect x="38" y="8" width="30" height="44" />
+      </clipPath>
+      {mountains(8, 8, 60, 44)}
+      <g clipPath="url(#tp-half)" style={{ filter: 'grayscale(1) contrast(1.2)' }}>
+        {mountains(8, 8, 60, 44)}
+      </g>
+      <line x1="38" y1="8" x2="38" y2="52" stroke="#fff" strokeWidth="1.5" />
+    </g>
+  ),
+  splitter: (
+    <g>
+      {mountains(8, 14, 60, 32)}
+      <line x1="28" y1="12" x2="28" y2="48" stroke="#fff" strokeWidth="1.5" strokeDasharray="3 2" />
+      <line x1="48" y1="12" x2="48" y2="48" stroke="#fff" strokeWidth="1.5" strokeDasharray="3 2" />
+    </g>
+  ),
+  'social-sizes': (
+    <g>
+      <rect x="6" y="12" width="26" height="26" rx="3" fill="#ff375f" />
+      <rect x="35" y="6" width="16" height="28" rx="3" fill="#bf5af2" />
+      <rect x="35" y="38" width="35" height="16" rx="3" fill="#0a84ff" />
+      <rect x="54" y="10" width="16" height="20" rx="3" fill="#ff9f0a" />
+    </g>
+  ),
+  'sprite-sheet': (
+    <g>
+      <rect x="8" y="8" width="60" height="44" rx="3" fill="url(#tp-checker)" />
+      {checker}
+      {[0, 1, 2].map((r) => [0, 1, 2, 3].map((c) => <rect key={`${r}${c}`} x={12 + c * 14} y={12 + r * 13} width="10" height="9" rx="2" fill={['#0a84ff', '#30d158', '#ff9f0a', '#ff375f'][(r + c) % 4]} />))}
+    </g>
+  ),
+  'batch-rename': (
+    <g>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x="8" y={10 + i * 14} width="60" height="10" rx="2.5" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+          <text x="12" y={17.5 + i * 14} fontSize="6" fontFamily="monospace" fill="#0a84ff">{`photo-00${i + 1}.jpg`}</text>
+        </g>
+      ))}
+    </g>
+  ),
+  'image-diff': (
+    <g>
+      <rect x="6" y="10" width="30" height="40" rx="3" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+      <rect x="40" y="10" width="30" height="40" rx="3" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+      {[16, 24, 32].map((y) => (
+        <g key={y}>
+          <rect x="10" y={y} width="22" height="4" rx="1" fill="#c7c7cc" />
+          <rect x="44" y={y} width="22" height="4" rx="1" fill={y === 24 ? '#ff2d55' : '#c7c7cc'} />
+        </g>
+      ))}
+    </g>
+  ),
   'color-picker': (
     <g>
       {['#2f6f8f', '#4f9d8c', '#7fb7a4', '#f3d9a4', '#f0a39a'].map((c, i) => (
