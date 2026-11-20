@@ -4,6 +4,8 @@ import type {
   EditorDoc,
   EllipseAnnotation,
   HighlightAnnotation,
+  MagnifyAnnotation,
+  MeasureAnnotation,
   Point,
   RectAnnotation,
   StepAnnotation,
@@ -11,7 +13,7 @@ import type {
 } from '../types';
 import { luminance, normalizeRect, withAlpha } from '../lib/utils';
 import { aspectValue, paintFill } from './backgrounds';
-import { isPrivacy, stepNumbers } from './annotations';
+import { arrowControl, isPrivacy, magnifySourceRadius, measureLength, stepNumbers } from './annotations';
 import { FONT_FAMILY, measureText } from './text';
 import { createCanvas, ctx2d, getDisplaySource, getImage } from './images';
 import { getImageLayer, paintPrivacy } from './privacy';
@@ -153,6 +155,12 @@ export interface RenderContext {
   /** Device pixels per image-space pixel (for shadow sizes). */
   pxScale: number;
   steps: Map<string, number>;
+  /**
+   * The image with privacy regions already erased, for annotations that show
+   * image pixels (the magnifier). Never the raw image: a lens over a blurred
+   * area must not reveal what is under it.
+   */
+  source?: () => CanvasImageSource | null;
 }
 
 function applyShadow(ctx: CanvasRenderingContext2D, rc: RenderContext, on: boolean, strength = 1) {
@@ -186,7 +194,156 @@ function roundedPolygon(ctx: CanvasRenderingContext2D, pts: [Point, number][]) {
   ctx.closePath();
 }
 
+function drawCurvedArrow(ctx: CanvasRenderingContext2D, a: ArrowAnnotation, rc: RenderContext, c: Point) {
+  const sw = a.strokeWidth * rc.unit;
+  const unitVec = (from: Point, to: Point) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const L = Math.hypot(dx, dy) || 1;
+    return { x: dx / L, y: dy / L };
+  };
+  const chord = Math.hypot(a.end.x - a.start.x, a.end.y - a.start.y);
+  const head = Math.min(Math.max(sw * 3.1, 8 * rc.unit), chord * 0.4);
+  const half = head * 0.56;
+  const tEnd = unitVec(c, a.end);
+  const tStart = unitVec(c, a.start);
+  const both = a.heads === 'both';
+  const s0 = both ? { x: a.start.x - tStart.x * head * 0.7, y: a.start.y - tStart.y * head * 0.7 } : a.start;
+  const e0 = { x: a.end.x - tEnd.x * head * 0.7, y: a.end.y - tEnd.y * head * 0.7 };
+
+  ctx.strokeStyle = a.color;
+  ctx.fillStyle = a.color;
+  applyShadow(ctx, rc, a.shadow);
+  ctx.lineWidth = sw;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(s0.x, s0.y);
+  ctx.quadraticCurveTo(c.x, c.y, e0.x, e0.y);
+  ctx.stroke();
+  const tip = (p: Point, t: Point) => {
+    const bx = p.x - t.x * head;
+    const by = p.y - t.y * head;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(bx - t.y * half, by + t.x * half);
+    ctx.quadraticCurveTo(p.x - t.x * head * 0.72, p.y - t.y * head * 0.72, bx + t.y * half, by - t.x * half);
+    ctx.closePath();
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = sw * 0.35;
+    ctx.fill();
+    ctx.stroke();
+  };
+  tip(a.end, tEnd);
+  if (both) tip(a.start, tStart);
+}
+
+function drawMeasure(ctx: CanvasRenderingContext2D, a: MeasureAnnotation, rc: RenderContext) {
+  const sw = a.strokeWidth * rc.unit;
+  const dx = a.end.x - a.start.x;
+  const dy = a.end.y - a.start.y;
+  const L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  const nx = -dy / L;
+  const ny = dx / L;
+  const tick = Math.max(6 * rc.unit, sw * 3);
+  ctx.strokeStyle = a.color;
+  ctx.lineWidth = sw;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(a.start.x, a.start.y);
+  ctx.lineTo(a.end.x, a.end.y);
+  for (const p of [a.start, a.end]) {
+    ctx.moveTo(p.x + nx * tick, p.y + ny * tick);
+    ctx.lineTo(p.x - nx * tick, p.y - ny * tick);
+  }
+  ctx.stroke();
+
+  const label = `${Math.round(measureLength(a, rc.unit))} px`;
+  const fs = 12 * rc.unit;
+  ctx.font = `600 ${fs}px ${FONT_FAMILY}`;
+  const tw = ctx.measureText(label).width;
+  const padX = 6 * rc.unit;
+  const h = fs + 8 * rc.unit;
+  const mx = (a.start.x + a.end.x) / 2;
+  const my = (a.start.y + a.end.y) / 2;
+  applyShadow(ctx, rc, true, 0.6);
+  ctx.fillStyle = a.color;
+  ctx.beginPath();
+  ctx.roundRect(mx - tw / 2 - padX, my - h / 2, tw + padX * 2, h, h / 2);
+  ctx.fill();
+  applyShadow(ctx, rc, false);
+  ctx.fillStyle = contrastColor(a.color);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, mx, my + 0.5 * rc.unit);
+}
+
+function drawMagnify(ctx: CanvasRenderingContext2D, a: MagnifyAnnotation, rc: RenderContext) {
+  const r = normalizeRect(a);
+  if (r.w < 1 || r.h < 1) return;
+  const zoom = Math.max(1, a.zoom);
+  const sw = a.strokeWidth * rc.unit;
+  const circle = a.shape === 'circle';
+  const side = Math.min(r.w, r.h);
+  const lens = circle ? { x: r.x + (r.w - side) / 2, y: r.y + (r.h - side) / 2, w: side, h: side } : r;
+  const lcx = lens.x + lens.w / 2;
+  const lcy = lens.y + lens.h / 2;
+  const srcW = lens.w / zoom;
+  const srcH = lens.h / zoom;
+  const radius = circle ? side / 2 : Math.min(12 * rc.unit, lens.w / 2, lens.h / 2);
+  const shapePath = (x: number, y: number, w: number, h: number, rr: number) => {
+    ctx.beginPath();
+    if (circle) ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    else ctx.roundRect(x, y, w, h, rr);
+  };
+
+  // Source outline and connector.
+  ctx.strokeStyle = a.color;
+  ctx.lineWidth = Math.max(1, sw * 0.6);
+  applyShadow(ctx, rc, a.shadow, 0.6);
+  shapePath(a.sx - srcW / 2, a.sy - srcH / 2, srcW, srcH, radius / zoom);
+  ctx.stroke();
+  const dx = lcx - a.sx;
+  const dy = lcy - a.sy;
+  const d = Math.hypot(dx, dy);
+  const srcR = magnifySourceRadius({ w: lens.w, h: lens.h, zoom });
+  const lensR = Math.min(lens.w, lens.h) / 2;
+  if (d > srcR + lensR + 2) {
+    const ux = dx / d;
+    const uy = dy / d;
+    ctx.beginPath();
+    ctx.moveTo(a.sx + ux * srcR, a.sy + uy * srcR);
+    ctx.lineTo(lcx - ux * lensR, lcy - uy * lensR);
+    ctx.stroke();
+  }
+
+  // Lens.
+  applyShadow(ctx, rc, a.shadow);
+  ctx.fillStyle = '#ffffff';
+  shapePath(lens.x, lens.y, lens.w, lens.h, radius);
+  ctx.fill();
+  applyShadow(ctx, rc, false);
+  const src = rc.source?.();
+  if (src) {
+    ctx.save();
+    shapePath(lens.x, lens.y, lens.w, lens.h, radius);
+    ctx.clip();
+    ctx.imageSmoothingEnabled = zoom < 3;
+    ctx.drawImage(src, a.sx - srcW / 2, a.sy - srcH / 2, srcW, srcH, lens.x, lens.y, lens.w, lens.h);
+    ctx.restore();
+  }
+  ctx.strokeStyle = a.color;
+  ctx.lineWidth = sw;
+  shapePath(lens.x, lens.y, lens.w, lens.h, radius);
+  ctx.stroke();
+}
+
 function drawArrow(ctx: CanvasRenderingContext2D, a: ArrowAnnotation, rc: RenderContext) {
+  const control = a.heads !== 'none' ? arrowControl(a) : null;
+  if (control) {
+    drawCurvedArrow(ctx, a, rc, control);
+    return;
+  }
   const sw = a.strokeWidth * rc.unit;
   const dx = a.end.x - a.start.x;
   const dy = a.end.y - a.start.y;
@@ -447,12 +604,24 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, a: Annotation, rc:
     case 'step':
       drawStep(ctx, a, rc);
       break;
+    case 'measure':
+      drawMeasure(ctx, a, rc);
+      break;
+    case 'magnify':
+      drawMagnify(ctx, a, rc);
+      break;
   }
   ctx.restore();
 }
 
 export function drawAnnotations(ctx: CanvasRenderingContext2D, doc: EditorDoc, pxScale: number) {
-  const rc: RenderContext = { unit: doc.unit, pxScale, steps: stepNumbers(doc.annotations) };
+  let layer: CanvasImageSource | null | undefined;
+  const rc: RenderContext = {
+    unit: doc.unit,
+    pxScale,
+    steps: stepNumbers(doc.annotations),
+    source: () => (layer === undefined ? (layer = getImageLayer(doc)) : layer),
+  };
   drawSpotlights(ctx, doc, rc);
   for (const a of doc.annotations) drawAnnotation(ctx, a, rc);
 }

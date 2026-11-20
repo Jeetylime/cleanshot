@@ -26,10 +26,10 @@ import {
   rotateImage,
   type ImageEntry,
 } from '../engine/images';
-import { getBounds, moveAnnotation, resizeAnnotation, transformAnnotation } from '../engine/annotations';
+import { getBounds, magnifyFromDrag, moveAnnotation, resizeAnnotation, transformAnnotation } from '../engine/annotations';
 import { DEFAULT_BACKGROUND } from '../engine/backgrounds';
 import { clampExportSize, downloadBlob, exportDocument, exportFileName, outputSize, writeImageToClipboard } from '../engine/export';
-import { clearPrivacyCaches } from '../engine/privacy';
+import { clearPrivacyCaches, getImageLayer } from '../engine/privacy';
 import { createSampleScreenshot } from '../engine/sample';
 import { clamp, defaultScreenshotName, intersectRects, rectsIntersect, uid } from '../lib/utils';
 import { readPngDpi } from '../lib/png';
@@ -376,6 +376,8 @@ export function insertAnnotationAtCenter(): boolean {
   const a = createAnnotation(s.tool, { x: cx - w / 2, y: cy - h / 2 }, s.styles, doc.unit, doc.annotations);
   let placed: Annotation = a;
   if (a.type === 'arrow') placed = { ...a, start: { x: cx - w / 2, y: cy + h / 2 }, end: { x: cx + w / 2, y: cy - h / 2 } };
+  else if (a.type === 'measure') placed = { ...a, start: { x: cx - w / 2, y: cy }, end: { x: cx + w / 2, y: cy } };
+  else if (a.type === 'magnify') placed = magnifyFromDrag({ ...a, x: cx - h / 4, y: cy - h / 4, w: h / 2, h: h / 2 }, doc.width, doc.height);
   else if (a.type === 'step') placed = { ...a, x: cx, y: cy };
   else if ('w' in a && 'h' in a) placed = { ...a, w, h } as Annotation;
   addAnnotation(placed);
@@ -395,7 +397,7 @@ export function resizeSelectionBy(dx: number, dy: number) {
       ...doc,
       annotations: doc.annotations.map((a) => {
         if (!set.has(a.id)) return a;
-        if (a.type === 'arrow') return resizeAnnotation(a, 'end', { x: a.end.x + dx, y: a.end.y + dy }, { keepAspect: false, fromCenter: false }, unit);
+        if (a.type === 'arrow' || a.type === 'measure') return resizeAnnotation(a, 'end', { x: a.end.x + dx, y: a.end.y + dy }, { keepAspect: false, fromCenter: false }, unit);
         if (a.type === 'step') return { ...a, size: clamp(a.size + (dx || dy) / 2, 8, 200) };
         const b = getBounds(a, unit);
         if (b.w + dx < 4 || b.h + dy < 4) return a;
@@ -461,6 +463,8 @@ export type StylePatch = Partial<{
   size: number;
   intensity: number;
   mode: 'stroke' | 'box' | 'spotlight';
+  zoom: number;
+  shape: 'circle' | 'rounded';
 }>;
 
 function patchStyles(styles: ToolStyles, group: StyleGroup, patch: StylePatch): ToolStyles {
@@ -864,3 +868,119 @@ export function openOverlay(overlay: 'export' | 'shortcuts' | null) {
 }
 
 export { cancelGesture, beginGesture, endGesture, updateLive };
+
+// ---------------------------------------------------------------------------
+// Eyedropper
+
+type EyeDropperCtor = new () => { open(): Promise<{ sRGBHex: string }> };
+
+/** Pick an annotation color from the screen (EyeDropper API) or, elsewhere, from the image. */
+export function startEyedropper() {
+  const ED = (window as unknown as { EyeDropper?: EyeDropperCtor }).EyeDropper;
+  if (ED) {
+    new ED()
+      .open()
+      .then((r) => applyStyle({ color: toHex(r.sRGBHex) }))
+      .catch(() => {
+        /* cancelled */
+      });
+    return;
+  }
+  if (!store.get().doc) return;
+  store.set({ picking: 'color' });
+  showToast('Click the image to pick a color. Esc cancels.', 'info');
+}
+
+export function cancelEyedropper() {
+  if (store.get().picking) store.set({ picking: null });
+}
+
+/** Sample the (privacy-safe) image at an image-space point. */
+export function finishEyedropper(p: { x: number; y: number }) {
+  const doc = store.get().doc;
+  store.set({ picking: null });
+  if (!doc) return;
+  if (p.x < 0 || p.y < 0 || p.x >= doc.width || p.y >= doc.height) {
+    showToast('Pick a color inside the image.', 'info');
+    return;
+  }
+  const layer = getImageLayer(doc);
+  if (!layer) return;
+  const c = document.createElement('canvas');
+  c.width = c.height = 1;
+  const ctx = c.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(layer, Math.floor(p.x), Math.floor(p.y), 1, 1, 0, 0, 1, 1);
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+  applyStyle({ color: '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('') });
+}
+
+function toHex(c: string): string {
+  if (c.startsWith('#')) return c.toLowerCase();
+  const m = c.match(/\d+/g);
+  return m ? '#' + m.slice(0, 3).map((v) => Number(v).toString(16).padStart(2, '0')).join('') : c;
+}
+
+// ---------------------------------------------------------------------------
+// Style presets (saved per browser)
+
+export interface StylePreset {
+  id: string;
+  name: string;
+  group: StyleGroup;
+  values: StylePatch;
+}
+
+const PRESETS_KEY = 'studiolo:annotation-presets';
+const presetListeners = new Set<() => void>();
+let presetCache: StylePreset[] | null = null;
+
+export function getPresets(): StylePreset[] {
+  if (presetCache) return presetCache;
+  try {
+    const raw = JSON.parse(localStorage.getItem(PRESETS_KEY) || '[]');
+    presetCache = Array.isArray(raw) ? (raw as StylePreset[]) : [];
+  } catch {
+    presetCache = [];
+  }
+  return presetCache;
+}
+
+function setPresets(list: StylePreset[]) {
+  presetCache = list;
+  try {
+    localStorage.setItem(PRESETS_KEY, JSON.stringify(list));
+  } catch {
+    /* storage unavailable: presets last for this visit */
+  }
+  presetListeners.forEach((l) => l());
+}
+
+export function subscribePresets(l: () => void): () => void {
+  presetListeners.add(l);
+  return () => presetListeners.delete(l);
+}
+
+const PRESET_KEYS = ['color', 'strokeWidth', 'heads', 'shadow', 'opacity', 'radius', 'fill', 'fontSize', 'weight', 'style', 'size', 'intensity', 'mode', 'zoom', 'shape'] as const;
+
+/** Save the style shown in the panel (selection or tool defaults) as a named preset. */
+export function savePreset(name: string, group: StyleGroup, values: Record<string, unknown>) {
+  const v: Record<string, unknown> = {};
+  for (const k of PRESET_KEYS) if (values[k] !== undefined) v[k] = values[k];
+  setPresets([...getPresets(), { id: uid('preset'), name: name.trim() || 'Style', group, values: v as StylePatch }]);
+  showToast(`Saved style “${name.trim() || 'Style'}”`);
+}
+
+export function deletePreset(id: string) {
+  setPresets(getPresets().filter((p) => p.id !== id));
+}
+
+export function applyPreset(id: string) {
+  const p = getPresets().find((x) => x.id === id);
+  if (p) applyStyle(p.values);
+}
+
+/** Remove the bend from the selected arrows. */
+export function straightenArrows() {
+  const ids = new Set(store.get().selection);
+  commit((doc) => ({ ...doc, annotations: doc.annotations.map((a) => (ids.has(a.id) && a.type === 'arrow' && a.curve ? { ...a, curve: 0 } : a)) }));
+}

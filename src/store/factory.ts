@@ -13,6 +13,8 @@ export const ANNOTATION_TOOLS = new Set<ToolId>([
   'text',
   'step',
   'highlighter',
+  'magnify',
+  'measure',
   'blur',
   'pixelate',
   'redact',
@@ -96,6 +98,15 @@ export function createAnnotation(
       const s = styles.step;
       const seq = existing.reduce((m, a) => (a.type === 'step' ? Math.max(m, a.seq) : m), 0) + 1;
       return { id, type: 'step', x: p.x, y: p.y, seq, size: s.size, color, shadow: s.shadow, opacity: s.opacity };
+    }
+    case 'magnify': {
+      const s = styles.magnify;
+      // Starts as a zero box at the pointer; the drag picks the area to enlarge (see magnifyFromDrag).
+      return { id, type: 'magnify', x: p.x, y: p.y, w: 0, h: 0, sx: p.x, sy: p.y, zoom: s.zoom, shape: s.shape, color, strokeWidth: s.strokeWidth, shadow: s.shadow, opacity: s.opacity };
+    }
+    case 'measure': {
+      const s = styles.measure;
+      return { id, type: 'measure', start: p, end: p, color, strokeWidth: s.strokeWidth, opacity: s.opacity };
     }
     case 'blur':
     case 'pixelate':

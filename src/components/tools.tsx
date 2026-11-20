@@ -9,6 +9,8 @@ import {
   MoveUpRight,
   Pencil,
   RotateCw,
+  Ruler,
+  ZoomIn,
   Scaling,
   Square,
   Type,
@@ -87,6 +89,8 @@ export const TOOL_GROUPS: ToolGroup[] = [
       { id: 'text', label: 'Text', shortcut: 'T', icon: Type, hint: 'Click to add text' },
       { id: 'step', label: 'Numbered step', shortcut: 'N', icon: StepIcon, hint: 'Click to place numbered markers' },
       { id: 'highlighter', label: 'Highlighter', shortcut: 'H', icon: Highlighter, hint: 'Highlight text or areas' },
+      { id: 'magnify', label: 'Magnifier', shortcut: 'L', icon: ZoomIn, hint: 'Drag over a detail to show it enlarged beside it' },
+      { id: 'measure', label: 'Measure', shortcut: 'U', icon: Ruler, hint: 'Drag to measure a distance. Shift snaps to 45°' },
     ],
   },
   {

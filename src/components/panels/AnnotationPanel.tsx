@@ -1,4 +1,5 @@
-import { ArrowDownToLine, ArrowUpToLine, CopyPlus, Trash2, MoveRight, MoveHorizontal, Minus } from 'lucide-react';
+import { useState, useSyncExternalStore } from 'react';
+import { ArrowDownToLine, ArrowUpToLine, BookmarkPlus, CopyPlus, Trash2, MoveRight, MoveHorizontal, Minus, Pipette, Spline, X } from 'lucide-react';
 import { useEditor, shallowEqual } from '../../store/store';
 import * as actions from '../../store/actions';
 import { styleGroupOf, type StyleGroup } from '../../store/factory';
@@ -47,6 +48,8 @@ function toolGroup(tool: ToolId): StyleGroup | null {
     case 'text':
     case 'step':
     case 'highlighter':
+    case 'magnify':
+    case 'measure':
     case 'blur':
     case 'pixelate':
     case 'redact':
@@ -142,7 +145,12 @@ export function AnnotationPanel() {
       <Section>
         {has('color') && (
           <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted">Color</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted">Color</span>
+              <IconButton label="Pick a color from the image" onClick={actions.startEyedropper} className="!h-[24px] !w-[24px]">
+                <Pipette size={13} />
+              </IconButton>
+            </div>
             <ColorPicker value={String(v.color)} onChange={(color) => actions.applyStyle({ color })} colors={colors} />
           </div>
         )}
@@ -169,6 +177,37 @@ export function AnnotationPanel() {
                 { value: 'end', label: <MoveRight size={15} />, title: 'Arrow' },
                 { value: 'both', label: <MoveHorizontal size={15} />, title: 'Double arrow' },
                 { value: 'none', label: <Minus size={15} />, title: 'Line' },
+              ]}
+            />
+          </div>
+        )}
+
+        {m.types.has('arrow') && m.selectionCount === 1 && v.heads !== 'none' && (
+          <div className="flex items-center gap-2">
+            <span className="min-w-0 flex-1 text-xs text-muted">{Number(v.curve) ? 'Curved' : 'Drag the middle handle to curve it'}</span>
+            {!!Number(v.curve) && (
+              <button type="button" className="h-[24px] shrink-0 text-xs font-medium text-accent hover:underline" onClick={actions.straightenArrows}>
+                <Spline size={12} className="mr-1 inline" />
+                Straighten
+              </button>
+            )}
+          </div>
+        )}
+
+        {has('zoom') && (
+          <Slider label="Zoom" value={Number(v.zoom)} min={1.5} max={6} step={0.5} unit="×" onChange={(zoom) => actions.applyStyle({ zoom: Math.round(zoom * 2) / 2 })} />
+        )}
+
+        {has('shape') && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-muted">Lens</span>
+            <Segmented
+              ariaLabel="Lens shape"
+              value={v.shape as 'circle' | 'rounded'}
+              onChange={(shape) => actions.applyStyle({ shape })}
+              options={[
+                { value: 'circle', label: 'Circle' },
+                { value: 'rounded', label: 'Rounded' },
               ]}
             />
           </div>
@@ -304,7 +343,8 @@ export function AnnotationPanel() {
         {isText && m.selectionCount === 1 && <p className="text-xs text-subtle">Double-click the text to edit it.</p>}
       </Section>
 
-      {m.selectionCount > 0 && <ArrangeSection />}
+      {m.groups.size === 1 && !privacyOnly && <PresetSection group={[...m.groups][0]} values={v} />}
+            {m.selectionCount > 0 && <ArrangeSection />}
     </>
   );
 }
@@ -334,4 +374,62 @@ function ArrangeSection() {
 export function selectionTitle(a: Annotation[]): string {
   if (!a.length) return '';
   return a.length === 1 ? TYPE_LABELS[a[0].type] : `${a.length} objects`;
+}
+
+function PresetSection({ group, values }: { group: StyleGroup; values: Values }) {
+  const all = useSyncExternalStore(actions.subscribePresets, actions.getPresets);
+  const presets = all.filter((p) => p.group === group);
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState('');
+  const save = () => {
+    actions.savePreset(name || `Style ${presets.length + 1}`, group, values);
+    setNaming(false);
+    setName('');
+  };
+  return (
+    <Section title="Saved styles">
+      {presets.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {presets.map((p) => (
+            <span key={p.id} className="flex items-center rounded-full border border-line bg-control text-xs">
+              <button type="button" onClick={() => actions.applyPreset(p.id)} className="flex h-[24px] items-center gap-1.5 rounded-l-full pr-1 pl-2 hover:bg-hover">
+                {p.values.color && <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.values.color, boxShadow: 'inset 0 0 0 1px var(--border-strong)' }} />}
+                {p.name}
+              </button>
+              <button type="button" aria-label={`Delete style ${p.name}`} onClick={() => actions.deletePreset(p.id)} className="flex h-[24px] w-[24px] items-center justify-center rounded-r-full text-muted hover:bg-hover hover:text-fg">
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {naming ? (
+        <form
+          className="flex items-center gap-1.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save();
+          }}
+        >
+          <input
+            autoFocus
+            aria-label="Style name"
+            value={name}
+            maxLength={40}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && setNaming(false)}
+            placeholder="Style name"
+            className="h-[26px] min-w-0 flex-1 rounded-[6px] border border-line bg-control px-2 text-xs text-fg outline-none focus:border-accent"
+          />
+          <button type="submit" className="h-[26px] shrink-0 rounded-[6px] bg-accent-fill px-2.5 text-xs font-medium text-white">
+            Save
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setNaming(true)} className="flex h-[24px] items-center gap-1.5 self-start text-xs font-medium text-accent hover:underline">
+          <BookmarkPlus size={13} /> Save this style
+        </button>
+      )}
+    </Section>
+  );
 }

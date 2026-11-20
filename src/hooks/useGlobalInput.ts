@@ -100,6 +100,10 @@ export function useKeyboardShortcuts() {
       switch (e.key) {
         case 'Escape':
           if (s.gesturing) return; // the canvas cancels the active drag
+          if (s.picking) {
+            actions.cancelEyedropper();
+            return;
+          }
           if (s.crop) actions.cancelCrop();
           else if (s.selection.length) actions.clearSelection();
           else if (s.tool !== 'select') actions.setTool('select');

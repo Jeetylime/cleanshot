@@ -22,6 +22,8 @@ export interface ToolStyles {
   text: { fontSize: number; weight: 400 | 600 | 800; style: TextStyle; shadow: boolean; opacity: number };
   step: { size: number; shadow: boolean; opacity: number };
   highlighter: { color: string; strokeWidth: number; mode: 'stroke' | 'box' | 'spotlight'; opacity: number };
+  magnify: { zoom: number; shape: 'circle' | 'rounded'; strokeWidth: number; shadow: boolean; opacity: number };
+  measure: { strokeWidth: number; opacity: number };
   blur: { intensity: number };
   pixelate: { intensity: number };
   redact: { color: string };
@@ -72,6 +74,8 @@ export interface EditorState {
   recents: SessionSummary[];
   /** True while a pointer gesture is mutating the document. */
   gesturing: boolean;
+  /** Eyedropper armed: the next click on the image samples a color for this style key. */
+  picking: 'color' | null;
 }
 
 export const DEFAULT_STYLES: ToolStyles = {
@@ -83,6 +87,8 @@ export const DEFAULT_STYLES: ToolStyles = {
   text: { fontSize: 24, weight: 600, style: 'outline', shadow: false, opacity: 1 },
   step: { size: 30, shadow: true, opacity: 1 },
   highlighter: { color: '#ffd60a', strokeWidth: 18, mode: 'stroke', opacity: 0.45 },
+  magnify: { zoom: 2, shape: 'circle', strokeWidth: 3, shadow: true, opacity: 1 },
+  measure: { strokeWidth: 2, opacity: 1 },
   blur: { intensity: 50 },
   pixelate: { intensity: 40 },
   redact: { color: '#111114' },
@@ -160,6 +166,7 @@ function initialState(): EditorState {
     busy: null,
     recents: [],
     gesturing: false,
+    picking: null,
   };
 }
 

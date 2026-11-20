@@ -29,6 +29,8 @@ export type AnnotationToolId =
   | 'text'
   | 'step'
   | 'highlighter'
+  | 'magnify'
+  | 'measure'
   | 'blur'
   | 'pixelate'
   | 'redact';
@@ -53,6 +55,40 @@ export interface ArrowAnnotation extends AnnotationBase {
   strokeWidth: number;
   heads: 'end' | 'both' | 'none';
   shadow: boolean;
+  /**
+   * Bend: signed distance (image px) of the curve's midpoint from the straight
+   * line, measured to the left of start→end. 0 or missing = straight.
+   */
+  curve?: number;
+}
+
+/**
+ * Magnifier: a lens (the box) showing an enlarged copy of the image around
+ * the source point, linked to it by a connector.
+ */
+export interface MagnifyAnnotation extends AnnotationBase {
+  type: 'magnify';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Center of the magnified area, in image space. */
+  sx: number;
+  sy: number;
+  zoom: number;
+  shape: 'circle' | 'rounded';
+  color: string;
+  strokeWidth: number;
+  shadow: boolean;
+}
+
+/** Dimension line labelled with its length in logical pixels. */
+export interface MeasureAnnotation extends AnnotationBase {
+  type: 'measure';
+  start: Point;
+  end: Point;
+  color: string;
+  strokeWidth: number;
 }
 
 export interface RectAnnotation extends AnnotationBase {
@@ -156,6 +192,8 @@ export type Annotation =
   | HighlightAnnotation
   | TextAnnotation
   | StepAnnotation
+  | MagnifyAnnotation
+  | MeasureAnnotation
   | PrivacyAnnotation;
 
 export type AnnotationType = Annotation['type'];

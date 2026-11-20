@@ -10,7 +10,9 @@ import {
   getHandles,
   hitTest,
   isDegenerate,
+  magnifyFromDrag,
   moveAnnotation,
+  snapToShapes,
   resizeAnnotation,
   type HandleId,
 } from '../engine/annotations';
@@ -24,6 +26,7 @@ const ACCENT = '#0a84ff';
 const HANDLE_HIT = 9; // screen px
 const HIT_TOL = 6; // screen px
 const DRAG_THRESHOLD = 3; // screen px
+const SNAP_TOL = 14; // screen px, arrow ends to shapes
 
 type Gesture =
   | { kind: 'pan'; pointerId: number; sx: number; sy: number; vx: number; vy: number }
@@ -160,7 +163,7 @@ export class CanvasController {
       ) {
         this.requestRender();
       }
-      if (s.tool !== prev.tool || s.crop !== prev.crop) this.updateCursor();
+      if (s.tool !== prev.tool || s.crop !== prev.crop || s.picking !== prev.picking) this.updateCursor();
       prev = s;
     });
     this.disposers.push(unsub);
@@ -307,6 +310,11 @@ export class CanvasController {
 
     const p = this.toImage(sp);
     const doc = s.doc;
+
+    if (s.picking) {
+      actions.finishEyedropper(p);
+      return;
+    }
 
     if (s.crop) {
       const handle = this.cropHandleAt(s.crop.rect, sp);
@@ -459,7 +467,12 @@ export class CanvasController {
         return;
       }
       case 'resize': {
-        const next = resizeAnnotation(g.original, g.handle, p, { keepAspect: e.shiftKey, fromCenter: e.altKey }, doc.unit);
+        let q = p;
+        // Smart arrows: ends snap to nearby shapes (hold Alt to place freely).
+        if (g.original.type === 'arrow' && (g.handle === 'start' || g.handle === 'end') && !e.shiftKey && !e.altKey) {
+          q = snapToShapes(doc.annotations, p, SNAP_TOL / s.view.zoom, doc.unit, g.id) ?? p;
+        }
+        const next = resizeAnnotation(g.original, g.handle, q, { keepAspect: e.shiftKey, fromCenter: e.altKey }, doc.unit);
         updateLive((d) => ({ ...d, annotations: d.annotations.map((a) => (a.id === g.id ? next : a)) }));
         return;
       }
@@ -497,7 +510,13 @@ export class CanvasController {
       annotations: d.annotations.map((a) => {
         if (a.id !== g.id) return a;
         switch (a.type) {
-          case 'arrow':
+          case 'arrow': {
+            if (e.shiftKey) return { ...a, end: snapAngle(o, p) };
+            const d = store.get().doc;
+            const snapped = !e.altKey && d ? snapToShapes(d.annotations, p, SNAP_TOL / store.get().view.zoom, d.unit, a.id) : null;
+            return { ...a, end: snapped ?? p };
+          }
+          case 'measure':
             return { ...a, end: e.shiftKey ? snapAngle(o, p) : p };
           case 'pen':
           case 'marker': {
@@ -555,6 +574,10 @@ export class CanvasController {
         if (cancelled || !a || !doc || isDegenerate(a, doc.unit)) {
           cancelGesture();
         } else {
+          if (a.type === 'magnify') {
+            const placed = magnifyFromDrag(a, doc.width, doc.height);
+            updateLive((d) => ({ ...d, annotations: d.annotations.map((x) => (x.id === a.id ? placed : x)) }));
+          }
           if (a.type === 'pen' || a.type === 'marker') {
             const pts = simplifyPoints(a.points, 0.6 / s.view.zoom);
             updateLive((d) => ({
@@ -691,6 +714,10 @@ export class CanvasController {
     }
     if (this.spaceDown) {
       c.cursor = 'grab';
+      return;
+    }
+    if (s.picking) {
+      c.cursor = 'crosshair';
       return;
     }
     if (s.crop) {
