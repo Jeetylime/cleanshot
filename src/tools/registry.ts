@@ -1,6 +1,6 @@
 import { lazyTool } from './lazyTool';
 import { type ComponentType, type LazyExoticComponent } from 'react';
-import { AppWindow, ScanText, PenTool, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
+import { AppWindow, Workflow, ScanText, PenTool, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -196,6 +196,16 @@ export const TOOLS: ToolMeta[] = [
     ai: false,
     batch: false,
     ...lazyTool(() => import('./social/SocialSizes')),
+  },
+  {
+    key: 'workflows',
+    name: 'Workflows',
+    description: 'Chain steps (resize, crop, filter, watermark, cut out) and run them on many images or a folder.',
+    group: 'optimization',
+    icon: Workflow,
+    ai: false,
+    batch: true,
+    ...lazyTool(() => import('./workflow/Workflows')),
   },
   {
     key: 'image-to-svg',

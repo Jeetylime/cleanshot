@@ -1,3 +1,6 @@
+import { MonitorUp, Timer, Video } from 'lucide-react';
+import { captureScreen, recordingSupported, screenCaptureSupported } from '../lib/screenCapture';
+import { startRecording } from './RecordingBar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -82,6 +85,18 @@ function markIntroSeen(seen = true) {
 /** Set by the "Command palette tips" command so the next render shows the intro again. */
 let introRequested = false;
 
+async function captureInto(delay: number) {
+  // Loaded on use: the palette itself never imports editor code.
+  const { openImageBlob, showToast } = await import('../store/actions');
+  try {
+    const blob = await captureScreen({ delay });
+    goEditor();
+    await openImageBlob(blob, `Screen capture ${new Date().toLocaleString().replace(/[/:]/g, '-')}.png`);
+  } catch (err) {
+    if ((err as Error)?.name !== 'NotAllowedError') showToast(`Screen capture failed: ${(err as Error)?.message ?? err}`, 'error');
+  }
+}
+
 function globalCommands(): Command[] {
   const a11y = store.get().a11y;
   const hasRecents = store.get().recents.length > 0;
@@ -93,6 +108,20 @@ function globalCommands(): Command[] {
     { id: 'go-tools', label: 'All Image Tools', section: 'Go to', icon: <Wrench size={15} />, run: () => goTools(null) },
     { id: 'go-pdf', label: 'All PDF Tools', section: 'Go to', icon: <FileText size={15} />, run: () => goPdf(null) },
     { id: 'open-image', label: 'Open an image to edit…', section: 'Create', keywords: 'open file upload screenshot photo annotate', icon: <ImagePlus size={15} />, shortcut: shortcutLabel('O'), run: () => (goEditor(), openFilePicker()) },
+    ...(screenCaptureSupported()
+      ? [
+          { id: 'capture', label: 'Capture screen', section: 'Create', keywords: 'screenshot window tab grab', icon: <MonitorUp size={15} />, run: () => void captureInto(0) },
+          { id: 'capture-3', label: 'Capture screen in 3 seconds', section: 'Create', keywords: 'screenshot delay timer countdown', icon: <Timer size={15} />, run: () => void captureInto(3) },
+          { id: 'capture-5', label: 'Capture screen in 5 seconds', section: 'Create', keywords: 'screenshot delay timer countdown', icon: <Timer size={15} />, run: () => void captureInto(5) },
+        ]
+      : []),
+    ...(recordingSupported()
+      ? [
+          { id: 'record', label: 'Record screen', section: 'Create', keywords: 'video screencast recording webm gif', icon: <Video size={15} />, run: () => void startRecording() },
+          { id: 'record-audio', label: 'Record screen with audio', section: 'Create', keywords: 'video screencast recording sound tab audio', icon: <Video size={15} />, run: () => void startRecording(true) },
+        ]
+      : []),
+    { id: 'backup', label: 'Back up settings, brand kit and templates…', section: 'Settings', keywords: 'export backup restore move browser transfer', icon: <HardDrive size={15} />, run: goStorage },
     { id: 'new-design', label: 'New design', section: 'Create', keywords: 'canvas create blank start template poster', icon: <Plus size={15} />, run: goCanvas },
   ];
   for (const t of TOOLS) cmds.push({ id: `tool-${t.key}`, label: t.name, section: 'Image Tools', keywords: t.description, icon: <t.icon size={15} />, run: () => goTools(t.key) });

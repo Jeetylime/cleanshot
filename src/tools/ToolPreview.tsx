@@ -177,6 +177,16 @@ const PREVIEWS: Record<ToolKey, React.ReactNode> = {
       <path d="M8 18V8h10M58 8h10v10M68 42v10H58M18 52H8V42" fill="none" stroke="#0a84ff" strokeWidth="2" />
     </g>
   ),
+  workflows: (
+    <g>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x={6 + i * 24} y="20" width="16" height="20" rx="3" fill={['#0a84ff', '#30d158', '#ff9f0a'][i]} />
+          {i < 2 && <path d={`M${23 + i * 24} 30h6m-2-2 2 2-2 2`} stroke="#8e8e93" strokeWidth="1.5" fill="none" />}
+        </g>
+      ))}
+    </g>
+  ),
   splitter: (
     <g>
       {mountains(8, 14, 60, 32)}

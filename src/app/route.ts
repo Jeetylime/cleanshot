@@ -27,7 +27,8 @@ export type ToolKey =
   | 'photo-filters'
   | 'animation'
   | 'image-to-svg'
-  | 'image-to-text';
+  | 'image-to-text'
+  | 'workflows';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -51,6 +52,7 @@ export const TOOL_KEYS: ToolKey[] = [
   'animation',
   'image-to-svg',
   'image-to-text',
+  'workflows',
 ];
 
 export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form' | 'pdf-protect' | 'pdf-unlock' | 'pdf-redact' | 'pdf-compare' | 'pdf-metadata' | 'pdf-ocr';

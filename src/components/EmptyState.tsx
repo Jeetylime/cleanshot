@@ -1,5 +1,7 @@
 import { Clipboard, ImagePlus, Lock, MonitorUp, Sparkles, X } from 'lucide-react';
-import { captureScreen, screenCaptureSupported } from '../lib/screenCapture';
+import { captureScreen, recordingSupported, screenCaptureSupported } from '../lib/screenCapture';
+import { startRecording } from './RecordingBar';
+import { Timer, Video } from 'lucide-react';
 import { useEditor } from '../store/store';
 import * as actions from '../store/actions';
 import { openFilePicker } from '../lib/filePicker';
@@ -26,9 +28,9 @@ async function pasteFromClipboard() {
   }
 }
 
-async function captureFromScreen() {
+async function captureFromScreen(delay = 0) {
   try {
-    const blob = await captureScreen();
+    const blob = await captureScreen({ delay });
     await actions.openImageBlob(blob, `Screen capture ${new Date().toLocaleString().replace(/[/:]/g, '-')}.png`);
   } catch (err) {
     // Cancelling the browser's picker throws NotAllowedError; that's not worth a toast.
@@ -159,9 +161,21 @@ export function EmptyState() {
               </span>
             </Button>
             {screenCaptureSupported() && (
-              <Button onClick={() => void captureFromScreen()} className="h-8 px-3" disabled={!!busy}>
-                <MonitorUp size={14} />
-                Capture screen
+              <>
+                <Button onClick={() => void captureFromScreen()} className="h-8 px-3" disabled={!!busy}>
+                  <MonitorUp size={14} />
+                  Capture screen
+                </Button>
+                <Button onClick={() => void captureFromScreen(3)} className="h-8 px-3" disabled={!!busy} title="Pick a window, then you have 3 seconds to get it ready">
+                  <Timer size={14} />
+                  In 3 s
+                </Button>
+              </>
+            )}
+            {recordingSupported() && (
+              <Button onClick={() => void startRecording()} className="h-8 px-3" disabled={!!busy}>
+                <Video size={14} />
+                Record
               </Button>
             )}
           </div>

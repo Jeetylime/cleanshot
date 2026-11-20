@@ -67,3 +67,16 @@ describe('image diff', () => {
     expect(r.bounds).toEqual({ x: 2, y: 1, w: 1, h: 1 });
   });
 });
+
+import { cropRect, fitSize } from '../tools/workflow/steps';
+describe('workflow geometry', () => {
+  it('center-crops to a ratio', () => {
+    expect(cropRect(1000, 500, '1:1')).toEqual({ x: 250, y: 0, w: 500, h: 500 });
+    expect(cropRect(1000, 2000, '4:5')).toEqual({ x: 0, y: 375, w: 1000, h: 1250 });
+  });
+  it('fits without enlarging unless asked', () => {
+    expect(fitSize(4000, 3000, 1600, 1600, false)).toEqual({ w: 1600, h: 1200 });
+    expect(fitSize(800, 600, 1600, 1600, false)).toEqual({ w: 800, h: 600 });
+    expect(fitSize(800, 600, 1600, 1600, true)).toEqual({ w: 1600, h: 1200 });
+  });
+});

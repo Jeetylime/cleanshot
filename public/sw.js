@@ -34,8 +34,34 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * Share target (installed app): the OS share sheet POSTs files here. Keep them
+ * in a local inbox cache and open the app, which picks them up (main.tsx).
+ * Nothing is sent anywhere; the request never leaves the device.
+ */
+const INBOX = 'share-target-inbox';
+async function receiveShare(request) {
+  try {
+    const form = await request.formData();
+    const files = form.getAll('files').filter((f) => typeof f !== 'string');
+    const cache = await caches.open(INBOX);
+    await Promise.all(
+      files.map((f, i) =>
+        cache.put(`./share-target/${Date.now()}-${i}`, new Response(f, { headers: { 'content-type': f.type || 'application/octet-stream', 'x-file-name': encodeURIComponent(f.name || `shared-${i}`) } })),
+      ),
+    );
+  } catch {
+    /* fall through: open the app anyway */
+  }
+  return Response.redirect('./#home', 303);
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-target')) {
+    event.respondWith(receiveShare(req));
+    return;
+  }
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;

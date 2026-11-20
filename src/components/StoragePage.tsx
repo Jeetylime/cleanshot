@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronRight, Download, HardDrive, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
+import { ChevronRight, Download, HardDrive, RefreshCw, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { HomeLogo, SettingsMenu } from './TopBar';
 import { Button } from './ui/controls';
 import { formatBytes } from '../lib/utils';
@@ -8,7 +8,7 @@ import { CACHE_NAME } from '../tools/ai/runtime';
 import { clearOfflineCache, takeInventory, type Inventory, type StoreUsage } from '../persistence/inventory';
 import { errorMessage } from '../tools/shared/batch';
 import { createZip } from '../tools/shared/zip';
-import { saveBlob } from '../tools/shared/ui';
+import { pickFiles, saveBlob } from '../tools/shared/ui';
 
 function Row({ label, hint, usage, children }: { label: string; hint: string; usage: StoreUsage | undefined; children?: ReactNode }) {
   return (
@@ -51,6 +51,21 @@ export default function StoragePage() {
       setBusy(null);
       void refresh();
     }
+  };
+
+  const backup = async () => {
+    const { exportSettings } = await import('../persistence/backup');
+    const { blob, summary } = await exportSettings();
+    const { downloadBlob } = await import('../engine/export');
+    await downloadBlob(blob, `studiolo-settings-${new Date().toISOString().slice(0, 10)}.studiolo-settings`);
+    showToast(`Backed up ${summary}`, 'success');
+  };
+
+  const restore = async (file: File) => {
+    const { importSettings } = await import('../persistence/backup');
+    const summary = await importSettings(file);
+    showToast(`Restored ${summary}. Reloading…`, 'success');
+    setTimeout(() => location.reload(), 1200);
   };
 
   const exportProjects = async () => {
@@ -125,6 +140,21 @@ export default function StoragePage() {
               )}
               <Button variant="ghost" className="h-7" onClick={() => void refresh()}>
                 <RefreshCw size={13} /> Refresh
+              </Button>
+            </div>
+          </section>
+
+          <section className="flex flex-col gap-2 rounded-[12px] border border-line bg-panel p-4">
+            <h2 className="text-sm font-semibold text-fg">Back up your settings</h2>
+            <p className="text-xs leading-[18px] text-muted">
+              One file with your preferences, saved styles, brand kit (with logos), saved signatures and Canvas templates, to restore here or in another browser. Designs aren’t included; export them above. Signatures are personal: keep the file private.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button className="h-7" disabled={!!busy} onClick={() => void act('backup', backup, '')}>
+                <Download size={13} /> Download backup
+              </Button>
+              <Button className="h-7" disabled={!!busy} onClick={() => pickFiles(false, (f) => f[0] && void act('restore', () => restore(f[0]), ''), '.studiolo-settings,application/json')}>
+                <Upload size={13} /> Restore from backup…
               </Button>
             </div>
           </section>
