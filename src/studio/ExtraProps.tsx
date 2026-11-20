@@ -2,7 +2,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Section, Segmented, Toggle, ColorPicker, ColorWell, Button } from '../components/ui/controls';
 import * as A from './actions';
 import { CHART_COLORS } from './extraRender';
-import type { ChartElement, ChartKind, QrElement } from './types';
+import type { ChartElement, ChartKind, QrElement, TableElement } from './types';
 
 const PALETTES: { label: string; colors: string[] }[] = [
   { label: 'Bright', colors: CHART_COLORS },
@@ -128,5 +128,112 @@ export function QrProps({ e, palette }: { e: QrElement; palette: { value: string
       />
       <p className="text-2xs leading-[14px] text-subtle">Keep strong contrast so phones can scan it. Test the code before printing.</p>
     </Section>
+  );
+}
+
+const MAX_ROWS = 30;
+const MAX_COLS = 10;
+
+export function TableProps({ e, palette }: { e: TableElement; palette: { value: string; name: string }[] }) {
+  const up = (p: Partial<TableElement>, key?: string) => A.updateElements<TableElement>([e.id], p, key);
+  const cols = Math.max(1, ...e.cells.map((r) => r.length));
+  const setCell = (r: number, c: number, v: string) => up({ cells: e.cells.map((row, i) => (i === r ? Array.from({ length: cols }, (_, k) => (k === c ? v : row[k] ?? '')) : row)) }, `cell-${r}-${c}`);
+  const addRow = () => up({ cells: [...e.cells, Array(cols).fill('')], h: e.h + e.h / e.cells.length });
+  const delRow = (r: number) => e.cells.length > 1 && up({ cells: e.cells.filter((_, i) => i !== r), h: e.h - e.h / e.cells.length });
+  const addCol = () => up({ cells: e.cells.map((row) => [...row, '']) });
+  const delCol = (c: number) => cols > 1 && up({ cells: e.cells.map((row) => row.filter((_, i) => i !== c)) });
+  const pasteCsv = async () => {
+    const text = await navigator.clipboard?.readText?.().catch(() => '');
+    const src = text || prompt('Paste rows from a spreadsheet or CSV:') || '';
+    if (!src.trim()) return;
+    const { parseCsv } = await import('./bulk');
+    const { headers, rows } = parseCsv(src);
+    const cells = [headers, ...rows.map((r) => headers.map((h) => r[h] ?? ''))].slice(0, MAX_ROWS).map((r) => r.slice(0, MAX_COLS));
+    if (cells.length) up({ cells, h: (e.h / e.cells.length) * cells.length });
+  };
+  return (
+    <>
+      <Section title="Table">
+        <div className="scroll-thin -mx-1 overflow-x-auto px-1">
+          <table className="border-separate border-spacing-0.5" aria-label="Table cells">
+            <thead>
+              <tr>
+                {Array.from({ length: cols }, (_, c) => (
+                  <th key={c} className="p-0">
+                    <button type="button" aria-label={`Delete column ${c + 1}`} disabled={cols <= 1} onClick={() => delCol(c)} className="flex h-[24px] w-full items-center justify-center rounded-[5px] text-subtle hover:bg-hover hover:text-fg disabled:opacity-30">
+                      <Trash2 size={11} />
+                    </button>
+                  </th>
+                ))}
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {e.cells.map((row, r) => (
+                <tr key={r}>
+                  {Array.from({ length: cols }, (_, c) => (
+                    <td key={c} className="p-0">
+                      <input
+                        value={row[c] ?? ''}
+                        aria-label={`Row ${r + 1}, column ${c + 1}`}
+                        onChange={(ev) => setCell(r, c, ev.target.value)}
+                        onKeyDown={(ev) => ev.stopPropagation()}
+                        className={`h-7 w-[76px] rounded-[5px] bg-control px-1.5 text-xs text-fg outline-none focus:ring-1 focus:ring-accent ${e.header && r === 0 ? 'font-semibold' : ''}`}
+                      />
+                    </td>
+                  ))}
+                  <td className="p-0">
+                    <button type="button" aria-label={`Delete row ${r + 1}`} disabled={e.cells.length <= 1} onClick={() => delRow(r)} className="flex h-[24px] w-[24px] items-center justify-center rounded-[5px] text-subtle hover:bg-hover hover:text-fg disabled:opacity-30">
+                      <Trash2 size={11} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
+          <Button onClick={addRow} disabled={e.cells.length >= MAX_ROWS}>
+            <Plus size={12} /> Row
+          </Button>
+          <Button onClick={addCol} disabled={cols >= MAX_COLS}>
+            <Plus size={12} /> Column
+          </Button>
+        </div>
+        <Button onClick={() => void pasteCsv()}>Paste from spreadsheet</Button>
+        <label className="flex items-center justify-between text-xs text-muted">
+          Header row <Toggle checked={e.header} onChange={(v) => up({ header: v })} label="Header row" />
+        </label>
+        <Segmented ariaLabel="Text alignment" size="sm" value={e.align} onChange={(align) => up({ align })} options={[{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }]} />
+        <label className="flex flex-col gap-1 text-xs text-muted">
+          Text size
+          <input type="range" min={8} max={72} value={e.fontSize} onChange={(ev) => up({ fontSize: Number(ev.target.value) }, 'table-font')} className="accent-[var(--accent)]" aria-label="Text size" />
+        </label>
+      </Section>
+      <Section title="Colors">
+        <span className="text-xs text-muted">Text</span>
+        <ColorPicker value={e.textColor} onChange={(textColor) => up({ textColor }, 'table-text')} colors={palette} />
+        {e.header && (
+          <>
+            <ColorWell label="Header background" value={e.headerBg} onChange={(headerBg) => up({ headerBg }, 'table-hbg')} />
+            <ColorWell label="Header text" value={e.headerColor} onChange={(headerColor) => up({ headerColor }, 'table-hc')} />
+          </>
+        )}
+        <ColorWell label="Cell background" value={e.cellBg ?? '#ffffff'} onChange={(cellBg) => up({ cellBg }, 'table-cbg')} />
+        <label className="flex items-center justify-between text-xs text-muted">
+          Striped rows <Toggle checked={!!e.stripe} onChange={(v) => up({ stripe: v ? '#f2f2f5' : null })} label="Striped rows" />
+        </label>
+        {e.stripe && <ColorWell label="Stripe" value={e.stripe} onChange={(stripe) => up({ stripe }, 'table-stripe')} />}
+        <ColorWell label="Borders" value={e.borderColor} onChange={(borderColor) => up({ borderColor }, 'table-border')} />
+        <label className="flex flex-col gap-1 text-xs text-muted">
+          Border width
+          <input type="range" min={0} max={6} step={0.5} value={e.borderWidth} onChange={(ev) => up({ borderWidth: Number(ev.target.value) }, 'table-bw')} className="accent-[var(--accent)]" aria-label="Border width" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted">
+          Corner radius
+          <input type="range" min={0} max={40} value={e.radius} onChange={(ev) => up({ radius: Number(ev.target.value) }, 'table-r')} className="accent-[var(--accent)]" aria-label="Corner radius" />
+        </label>
+      </Section>
+    </>
   );
 }

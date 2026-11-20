@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Search, Trash2, X } from 'lucide-react';
 import * as db from './persistence';
+import { fieldsIn, parseCsv } from './bulk';
+import { pickFiles } from '../tools/shared/ui';
 import { Button, Toggle } from '../components/ui/controls';
 import { showToast } from '../store/actions';
 import { studio, useStudio } from './store';
@@ -42,6 +44,7 @@ export function StudioDialogs() {
   if (dialog === 'resize') return <ResizeDialog onClose={close} />;
   if (dialog === 'find') return <FindDialog onClose={close} />;
   if (dialog === 'history') return <HistoryDialog onClose={close} />;
+  if (dialog === 'bulk') return <BulkDialog onClose={close} />;
   return null;
 }
 
@@ -248,6 +251,68 @@ function HistoryDialog({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         ))}
+      </div>
+    </Modal>
+  );
+}
+
+function BulkDialog({ onClose }: { onClose: () => void }) {
+  const doc = useStudio((s) => s.doc);
+  const [csv, setCsv] = useState('');
+  const [busy, setBusy] = useState(false);
+  const fields = useMemo(() => (doc ? fieldsIn(doc.elements) : []), [doc]);
+  const data = useMemo(() => (csv.trim() ? parseCsv(csv) : null), [csv]);
+  if (!doc) return null;
+  const missing = data ? fields.filter((f) => !data.headers.includes(f)) : [];
+  const run = async (out: 'pages' | 'png' | 'pdf') => {
+    if (!data) return;
+    setBusy(true);
+    try {
+      await A.bulkCreate(data.rows.slice(0, 500), out);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      showToast('Bulk create failed.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal title="Bulk create from CSV" onClose={onClose} width={520}>
+      <p className="text-xs leading-[17px] text-muted">
+        Put fields in this page’s text or QR codes, like <code className="rounded bg-control px-1">{'{{name}}'}</code>. Each row of your spreadsheet makes one filled-in copy, with the column of the same name.
+      </p>
+      <div className="rounded-[9px] bg-control px-3 py-2 text-xs">
+        <span className="text-muted">Fields on this page: </span>
+        {fields.length ? fields.map((f) => <code key={f} className="mr-1.5 text-fg">{`{{${f}}}`}</code>) : <span className="text-subtle">none yet. Type {'{{name}}'} into a text box.</span>}
+      </div>
+      <textarea
+        value={csv}
+        onChange={(e) => setCsv(e.target.value)}
+        onKeyDown={(e) => e.stopPropagation()}
+        aria-label="CSV data"
+        placeholder={'name,title\nAda Lovelace,Mathematician\nAlan Turing,Computer scientist'}
+        spellCheck={false}
+        className="h-[140px] resize-y rounded-[9px] bg-control p-2.5 font-mono text-xs text-fg outline-none ring-accent focus:ring-1"
+      />
+      <Button onClick={() => pickFiles(false, async (f) => f[0] && setCsv(await f[0].text()), '.csv,.tsv,.txt,text/csv,text/plain')}>Choose a CSV file…</Button>
+      {data && (
+        <p className="text-xs text-muted">
+          {data.rows.length} row{data.rows.length === 1 ? '' : 's'} with columns: {data.headers.join(', ') || 'none'}.
+          {missing.length > 0 && <span className="text-danger"> No column for: {missing.join(', ')} (left blank).</span>}
+          {data.rows.length > 500 && <span> Only the first 500 rows are used.</span>}
+        </p>
+      )}
+      <div className="grid grid-cols-3 gap-1.5 pt-1">
+        <Button variant="primary" className="h-8" disabled={!data?.rows.length || busy} onClick={() => void run('pdf')}>
+          One PDF
+        </Button>
+        <Button className="h-8" disabled={!data?.rows.length || busy} onClick={() => void run('png')}>
+          PNGs (ZIP)
+        </Button>
+        <Button className="h-8" disabled={!data?.rows.length || busy || data.rows.length > 100} onClick={() => void run('pages')} title="Up to 100 rows">
+          Add as pages
+        </Button>
       </div>
     </Modal>
   );

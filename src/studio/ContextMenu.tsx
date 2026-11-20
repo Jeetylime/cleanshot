@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowUpToLine, ClipboardPaste, Copy, CopyPlus, Group, Lock, Trash2, Ungroup, Unlock, BoxSelect } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpToLine, ClipboardPaste, Copy, CopyPlus, Group, Lock, Trash2, Ungroup, Unlock, BoxSelect, Link2 } from 'lucide-react';
 import { MenuItem, MenuSeparator } from '../components/ui/Popover';
 import { modKey } from '../lib/utils';
 import { selectedElements, studio, useStudio } from './store';
@@ -60,6 +60,9 @@ export function ContextMenu({ state, onClose }: { state: ContextMenuState; onClo
           </MenuItem>
           <MenuItem icon={<CopyPlus size={14} />} onClick={run(A.duplicateSelection)} shortcut={`${modKey}D`}>
             Duplicate
+          </MenuItem>
+          <MenuItem icon={<Link2 size={14} />} onClick={run(A.duplicateLinked)}>
+            Duplicate as linked copy
           </MenuItem>
           <MenuItem icon={<ClipboardPaste size={14} />} onClick={run(() => A.pasteClipboard())} disabled={!A.hasClipboard()} shortcut={`${modKey}V`}>
             Paste

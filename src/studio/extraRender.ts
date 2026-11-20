@@ -1,6 +1,6 @@
 import qrcode from 'qrcode-generator';
 import { fontCss } from './fonts';
-import type { ChartElement, QrElement } from './types';
+import type { ChartElement, QrElement, TableElement } from './types';
 
 // ---------------------------------------------------------------------------
 // QR codes
@@ -241,5 +241,93 @@ export function drawChart(ctx: CanvasRenderingContext2D, e: ChartElement) {
     const onSlice = (e.chart === 'pie' || e.chart === 'donut') && t.bold;
     ctx.fillStyle = onSlice ? '#ffffff' : e.textColor;
     ctx.fillText(t.text, t.x, t.y);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tables
+
+export interface TableGeometry {
+  /** Cell rectangles with their fill (null = none) and text. */
+  cells: { x: number; y: number; w: number; h: number; fill: string | null; text: string; color: string; bold: boolean; tx: number; ty: number; maxW: number; anchor: 'left' | 'center' | 'right' }[];
+  /** Grid lines [x1, y1, x2, y2]. */
+  lines: [number, number, number, number][];
+}
+
+/** Equal columns and rows across the element box. Shared by canvas, SVG and hit testing. */
+export function tableGeometry(e: TableElement): TableGeometry {
+  const rows = Math.max(1, e.cells.length);
+  const cols = Math.max(1, ...e.cells.map((r) => r.length));
+  const cw = e.w / cols;
+  const rh = e.h / rows;
+  const pad = Math.min(e.fontSize * 0.6, cw * 0.2);
+  const cells: TableGeometry['cells'] = [];
+  for (let r = 0; r < rows; r++) {
+    const head = e.header && r === 0;
+    const fill = head ? e.headerBg : e.stripe && r % 2 === (e.header ? 0 : 1) ? e.stripe : e.cellBg;
+    for (let c = 0; c < cols; c++) {
+      const x = c * cw;
+      const y = r * rh;
+      const tx = e.align === 'center' ? x + cw / 2 : e.align === 'right' ? x + cw - pad : x + pad;
+      cells.push({ x, y, w: cw, h: rh, fill, text: e.cells[r]?.[c] ?? '', color: head ? e.headerColor : e.textColor, bold: head, tx, ty: y + rh / 2, maxW: cw - pad * 2, anchor: e.align });
+    }
+  }
+  const lines: TableGeometry['lines'] = [];
+  if (e.borderWidth > 0) {
+    for (let c = 1; c < cols; c++) lines.push([c * cw, 0, c * cw, e.h]);
+    for (let r = 1; r < rows; r++) lines.push([0, r * rh, e.w, r * rh]);
+  }
+  return { cells, lines };
+}
+
+/** Shorten text with an ellipsis to fit `max` px. */
+export function fitCellText(ctx: CanvasRenderingContext2D, text: string, max: number): string {
+  if (ctx.measureText(text).width <= max) return text;
+  let lo = 0;
+  let hi = text.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (ctx.measureText(text.slice(0, mid) + '…').width <= max) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo ? text.slice(0, lo) + '…' : '';
+}
+
+export function drawTable(ctx: CanvasRenderingContext2D, e: TableElement) {
+  const g = tableGeometry(e);
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(0, 0, e.w, e.h, Math.min(e.radius, e.w / 2, e.h / 2));
+  ctx.clip();
+  for (const c of g.cells) {
+    if (!c.fill) continue;
+    ctx.fillStyle = c.fill;
+    ctx.fillRect(c.x, c.y, c.w + 0.5, c.h + 0.5);
+  }
+  if (g.lines.length) {
+    ctx.strokeStyle = e.borderColor;
+    ctx.lineWidth = e.borderWidth;
+    ctx.beginPath();
+    for (const [x1, y1, x2, y2] of g.lines) {
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.stroke();
+  }
+  ctx.textBaseline = 'middle';
+  for (const c of g.cells) {
+    if (!c.text) continue;
+    ctx.font = fontCss(e.fontFamily, e.fontSize, c.bold, false);
+    ctx.fillStyle = c.color;
+    ctx.textAlign = c.anchor;
+    ctx.fillText(fitCellText(ctx, c.text, c.maxW), c.tx, c.ty);
+  }
+  ctx.restore();
+  if (e.borderWidth > 0) {
+    ctx.strokeStyle = e.borderColor;
+    ctx.lineWidth = e.borderWidth;
+    ctx.beginPath();
+    ctx.roundRect(e.borderWidth / 2, e.borderWidth / 2, e.w - e.borderWidth, e.h - e.borderWidth, Math.max(0, Math.min(e.radius, e.w / 2, e.h / 2) - e.borderWidth / 2));
+    ctx.stroke();
   }
 }

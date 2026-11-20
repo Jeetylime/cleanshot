@@ -3,7 +3,7 @@ import { getImage, createCanvas, ctx2d } from '../engine/images';
 import { ICONS } from './iconData';
 import { fontCss, fontOf } from './fonts';
 import { adjustedImage, isIdentity } from './imageFx';
-import { chartGeometry, qrModules } from './extraRender';
+import { chartGeometry, fitCellText, qrModules, tableGeometry } from './extraRender';
 import { layoutText, type CharStyle } from './textEngine';
 import { pathFor, paintStudioFill, type PathSink } from './render';
 import type { Gradient, ImageElement, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
@@ -190,6 +190,24 @@ function elementBody(defs: string[], e: StudioElement): string {
       }
       return s;
     }
+    case 'table': {
+      const g = tableGeometry(e);
+      const r = Math.min(e.radius, e.w / 2, e.h / 2);
+      const clip = `tbl-${e.id.replace(/[^a-z0-9_-]/gi, '')}`;
+      let s = `<clipPath id="${clip}"><rect width="${n(e.w)}" height="${n(e.h)}" rx="${n(r)}"/></clipPath><g clip-path="url(#${clip})">`;
+      for (const c of g.cells) if (c.fill) s += `<rect x="${n(c.x)}" y="${n(c.y)}" width="${n(c.w + 0.5)}" height="${n(c.h + 0.5)}" fill="${esc(c.fill)}"/>`;
+      if (g.lines.length) s += `<path d="${g.lines.map(([x1, y1, x2, y2]) => `M${n(x1)} ${n(y1)}L${n(x2)} ${n(y2)}`).join('')}" stroke="${esc(e.borderColor)}" stroke-width="${n(e.borderWidth)}"/>`;
+      const mctx = measureCtx();
+      for (const c of g.cells) {
+        if (!c.text) continue;
+        mctx.font = fontCss(e.fontFamily, e.fontSize, c.bold, false);
+        const anchor = c.anchor === 'center' ? 'middle' : c.anchor === 'right' ? 'end' : 'start';
+        s += `<text x="${n(c.tx)}" y="${n(c.ty)}" text-anchor="${anchor}" dominant-baseline="central" font-family="${esc(fontOf(e.fontFamily).css)}" font-size="${n(e.fontSize)}" font-weight="${c.bold ? 700 : 400}" fill="${esc(c.color)}">${esc(fitCellText(mctx, c.text, c.maxW))}</text>`;
+      }
+      s += '</g>';
+      if (e.borderWidth > 0) s += `<rect x="${n(e.borderWidth / 2)}" y="${n(e.borderWidth / 2)}" width="${n(e.w - e.borderWidth)}" height="${n(e.h - e.borderWidth)}" rx="${n(Math.max(0, r - e.borderWidth / 2))}" fill="none" stroke="${esc(e.borderColor)}" stroke-width="${n(e.borderWidth)}"/>`;
+      return s;
+    }
     case 'chart': {
       const g = chartGeometry(e);
       let s = g.axis ? `<path d="M${n(g.axis[0])} ${n(g.axis[1])}L${n(g.axis[2])} ${n(g.axis[3])}" stroke="${esc(e.textColor)}" stroke-opacity="0.35"/>` : '';
@@ -297,7 +315,7 @@ export async function buildSvg(doc: StudioDoc, opts: { width: number; height: nu
     const t = `translate(${n(e.x + e.w / 2)} ${n(e.y + e.h / 2)})${e.rotation ? ` rotate(${n(e.rotation)})` : ''} translate(${n(-e.w / 2)} ${n(-e.h / 2)})`;
     body.push(`<g transform="${t}"${e.opacity < 1 ? ` opacity="${n(e.opacity)}"` : ''}${shadowDef(defs, e)}>${inner}</g>`);
   }
-  const families = new Set(els.flatMap((e) => (e.type === 'text' || e.type === 'chart' ? [e.fontFamily] : [])));
+  const families = new Set(els.flatMap((e) => (e.type === 'text' || e.type === 'chart' || e.type === 'table' ? [e.fontFamily] : [])));
   const css = families.size ? await fontFaceCss(families) : '';
   const clip = opts.bounds ? '' : `<clipPath id="page"><rect width="${n(doc.width)}" height="${n(doc.height)}"/></clipPath>`;
   return [
@@ -310,3 +328,10 @@ export async function buildSvg(doc: StudioDoc, opts: { width: number; height: nu
 
 // fontCss is re-exported for callers that need matching font strings.
 export { fontCss };
+
+let mc: CanvasRenderingContext2D | null = null;
+/** A small canvas context for measuring text (table cells are ellipsized like on screen). */
+function measureCtx(): CanvasRenderingContext2D {
+  mc ??= ctx2d(createCanvas(1, 1));
+  return mc;
+}

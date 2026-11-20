@@ -58,7 +58,8 @@ import { FONTS, fontOf } from './fonts';
 import { SOLIDS } from './LeftPanel';
 import { ImageExtras } from './ImageExtras';
 import { getBrand, useBrand } from './brand';
-import { ChartProps, QrProps } from './ExtraProps';
+import { ChartProps, QrProps, TableProps } from './ExtraProps';
+import { linkCount } from './links';
 import { studioFillCss } from './render';
 
 const BG_LABEL = { transparent: 'Transparent', solid: 'Solid color', gradient: 'Gradient', pattern: 'Pattern' } as const;
@@ -73,7 +74,7 @@ export function palette() {
   return [...brand, ...SOLIDS.filter((c) => !getBrand().colors.includes(c)).map((c) => ({ value: c, name: c }))].slice(0, 22);
 }
 
-const TYPE_LABEL: Record<StudioElement['type'], string> = { text: 'Text', shape: 'Shape', line: 'Line', image: 'Image', icon: 'Icon', chart: 'Chart', qr: 'QR code', draw: 'Drawing' };
+const TYPE_LABEL: Record<StudioElement['type'], string> = { text: 'Text', shape: 'Shape', line: 'Line', image: 'Image', icon: 'Icon', chart: 'Chart', qr: 'QR code', draw: 'Drawing', table: 'Table' };
 
 export function Properties() {
   useBrand(); // re-render pickers when brand colors change
@@ -252,6 +253,8 @@ function ElementProps({ sel, editing }: { sel: StudioElement[]; editing: boolean
               {single?.type === 'image' && <ImageProps e={single} />}
               {single?.type === 'chart' && <ChartProps e={single} palette={palette()} />}
               {single?.type === 'qr' && <QrProps e={single} palette={palette()} />}
+              {single?.type === 'table' && <TableProps e={single} palette={palette()} />}
+              {single?.linkId && <LinkedNote e={single} />}
               {single?.type === 'draw' && <DrawProps e={single} />}
               {!single && sel.every((e) => e.type === sel[0].type && ['text', 'shape', 'line', 'icon', 'draw'].includes(e.type)) && <ColorForMany sel={sel} />}
               <Effects sel={sel} ids={ids} />
@@ -818,3 +821,16 @@ export function useSelectionBox() {
 }
 
 export { aabb, studio };
+
+/** Shown on linked copies: how many there are, and a way out. */
+function LinkedNote({ e }: { e: StudioElement }) {
+  const n = useStudio((s) => (s.doc ? linkCount(s.doc, e.linkId) : 0));
+  return (
+    <Section title="Linked copy">
+      <p className="text-xs leading-[16px] text-muted">
+        Edits to content and style apply to all {n} linked copies, on every page. Position and size stay separate.
+      </p>
+      <Button onClick={() => A.unlinkSelection()}>Unlink this copy</Button>
+    </Section>
+  );
+}

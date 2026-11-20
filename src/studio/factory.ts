@@ -3,7 +3,7 @@ import { layoutText, naturalTextWidth } from './render';
 import { syncPages } from './pages';
 import { NO_ADJUST } from './imageFx';
 import { CHART_COLORS } from './extraRender';
-import type { ChartElement, ChartKind, QrElement, IconElement, ImageElement, LineElement, Shadow, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
+import type { ChartElement, ChartKind, QrElement, TableElement, IconElement, ImageElement, LineElement, Shadow, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
 
 export const DEFAULT_SHADOW: Shadow = { enabled: false, color: '#000000', blur: 24, x: 0, y: 10, opacity: 0.3 };
 
@@ -184,6 +184,30 @@ export function makeChart(doc: Pick<StudioDoc, 'width' | 'height'>, chart: Chart
     fontFamily: 'inter',
     showLabels: true,
     showValues: true,
+  };
+}
+
+export function makeTable(doc: Pick<StudioDoc, 'width' | 'height'>, rows = 4, cols = 3): TableElement {
+  const w = Math.round(Math.min(doc.width * 0.7, doc.height * 1.1));
+  const fontSize = Math.max(12, Math.round(w / 26));
+  const h = Math.round(rows * fontSize * 2.4);
+  const cells = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => (r === 0 ? ['Plan', 'Price', 'Users'][c] ?? `Column ${c + 1}` : ([['Starter', '$9', '1'], ['Team', '$29', '10'], ['Business', '$79', 'Unlimited']][r - 1]?.[c] ?? ''))));
+  return {
+    ...base('Table', (doc.width - w) / 2, (doc.height - h) / 2, w, h),
+    type: 'table',
+    cells,
+    header: true,
+    fontFamily: 'inter',
+    fontSize,
+    textColor: '#1d1d1f',
+    headerBg: '#1d1d1f',
+    headerColor: '#ffffff',
+    stripe: '#f2f2f5',
+    cellBg: '#ffffff',
+    borderColor: '#d2d2d7',
+    borderWidth: 1,
+    align: 'left',
+    radius: 8,
   };
 }
 

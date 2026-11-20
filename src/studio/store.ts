@@ -44,7 +44,7 @@ export interface StudioState {
   paintTick: number;
   /** Selected character range in the text being edited. */
   textSel: { start: number; end: number } | null;
-  dialog: 'resize' | 'find' | 'history' | null;
+  dialog: 'resize' | 'find' | 'history' | 'bulk' | null;
   draw: DrawSettings;
 }
 
@@ -122,10 +122,18 @@ function prune(doc: StudioDoc | null, sel: string[]) {
 }
 
 /** Apply an undoable change. Changes with the same `key` within a short time merge. */
+type CommitHook = (prev: StudioDoc, next: StudioDoc) => StudioDoc;
+let commitHook: CommitHook | null = null;
+/** Post-process every committed document (linked copies register here; see links.ts). */
+export function setCommitHook(hook: CommitHook | null) {
+  commitHook = hook;
+}
+
 export function commit(mutate: (doc: StudioDoc) => StudioDoc, key?: string) {
   const s = studio.get();
   if (!s.doc) return;
-  const next = mutate(s.doc);
+  const mutated = mutate(s.doc);
+  const next = commitHook && mutated !== s.doc ? commitHook(s.doc, mutated) : mutated;
   if (next === s.doc) return;
   const stamped = { ...next, updatedAt: Date.now() };
   if (gestureBase) {

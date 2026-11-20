@@ -3,7 +3,7 @@ import { createCanvas, ctx2d, getImage, getMipLevel } from '../engine/images';
 import { paintFill } from '../engine/backgrounds';
 import { ICONS } from './iconData';
 import { adjustedImage, isIdentity } from './imageFx';
-import { drawChart, drawQr } from './extraRender';
+import { drawChart, drawTable, drawQr } from './extraRender';
 import { layoutText, linearGradientFor, type CharStyle } from './textEngine';
 import { fontCss } from './fonts';
 import type { DrawElement, IconElement, ImageElement, LineElement, ShapeElement, ShapeKind, StudioDoc, StudioElement, StudioFill, TextElement } from './types';
@@ -552,6 +552,18 @@ export function drawElement(ctx: CanvasRenderingContext2D, e: StudioElement, sca
       break;
     case 'qr':
       drawQr(ctx, e);
+      break;
+    case 'table':
+      // One shadow for the whole table, cast by a backing shape.
+      if (e.shadow.enabled) {
+        applyShadow(ctx, e, scale);
+        ctx.fillStyle = e.cellBg ?? e.headerBg;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, e.w, e.h, Math.min(e.radius, e.w / 2, e.h / 2));
+        ctx.fill();
+        clearShadow(ctx);
+      }
+      drawTable(ctx, e);
       break;
     case 'draw':
       drawStroke(ctx, e, scale);

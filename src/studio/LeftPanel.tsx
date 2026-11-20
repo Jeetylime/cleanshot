@@ -1,6 +1,7 @@
 import { shortcutLabel } from '../lib/utils';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
+  Table2,
   Eye,
   EyeOff,
   GripVertical,
@@ -373,6 +374,7 @@ function ElementsPanel() {
   const stickers = STICKERS.filter((st) => m(st.label, st.category, 'sticker'));
   const charts = CHARTS.filter((c) => m(c.label, 'chart graph data'));
   const showQr = m('qr code link url barcode scan');
+  const showTable = m('table grid rows columns pricing comparison spreadsheet');
   const frames = FRAME_SHAPES.filter((f) => m(SHAPE_LABELS[f], SHAPE_WORDS[f], 'frame photo mask placeholder'));
   const showImages = m('image photo picture upload');
   const showDraw = !!q.trim() && m('draw drawing pen marker highlighter brush sketch freehand doodle');
@@ -486,6 +488,13 @@ function ElementsPanel() {
               </Tooltip>
             ))}
           </div>
+        </Group_>
+      )}
+      {showTable && (
+        <Group_ title="Table">
+          <button type="button" onClick={() => A.addTable()} className={`${tile} h-11 gap-2 text-xs`}>
+            <Table2 size={16} /> Add a table
+          </button>
         </Group_>
       )}
       {showQr && (
@@ -851,6 +860,8 @@ function layerIcon(e: StudioElement) {
       return <ChartColumn size={13} />;
     case 'qr':
       return <QrCode size={13} />;
+    case 'table':
+      return <Table2 size={13} />;
     case 'draw':
       return e.brush === 'highlighter' ? <Highlighter size={13} /> : <PencilLine size={13} />;
     default:

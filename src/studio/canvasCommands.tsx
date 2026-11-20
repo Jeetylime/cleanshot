@@ -1,6 +1,9 @@
 import { saveFileSupported } from '../lib/fileSave';
 import { useEffect } from 'react';
 import {
+  Link2,
+  Unlink,
+  Table2,
   History,
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -100,6 +103,8 @@ function canvasCommands(openShortcuts: () => void): Command[] {
 
   if (sel.length) {
     cmds.push(
+      { id: 'cv-dup-linked', label: 'Duplicate as linked copy', section: SEL, keywords: 'component instance symbol sync link reuse', icon: <Link2 size={15} />, run: A.duplicateLinked },
+      ...(sel.some((e) => e.linkId) ? [{ id: 'cv-unlink', label: 'Unlink copy', section: SEL, keywords: 'detach component instance', icon: <Unlink size={15} />, run: A.unlinkSelection }] : []),
       { id: 'cv-dup', label: 'Duplicate selection', section: SEL, keywords: 'copy clone', icon: <CopyPlus size={15} />, shortcut: shortcutLabel('D'), run: A.duplicateSelection },
       { id: 'cv-del', label: 'Delete selection', section: SEL, keywords: 'remove', icon: <Trash2 size={15} />, shortcut: '⌫', run: A.deleteSelection },
       { id: 'cv-copy', label: 'Copy selection', section: SEL, icon: <Copy size={15} />, shortcut: shortcutLabel('C'), run: () => void A.copySelection() },
@@ -182,6 +187,8 @@ function canvasCommands(openShortcuts: () => void): Command[] {
     ).map(([panel, label, icon]) => ({ id: `cv-panel-${panel}`, label: `Open ${label} panel`, section: 'View', keywords: 'sidebar panel', icon, run: () => A.setPanel(panel) })),
     { id: 'cv-resize', label: 'Smart resize…', section: 'Design', keywords: 'resize size dimensions social formats', icon: <Ratio size={15} />, run: () => studio.set({ dialog: 'resize' }) },
     { id: 'cv-find', label: 'Find and replace…', section: 'Design', keywords: 'search text replace', icon: <Search size={15} />, shortcut: shortcutLabel('F'), run: () => studio.set({ dialog: 'find' }) },
+    { id: 'cv-bulk', label: 'Bulk create from CSV…', section: 'Design', keywords: 'mail merge spreadsheet data certificates badges csv variables', icon: <Table2 size={15} />, run: () => studio.set({ dialog: 'bulk' }) },
+    { id: 'cv-add-table', label: 'Add table', section: 'Insert', keywords: 'grid rows columns pricing comparison', icon: <Table2 size={15} />, run: () => A.addTable() },
     { id: 'cv-history', label: 'Version history…', section: 'Design', keywords: 'versions restore earlier undo snapshot backup', icon: <History size={15} />, run: () => studio.set({ dialog: 'history' }) },
     ...(doc.userGuides?.length ? [{ id: 'cv-guides-clear', label: 'Clear guides', section: 'View', keywords: 'ruler guides remove', icon: <Ruler size={15} />, run: () => A.clearGuides() }] : []),
     { id: 'cv-save-template', label: 'Save as template', section: 'Design', keywords: 'reuse my templates', icon: <BookmarkPlus size={15} />, run: () => void A.saveAsTemplate() },

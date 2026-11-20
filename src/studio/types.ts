@@ -44,6 +44,8 @@ interface ElementBase {
   /** Elements sharing a group id are selected and moved together. */
   groupId: string | null;
   shadow: Shadow;
+  /** Linked copies share content and style (see links.ts). */
+  linkId?: string;
 }
 
 export type TextAlign = 'left' | 'center' | 'right';
@@ -171,6 +173,27 @@ export interface QrElement extends ElementBase {
   rounded: boolean;
 }
 
+export interface TableElement extends ElementBase {
+  type: 'table';
+  /** rows × columns of plain text. */
+  cells: string[][];
+  /** Style the first row as a header. */
+  header: boolean;
+  fontFamily: string;
+  fontSize: number;
+  textColor: string;
+  headerBg: string;
+  headerColor: string;
+  /** Alternate row tint, or null for none. */
+  stripe: string | null;
+  /** Cell background, or null for transparent. */
+  cellBg: string | null;
+  borderColor: string;
+  borderWidth: number;
+  align: TextAlign;
+  radius: number;
+}
+
 export type Brush = 'pen' | 'marker' | 'highlighter';
 
 /** A freehand stroke. Points are stored relative to the element box, so it moves, scales and rotates like any element. */
@@ -184,7 +207,7 @@ export interface DrawElement extends ElementBase {
   strokeWidth: number;
 }
 
-export type StudioElement = TextElement | ShapeElement | LineElement | ImageElement | IconElement | ChartElement | QrElement | DrawElement;
+export type StudioElement = TextElement | ShapeElement | LineElement | ImageElement | IconElement | ChartElement | QrElement | DrawElement | TableElement;
 export type ElementType = StudioElement['type'];
 
 export interface PageData {

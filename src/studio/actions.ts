@@ -1,11 +1,13 @@
 import { announceSaved, savePaused } from './tabSync';
+import { syncLinks } from './links';
+import { setCommitHook } from './store';
 import * as fs from '../lib/fileSave';
 import type { SaveHandle } from '../lib/fileSave';
 import { uid, clamp, modKey } from '../lib/utils';
 import { canvasToBlob, constrainSource, decodeImage, getImage, registerImage, resample } from '../engine/images';
 import { showToast } from '../store/actions';
 import { aabb, center, rotatePoint, unionBounds } from './geometry';
-import { cloneElements, coverCrop, fitText, scaleElement, makeChart, makeFrame, makeQr, makeIcon, makeImage, makeLine, makeShape, makeText, newDoc, normalize, type TextKind } from './factory';
+import { cloneElements, coverCrop, fitText, scaleElement, makeChart, makeTable, makeFrame, makeQr, makeIcon, makeImage, makeLine, makeShape, makeText, newDoc, normalize, type TextKind } from './factory';
 import { ensureFonts } from './fonts';
 import { renderToCanvas } from './render';
 import * as db from './persistence';
@@ -1329,4 +1331,56 @@ export async function openVersionAsCopy(id: string) {
 
 export function clearGuides() {
   commit((doc) => ({ ...doc, userGuides: [] }));
+}
+
+// ---------------------------------------------------------------------------
+// Tables, linked copies, bulk create
+
+export function addTable() {
+  const d = docOrNull();
+  if (d) addElements([placeAtViewCenter(makeTable(d))]);
+}
+
+// Keep linked copies in step after every edit.
+setCommitHook((prev, next) => syncLinks(prev, next, normalize));
+
+/** Duplicate the selection as linked copies (editing one edits all). */
+export function duplicateLinked() {
+  const sel = selectedElements();
+  if (!sel.length) return;
+  const d = docOrNull()!;
+  const off = Math.round(Math.min(d.width, d.height) * 0.025);
+  const ids = new Map(sel.map((e) => [e.id, e.linkId ?? uid('link')]));
+  const copies = cloneElements(sel.map((e) => ({ ...e, linkId: ids.get(e.id) })), off, off);
+  commit((doc) => ({ ...doc, elements: [...doc.elements.map((e) => (ids.has(e.id) && !e.linkId ? { ...e, linkId: ids.get(e.id) } : e)), ...copies] }));
+  studio.set({ selection: copies.map((c) => c.id) });
+  showToast('Linked copy added. Changes to one apply to all.', 'info');
+}
+
+export function unlinkSelection() {
+  const set = new Set(studio.get().selection);
+  commit((doc) => ({ ...doc, elements: doc.elements.map((e) => (set.has(e.id) && e.linkId ? { ...e, linkId: undefined } : e)) }));
+}
+
+/** Bulk create: one filled copy of the current page per CSV row. */
+export async function bulkCreate(records: Record<string, string>[], output: 'pages' | 'png' | 'pdf') {
+  const doc = docOrNull();
+  if (!doc || !records.length) return;
+  const { bulkDoc } = await import('./bulk');
+  const fresh = (e: StudioElement) => normalize({ ...structuredClone(e), id: uid('el'), linkId: undefined });
+  const filled = bulkDoc(syncPages(doc), doc.pageIndex, records, fresh, () => uid('pg'));
+  if (output === 'pages') {
+    commit((d) => {
+      const s = syncPages(d);
+      const pages = [...s.pages.slice(0, s.pageIndex + 1), ...filled.pages, ...s.pages.slice(s.pageIndex + 1)];
+      return showPage({ ...s, pages }, s.pageIndex + 1);
+    });
+    ensureDocFonts(studio.get().doc!);
+    showToast(`Added ${records.length} filled pages after this one.`, 'success');
+    return;
+  }
+  const { produce } = await import('./exportCore');
+  const { downloadBlob } = await import('../engine/export');
+  const r = await produce(filled, { format: output, scope: 'all', scale: 1, quality: 92, transparent: false, selectableText: true, selection: [], name: `${doc.name} (bulk)` });
+  await downloadBlob(r.blob, r.filename);
 }
