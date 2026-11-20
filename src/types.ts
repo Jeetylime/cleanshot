@@ -213,6 +213,8 @@ export type BackgroundFill =
 
 export type AspectRatioId = 'auto' | '1:1' | '4:3' | '3:2' | '16:9' | '16:10' | '4:5' | '9:16';
 
+export type DeviceFrame = 'none' | 'browser' | 'browser-dark' | 'window' | 'phone' | 'laptop';
+
 export interface BackgroundSettings {
   enabled: boolean;
   fill: BackgroundFill;
@@ -223,6 +225,10 @@ export interface BackgroundSettings {
   /** 0–100 */
   shadow: number;
   aspect: AspectRatioId;
+  /** Mockup drawn around the screenshot (see engine/devices.ts). */
+  device?: DeviceFrame;
+  /** Text in a browser mockup's address bar. */
+  deviceLabel?: string;
 }
 
 export interface EditorDoc {

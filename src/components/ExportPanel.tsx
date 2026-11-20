@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, Download, Link2, Loader2, Share, Unlink } from 'lucide-react';
+import { Columns2, Copy, Download, Frame, Link2, Loader2, Share, Unlink } from 'lucide-react';
+import { chooseFiles } from '../lib/filePicker';
+import * as batch from '../store/batch';
 import { shareSupported } from '../lib/fileSave';
 import { store, useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
@@ -196,6 +198,22 @@ export function ExportPanel() {
             {estimating && <Loader2 size={11} className="animate-spin-slow" />}
             {estimate ? `≈ ${formatBytes(estimate.bytes)}` : estimating ? 'Estimating…' : ''}
           </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5 border-t border-line px-3.5 py-2.5">
+        <span className="text-2xs font-semibold tracking-wide text-subtle uppercase">More</span>
+        <button type="button" className="flex h-[24px] items-center gap-2 text-left text-xs text-fg hover:text-accent" onClick={() => chooseFiles((f) => void batch.batchFrame(f), { multiple: true })}>
+          <Frame size={13} className="text-muted" /> Frame more images with this style…
+        </button>
+        <div className="flex items-center gap-2 text-xs">
+          <Columns2 size={13} className="text-muted" />
+          <span className="text-fg">Before/after:</span>
+          {(['side', 'stacked', 'gif'] as const).map((l) => (
+            <button key={l} type="button" className="h-[24px] font-medium text-accent hover:underline" onClick={() => chooseFiles((f) => void batch.beforeAfter(f[0], l))}>
+              {l === 'side' ? 'Side by side' : l === 'stacked' ? 'Stacked' : 'GIF'}
+            </button>
+          ))}
         </div>
       </div>
 

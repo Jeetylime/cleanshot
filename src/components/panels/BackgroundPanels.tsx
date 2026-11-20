@@ -3,7 +3,8 @@ import { ArrowLeftRight, Ban } from 'lucide-react';
 import { useEditor, shallowEqual } from '../../store/store';
 import * as actions from '../../store/actions';
 import { ASPECT_RATIOS, BACKGROUND_PRESETS, SOLID_SWATCHES, fillToCss } from '../../engine/backgrounds';
-import type { BackgroundFill, BackgroundSettings } from '../../types';
+import { DEVICE_FRAMES } from '../../engine/devices';
+import type { BackgroundFill, BackgroundSettings, DeviceFrame } from '../../types';
 import { ColorPicker, ColorWell, Section, Segmented, Slider, Toggle } from '../ui/controls';
 import { Tooltip } from '../ui/Tooltip';
 
@@ -178,6 +179,39 @@ export function PaddingPanel() {
         <Slider label="Corner radius" value={bg.radius} min={0} max={64} unit="px" onChange={(radius) => setBg({ radius: Math.round(radius) })} />
         <Slider label="Shadow" value={bg.shadow} min={0} max={100} unit="%" onChange={(shadow) => setBg({ shadow: Math.round(shadow) })} />
       </Section>
+      <Section title="Device">
+        <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Device mockup">
+          {DEVICE_FRAMES.map((d) => {
+            const active = (bg.enabled ? bg.device ?? 'none' : 'none') === d.id;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => (d.id === 'none' ? actions.updateBackground({ device: 'none' }) : setBg({ device: d.id }))}
+                className={`flex h-[52px] flex-col items-center justify-center gap-1 rounded-[7px] text-2xs font-medium transition-colors ${
+                  active ? 'bg-accent-soft text-accent ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
+                }`}
+              >
+                <DeviceThumb id={d.id} />
+                {d.label}
+              </button>
+            );
+          })}
+        </div>
+        {bg.enabled && (bg.device === 'browser' || bg.device === 'browser-dark') && (
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            Address bar text
+            <input
+              value={bg.deviceLabel ?? ''}
+              maxLength={80}
+              placeholder="example.com"
+              onChange={(e) => actions.updateBackground({ deviceLabel: e.target.value }, 'device-label')}
+              className="h-[26px] rounded-[6px] border border-line bg-control px-2 text-xs text-fg outline-none focus:border-accent"
+            />
+          </label>
+        )}
+      </Section>
       <Section title="Presets">
         <div className="grid grid-cols-3 gap-1.5">
           {[
@@ -213,4 +247,27 @@ export function PaddingPanel() {
       </Section>
     </>
   );
+}
+
+function DeviceThumb({ id }: { id: DeviceFrame }) {
+  const common = 'block border-[1.5px] border-current opacity-80';
+  switch (id) {
+    case 'browser':
+    case 'browser-dark':
+    case 'window':
+      return (
+        <span className={`${common} h-[16px] w-[24px] rounded-[3px]`} style={{ borderTopWidth: id === 'window' ? 3 : 4, background: id === 'browser-dark' ? 'currentColor' : undefined }} />
+      );
+    case 'phone':
+      return <span className={`${common} h-[20px] w-[11px] rounded-[3px]`} style={{ borderWidth: 2 }} />;
+    case 'laptop':
+      return (
+        <span className="flex flex-col items-center opacity-80">
+          <span className="block h-[13px] w-[20px] rounded-t-[2px] border-[1.5px] border-current" />
+          <span className="block h-[3px] w-[28px] rounded-b-[2px] bg-current" />
+        </span>
+      );
+    default:
+      return <Ban size={16} className="opacity-70" />;
+  }
 }

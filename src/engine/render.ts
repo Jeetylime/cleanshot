@@ -17,6 +17,7 @@ import { arrowControl, isPrivacy, magnifySourceRadius, measureLength, stepNumber
 import { FONT_FAMILY, measureText } from './text';
 import { createCanvas, ctx2d, getDisplaySource, getImage } from './images';
 import { getImageLayer, paintPrivacy } from './privacy';
+import { deviceBody, deviceInsets, drawDevice, screenRadii } from './devices';
 
 export interface Layout {
   /** Output size in image-space pixels. */
@@ -31,8 +32,11 @@ export function computeLayout(doc: Pick<EditorDoc, 'width' | 'height' | 'backgro
   const { width: w, height: h, background: bg, unit } = doc;
   if (!bg.enabled) return { outW: w, outH: h, imgX: 0, imgY: 0 };
   const p = Math.round(bg.padding * unit);
-  let outW = w + p * 2;
-  let outH = h + p * 2;
+  const i = deviceInsets(doc);
+  const boxW = w + i.l + i.r;
+  const boxH = h + i.t + i.b;
+  let outW = boxW + p * 2;
+  let outH = boxH + p * 2;
   const ar = aspectValue(bg.aspect);
   if (ar) {
     if (outW / outH > ar) outH = outW / ar;
@@ -40,7 +44,7 @@ export function computeLayout(doc: Pick<EditorDoc, 'width' | 'height' | 'backgro
   }
   outW = Math.round(outW);
   outH = Math.round(outH);
-  return { outW, outH, imgX: Math.round((outW - w) / 2), imgY: Math.round((outH - h) / 2) };
+  return { outW, outH, imgX: Math.round((outW - boxW) / 2) + i.l, imgY: Math.round((outH - boxH) / 2) + i.t };
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +105,13 @@ export function drawImageShadow(ctx: CanvasRenderingContext2D, doc: EditorDoc, s
   ctx.shadowOffsetX = shift * sx;
   ctx.shadowOffsetY = offsetY * sy;
   ctx.translate(-shift, 0);
-  if (isImageOpaque(doc.imageId)) {
+  const body = deviceBody(doc);
+  if (body) {
+    ctx.beginPath();
+    ctx.roundRect(body.x, body.y, body.w, body.h, body.r);
+    ctx.fillStyle = '#000';
+    ctx.fill();
+  } else if (isImageOpaque(doc.imageId)) {
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, r);
     ctx.fillStyle = '#000';
@@ -129,11 +139,12 @@ export function drawScreenshot(
   mode: 'export' | 'screen',
   pxScale: number,
 ) {
+  const radii = rounded ? screenRadii(doc) : null;
   const r = rounded ? Math.min(doc.background.radius * doc.unit, doc.width / 2, doc.height / 2) : 0;
   ctx.save();
-  if (r > 0) {
+  if (radii ? radii.some((v) => v > 0) : r > 0) {
     ctx.beginPath();
-    ctx.roundRect(0, 0, doc.width, doc.height, r);
+    ctx.roundRect(0, 0, doc.width, doc.height, radii ?? r);
     ctx.clip();
   }
   if (mode === 'export') {
@@ -696,6 +707,7 @@ export function renderDocument(doc: EditorDoc, opts: RenderOptions): HTMLCanvasE
   ctx.translate(L.imgX, L.imgY);
 
   if (bg.enabled) drawImageShadow(ctx, doc, sx, sy);
+  if (bg.enabled) drawDevice(ctx, doc);
   drawScreenshot(ctx, doc, bg.enabled, 'export', (sx + sy) / 2);
 
   ctx.save();

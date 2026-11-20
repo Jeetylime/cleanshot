@@ -1,3 +1,6 @@
+import { Columns2, Film, Rows2 } from 'lucide-react';
+import { chooseFiles } from '../lib/filePicker';
+import * as batch from '../store/batch';
 import { useEffect } from 'react';
 import {
   ArrowDownToLine,
@@ -71,6 +74,10 @@ function editorCommands(): Command[] {
     quick('jpeg'),
     quick('webp'),
     { id: 'edit-copy', label: 'Copy image to clipboard', section: sec, keywords: 'clipboard paste share', icon: <Copy size={15} />, run: () => void actions.copyImageToClipboard() },
+    { id: 'edit-batch-frame', label: 'Frame more images with this style…', section: sec, keywords: 'batch many bulk background padding device mockup zip', icon: <Frame size={15} />, run: () => chooseFiles((f) => void batch.batchFrame(f), { multiple: true }) },
+    { id: 'edit-before-after', label: 'Before/after: side by side…', section: sec, keywords: 'compare comparison before after diff', icon: <Columns2 size={15} />, run: () => chooseFiles((f) => void batch.beforeAfter(f[0], 'side')) },
+    { id: 'edit-before-after-stacked', label: 'Before/after: stacked…', section: sec, keywords: 'compare comparison before after vertical', icon: <Rows2 size={15} />, run: () => chooseFiles((f) => void batch.beforeAfter(f[0], 'stacked')) },
+    { id: 'edit-before-after-gif', label: 'Before/after: animated GIF…', section: sec, keywords: 'compare comparison before after animation gif', icon: <Film size={15} />, run: () => chooseFiles((f) => void batch.beforeAfter(f[0], 'gif')) },
     { id: 'edit-to-canvas', label: 'Send to Canvas', section: sec, keywords: 'design use in canvas', icon: <LayoutTemplate size={15} />, run: () => void sendCurrentToCanvas() },
     { id: 'edit-undo', label: 'Undo', section: sec, icon: <Undo2 size={15} />, shortcut: shortcutLabel('Z'), run: undo },
     { id: 'edit-redo', label: 'Redo', section: sec, icon: <Redo2 size={15} />, shortcut: shortcutLabel('⇧Z'), run: redo },

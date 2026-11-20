@@ -18,6 +18,7 @@ import {
 } from '../engine/annotations';
 import { computeLayout, drawAnnotations, drawImageShadow, drawScreenshot, isImageOpaque, type Layout } from '../engine/render';
 import { paintFill } from '../engine/backgrounds';
+import { drawDevice } from '../engine/devices';
 import { createCanvas, ctx2d } from '../engine/images';
 import { normalizeRect, rectFromPoints, rectsIntersect, simplifyPoints, snapAngle, unionRects } from '../lib/utils';
 import { cropMove, cropResize, rectFromAnchor } from './crop';
@@ -845,6 +846,8 @@ export class CanvasController {
       const cache = this.getBackdrop(doc, L);
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(cache.canvas, -L.imgX, -L.imgY, L.outW, L.outH);
+      ctx.imageSmoothingEnabled = true;
+      drawDevice(ctx, doc);
       ctx.imageSmoothingEnabled = z < 2;
     }
     drawScreenshot(ctx, doc, bgOn, 'screen', z);
