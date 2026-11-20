@@ -65,7 +65,7 @@ export function PrivacyPolicy() {
             <Strong>Preferences</Strong> (local storage): settings such as theme, canvas backdrop, tool styles and export format.
           </li>
           <li>
-            <Strong>Downloaded models</Strong> (Cache Storage): the Background Remover and Image Upscaler models, after you choose to download them, so they work offline
+            <Strong>Downloaded models</Strong> (Cache Storage): the Background Remover, Image Upscaler and text recognition models, after you choose to download them, so they work offline
             later.
           </li>
           <li>

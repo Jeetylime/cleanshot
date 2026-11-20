@@ -33,7 +33,7 @@ export function TermsOfService() {
           </li>
         </List>
         <p>
-          The tools are designed to process files on your device, in your browser. The Background Remover and Image Upscaler use machine-learning models that are
+          The tools are designed to process files on your device, in your browser. The Background Remover, Image Upscaler and text recognition (OCR) features use machine-learning models that are
           downloaded to your browser when you first use them. Studiolo doesn’t require an account.
         </p>
       </Section>
@@ -123,10 +123,10 @@ export function TermsOfService() {
             <Strong>Cloudflare</Strong>, which hosts and delivers the website
           </li>
           <li>
-            <Strong>Hugging Face</Strong>, which hosts the model files downloaded by the Background Remover and Image Upscaler
+            <Strong>Hugging Face</Strong>, which hosts the model files downloaded by the Background Remover, Image Upscaler and text recognition tools
           </li>
           <li>
-            <Strong>Model authors</Strong>, including BRIA AI (RMBG-1.4, used by the Background Remover) and the authors of Swin2SR (used by the Image Upscaler)
+            <Strong>Model authors</Strong>, including BRIA AI (RMBG-1.4, used by the Background Remover) the authors of Swin2SR (used by the Image Upscaler) and Microsoft (Florence-2, used for text recognition)
           </li>
           <li>
             <Strong>Open-source libraries</Strong> that the app is built with

@@ -10,7 +10,7 @@ import type {
   Backdrop,
   ToolId,
 } from '../types';
-import { store, type ExportPrefs, type ToolStyles } from './store';
+import { store, type ExportPrefs, type Overlay, type ToolStyles } from './store';
 import { beginGesture, cancelGesture, commit, endGesture, inGesture, resetHistory, updateLive } from './history';
 import { fitView } from './view';
 import { createAnnotation, isAnnotationTool, styleGroupOf, toolStyleGroup, type StyleGroup, CANVAS_TOOLS } from './factory';
@@ -862,7 +862,7 @@ export function toggleProperties() {
   store.set({ propertiesOpen: !store.get().propertiesOpen });
 }
 
-export function openOverlay(overlay: 'export' | 'shortcuts' | null) {
+export function openOverlay(overlay: Overlay) {
   if (overlay) commitTextEdit();
   store.set({ overlay });
 }
@@ -983,4 +983,29 @@ export function applyPreset(id: string) {
 export function straightenArrows() {
   const ids = new Set(store.get().selection);
   commit((doc) => ({ ...doc, annotations: doc.annotations.map((a) => (ids.has(a.id) && a.type === 'arrow' && a.curve ? { ...a, curve: 0 } : a)) }));
+}
+
+/** Cover found areas (e.g. from text recognition) with privacy annotations, as one undo step. */
+export function addPrivacyRegions(rects: { x: number; y: number; w: number; h: number }[], type: 'redact' | 'blur' | 'pixelate') {
+  const s = store.get();
+  const doc = s.doc;
+  if (!doc || !rects.length) return;
+  const added: Annotation[] = rects.map((r) => {
+    const x = Math.max(0, r.x);
+    const y = Math.max(0, r.y);
+    return {
+      id: uid(),
+      type,
+      x,
+      y,
+      w: Math.min(doc.width - x, r.w),
+      h: Math.min(doc.height - y, r.h),
+      intensity: type === 'redact' ? 0 : s.styles[type].intensity,
+      color: type === 'redact' ? s.styles.redact.color : '#000000',
+      opacity: 1,
+    };
+  });
+  commit((d) => ({ ...d, annotations: [...d.annotations, ...added] }));
+  store.set({ selection: added.map((a) => a.id) });
+  showToast(`Covered ${added.length} ${added.length === 1 ? 'area' : 'areas'}. Check them before sharing.`, 'success');
 }

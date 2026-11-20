@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import {
+  ScanText,
   FileText,
   House,
   LayoutGrid,
@@ -440,6 +441,9 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
             <>
               <MenuItem icon={<ImagePlus size={14} />} onClick={run(openFilePicker)} shortcut={`${modKey}O`}>
                 Open image…
+              </MenuItem>
+              <MenuItem icon={<ScanText size={14} />} onClick={run(() => actions.openOverlay('text'))}>
+                Text in image (copy or redact)…
               </MenuItem>
               <MenuItem icon={<Keyboard size={14} />} onClick={run(() => actions.openOverlay('shortcuts'))} shortcut="?">
                 Keyboard shortcuts

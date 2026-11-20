@@ -26,7 +26,8 @@ export type ToolKey =
   | 'image-diff'
   | 'photo-filters'
   | 'animation'
-  | 'image-to-svg';
+  | 'image-to-svg'
+  | 'image-to-text';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -49,11 +50,12 @@ export const TOOL_KEYS: ToolKey[] = [
   'photo-filters',
   'animation',
   'image-to-svg',
+  'image-to-text',
 ];
 
-export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form' | 'pdf-protect' | 'pdf-unlock' | 'pdf-redact' | 'pdf-compare' | 'pdf-metadata';
+export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form' | 'pdf-protect' | 'pdf-unlock' | 'pdf-redact' | 'pdf-compare' | 'pdf-metadata' | 'pdf-ocr';
 
-export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop', 'pdf-form', 'pdf-protect', 'pdf-unlock', 'pdf-redact', 'pdf-compare', 'pdf-metadata'];
+export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop', 'pdf-form', 'pdf-protect', 'pdf-unlock', 'pdf-redact', 'pdf-compare', 'pdf-metadata', 'pdf-ocr'];
 
 export type LegalDoc = 'terms' | 'privacy-policy' | 'accessibility' | 'licenses';
 

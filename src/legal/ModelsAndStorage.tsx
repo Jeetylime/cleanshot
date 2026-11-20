@@ -8,6 +8,7 @@ import { goTools } from '../app/route';
 import { CACHE_NAME } from '../tools/ai/runtime';
 import { RMBG } from '../tools/bgremove/segment';
 import { SR_MODELS } from '../tools/upscaler/sr';
+import { OCR_MODEL } from '../tools/ai/ocr';
 
 /** Interactive pieces of the Privacy Policy: the model table and the storage controls. */
 
@@ -35,6 +36,14 @@ const MODELS = [
     repo: SR_MODELS[4].id,
     size: SR_MODELS[4].bytes,
     license: 'Apache 2.0',
+  },
+  {
+    tool: 'Image to Text, Edit’s text tools, Make Searchable (OCR)',
+    key: 'image-to-text' as const,
+    model: 'Florence-2 base (Microsoft), 4-bit',
+    repo: OCR_MODEL.id,
+    size: OCR_MODEL.bytes,
+    license: 'MIT',
   },
 ];
 

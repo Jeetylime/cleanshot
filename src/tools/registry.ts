@@ -1,6 +1,6 @@
 import { lazyTool } from './lazyTool';
 import { type ComponentType, type LazyExoticComponent } from 'react';
-import { AppWindow, PenTool, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
+import { AppWindow, ScanText, PenTool, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -46,6 +46,16 @@ export const TOOLS: ToolMeta[] = [
     ai: true,
     batch: false,
     ...lazyTool(() => import('./upscaler/Upscaler')),
+  },
+  {
+    key: 'image-to-text',
+    name: 'Image to Text',
+    description: 'Copy the text out of screenshots and photos, read on your device.',
+    group: 'ai',
+    icon: ScanText,
+    ai: true,
+    batch: false,
+    ...lazyTool(() => import('./ocr/ImageToText')),
   },
   {
     key: 'resizer',

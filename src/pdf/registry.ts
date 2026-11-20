@@ -1,5 +1,5 @@
 import { lazyTool } from '../tools/lazyTool';
-import { BookMarked, ClipboardList, Combine, Crop, FileImage, FileText, GitCompareArrows, Hash, Images, LayoutGrid, Lock, LockOpen, PenLine, Scissors, Shrink, SquareDashed } from 'lucide-react';
+import { BookMarked, ClipboardList, Combine, Crop, FileImage, FileText, GitCompareArrows, Hash, Images, LayoutGrid, Lock, LockOpen, PenLine, ScanSearch, Scissors, Shrink, SquareDashed } from 'lucide-react';
 import type { SectionTool } from '../tools/ToolSection';
 
 export const PDF_GROUPS = [
@@ -25,5 +25,6 @@ export const PDF_TOOLS: SectionTool[] = [
   { key: 'pdf-redact', name: 'Redact PDF', description: 'Permanently black out text and areas, found by search or drawn.', group: 'secure', icon: SquareDashed, ...lazyTool(() => import('./tools/Redact')) },
   { key: 'pdf-compare', name: 'Compare PDFs', description: 'See which words changed between two versions of a document.', group: 'secure', icon: GitCompareArrows, batch: true, ...lazyTool(() => import('./tools/Compare')) },
   { key: 'pdf-metadata', name: 'Info & Bookmarks', description: 'Edit title, author and keywords, and add or change bookmarks.', group: 'edit', icon: BookMarked, ...lazyTool(() => import('./tools/Metadata')) },
+  { key: 'pdf-ocr', name: 'Make Searchable (OCR)', description: 'Recognize text in scanned pages so you can search and copy it.', group: 'convert', icon: ScanSearch, ...lazyTool(() => import('./tools/Ocr')) },
   { key: 'pdf-text', name: 'Extract Text', description: 'Pull the text out of a PDF as plain text or Markdown.', group: 'convert', icon: FileText, ...lazyTool(() => import('./tools/ExtractText')) },
 ];

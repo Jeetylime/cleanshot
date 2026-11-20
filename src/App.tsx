@@ -8,6 +8,7 @@ import { EditorCanvas } from './components/EditorCanvas';
 import { EmptyState } from './components/EmptyState';
 import { StartScreen } from './components/StartScreen';
 import { BusyIndicator, DropOverlay, ShortcutsDialog, Toasts } from './components/Overlays';
+import { TextDialog } from './components/TextDialog';
 import { CommandPalette } from './components/CommandPalette';
 import { useEditorCommands } from './components/editorCommands';
 import { useKeyboardShortcuts, usePasteAndDrop, useThemeSync } from './hooks/useGlobalInput';
@@ -60,6 +61,7 @@ function Editor() {
         <EmptyState />
       )}
       <ShortcutsDialog />
+      <TextDialog />
     </>
   );
 }

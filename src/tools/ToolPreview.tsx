@@ -168,6 +168,15 @@ const PREVIEWS: Record<ToolKey, React.ReactNode> = {
       ))}
     </g>
   ),
+  'image-to-text': (
+    <g>
+      <rect x="8" y="8" width="60" height="44" rx="3" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+      {[14, 23, 32, 41].map((y, i) => (
+        <rect key={y} x="13" y={y} width={[44, 36, 48, 28][i]} height="5" rx="1.5" fill={i === 1 ? '#0a84ff' : '#c7c7cc'} />
+      ))}
+      <path d="M8 18V8h10M58 8h10v10M68 42v10H58M18 52H8V42" fill="none" stroke="#0a84ff" strokeWidth="2" />
+    </g>
+  ),
   splitter: (
     <g>
       {mountains(8, 14, 60, 32)}

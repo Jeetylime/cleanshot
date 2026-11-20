@@ -1,4 +1,4 @@
-import { Columns2, Film, Rows2 } from 'lucide-react';
+import { Columns2, Film, Rows2, ScanText, ShieldCheck } from 'lucide-react';
 import { chooseFiles } from '../lib/filePicker';
 import * as batch from '../store/batch';
 import { useEffect } from 'react';
@@ -74,6 +74,8 @@ function editorCommands(): Command[] {
     quick('jpeg'),
     quick('webp'),
     { id: 'edit-copy', label: 'Copy image to clipboard', section: sec, keywords: 'clipboard paste share', icon: <Copy size={15} />, run: () => void actions.copyImageToClipboard() },
+    { id: 'edit-text', label: 'Copy text from image…', section: sec, keywords: 'ocr recognize read text extract', icon: <ScanText size={15} />, run: () => actions.openOverlay('text') },
+    { id: 'edit-auto-redact', label: 'Find and redact sensitive info…', section: sec, keywords: 'auto redact blur email api key password card phone privacy ocr', icon: <ShieldCheck size={15} />, run: () => actions.openOverlay('text') },
     { id: 'edit-batch-frame', label: 'Frame more images with this style…', section: sec, keywords: 'batch many bulk background padding device mockup zip', icon: <Frame size={15} />, run: () => chooseFiles((f) => void batch.batchFrame(f), { multiple: true }) },
     { id: 'edit-before-after', label: 'Before/after: side by side…', section: sec, keywords: 'compare comparison before after diff', icon: <Columns2 size={15} />, run: () => chooseFiles((f) => void batch.beforeAfter(f[0], 'side')) },
     { id: 'edit-before-after-stacked', label: 'Before/after: stacked…', section: sec, keywords: 'compare comparison before after vertical', icon: <Rows2 size={15} />, run: () => chooseFiles((f) => void batch.beforeAfter(f[0], 'stacked')) },

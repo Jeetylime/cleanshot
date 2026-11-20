@@ -50,7 +50,7 @@ export interface SessionSummary {
   thumbUrl: string | null;
 }
 
-export type Overlay = null | 'export' | 'shortcuts';
+export type Overlay = null | 'export' | 'shortcuts' | 'text';
 
 export interface EditorState {
   doc: EditorDoc | null;
