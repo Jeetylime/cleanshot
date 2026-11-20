@@ -1,6 +1,7 @@
 import { saveFileSupported } from '../lib/fileSave';
 import { useEffect } from 'react';
 import {
+  History,
   AlignCenterHorizontal,
   AlignCenterVertical,
   AlignEndHorizontal,
@@ -181,6 +182,8 @@ function canvasCommands(openShortcuts: () => void): Command[] {
     ).map(([panel, label, icon]) => ({ id: `cv-panel-${panel}`, label: `Open ${label} panel`, section: 'View', keywords: 'sidebar panel', icon, run: () => A.setPanel(panel) })),
     { id: 'cv-resize', label: 'Smart resize…', section: 'Design', keywords: 'resize size dimensions social formats', icon: <Ratio size={15} />, run: () => studio.set({ dialog: 'resize' }) },
     { id: 'cv-find', label: 'Find and replace…', section: 'Design', keywords: 'search text replace', icon: <Search size={15} />, shortcut: shortcutLabel('F'), run: () => studio.set({ dialog: 'find' }) },
+    { id: 'cv-history', label: 'Version history…', section: 'Design', keywords: 'versions restore earlier undo snapshot backup', icon: <History size={15} />, run: () => studio.set({ dialog: 'history' }) },
+    ...(doc.userGuides?.length ? [{ id: 'cv-guides-clear', label: 'Clear guides', section: 'View', keywords: 'ruler guides remove', icon: <Ruler size={15} />, run: () => A.clearGuides() }] : []),
     { id: 'cv-save-template', label: 'Save as template', section: 'Design', keywords: 'reuse my templates', icon: <BookmarkPlus size={15} />, run: () => void A.saveAsTemplate() },
     { id: 'cv-project-file', label: 'Download project file', section: 'Design', keywords: 'backup .studiolo save editable', icon: <FileDown size={15} />, run: () => void A.downloadProjectFile() },
     ...(saveFileSupported()

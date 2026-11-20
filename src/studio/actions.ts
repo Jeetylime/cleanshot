@@ -751,6 +751,7 @@ export async function saveNow() {
       await db.saveProject(syncPages(doc), await makeThumb(doc));
       if (studio.get().doc?.id === doc.id) studio.set({ saveState: 'saved', storageWarning: null });
       announceSaved(doc.id);
+      void maybeSnapshot(doc);
       void db.requestPersistence();
       const est = await db.storageEstimate();
       if (est && est.usage / est.quota > 0.9) studio.set({ storageWarning: 'Browser storage is almost full. Delete old designs or download project files to keep your work safe.' });
@@ -1257,4 +1258,75 @@ export function replaceText(query: string, replacement: string, caseSensitive: b
 export function revealElement(page: number, id: string) {
   if (studio.get().doc?.pageIndex !== page) goToPage(page);
   select([id]);
+}
+
+// ---------------------------------------------------------------------------
+// Version history
+
+/** Automatic snapshot at most this often while a design is being edited. */
+const SNAPSHOT_EVERY = 10 * 60 * 1000;
+const lastSnapshot = new Map<string, number>();
+
+async function maybeSnapshot(doc: StudioDoc) {
+  try {
+    let last = lastSnapshot.get(doc.id);
+    if (last === undefined) {
+      last = await db.latestVersionTime(doc.id);
+      lastSnapshot.set(doc.id, last);
+    }
+    if (Date.now() - last < SNAPSHOT_EVERY) return;
+    await snapshot(doc);
+  } catch {
+    /* history is best effort */
+  }
+}
+
+async function snapshot(doc: StudioDoc, label?: string) {
+  const now = Date.now();
+  lastSnapshot.set(doc.id, now);
+  await db.addVersion({ projectId: doc.id, createdAt: now, label, doc: syncPages(doc), thumb: await makeThumb(doc) });
+}
+
+/** Save a named version of the open design (kept until deleted). */
+export async function saveVersion(label: string) {
+  const doc = studio.get().doc;
+  if (!doc) return;
+  try {
+    await saveNow();
+    await snapshot(doc, label.trim() || 'Saved version');
+    showToast('Version saved', 'success');
+  } catch (err) {
+    reportStorageError(err);
+  }
+}
+
+/** Replace the design with an earlier version (one undo step; the current state is saved as a version first). */
+export async function restoreVersion(id: string) {
+  const cur = studio.get().doc;
+  const rec = await db.loadVersion(id).catch(() => null);
+  if (!cur || !rec) {
+    showToast('Couldn’t load that version.', 'error');
+    return;
+  }
+  await snapshot(cur, 'Before restoring').catch(() => undefined);
+  const v = migrateDoc(rec.doc);
+  await Promise.all(docAssetIds(v).map(loadAsset));
+  ensureDocFonts(v);
+  commit(() => ({ ...v, id: cur.id, name: cur.name, createdAt: cur.createdAt, updatedAt: Date.now() }));
+  studio.set({ selection: [], paintTick: studio.get().paintTick + 1 });
+  requestFit();
+  showToast('Version restored. Undo to go back.', 'success');
+}
+
+/** Open an earlier version as a separate design. */
+export async function openVersionAsCopy(id: string) {
+  const rec = await db.loadVersion(id).catch(() => null);
+  if (!rec) return;
+  const now = Date.now();
+  const copy = migrateDoc({ ...structuredClone(rec.doc), id: uid('proj'), name: `${rec.doc.name} (${new Date(rec.createdAt).toLocaleString()})`, createdAt: now, updatedAt: now });
+  await openDoc(copy, { save: true });
+}
+
+export function clearGuides() {
+  commit((doc) => ({ ...doc, userGuides: [] }));
 }

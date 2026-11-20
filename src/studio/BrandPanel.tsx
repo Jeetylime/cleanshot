@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Wand2, X } from 'lucide-react';
+import { Image as ImageIcon, Plus, Trash2, Upload, Wand2, X } from 'lucide-react';
+import { decodeImage, createCanvas, ctx2d } from '../engine/images';
+import { dominantColors } from '../tools/shared/quantize';
 import { Button, ColorWell } from '../components/ui/controls';
 import { Tooltip } from '../components/ui/Tooltip';
 import { pickFiles } from '../tools/shared/ui';
@@ -19,6 +21,24 @@ export function BrandPanel() {
   const addColor = (c: string) => {
     if (brand.colors.some((x) => x.toLowerCase() === c.toLowerCase())) return;
     setBrand({ colors: [...brand.colors, c].slice(0, 16) });
+  };
+
+  /** Extract an image's dominant colors (the Color Picker tool's palette) into the kit. */
+  const colorsFromImage = async (file: File) => {
+    try {
+      const src = await decodeImage(file);
+      const k = Math.min(1, 300 / Math.max(src.width, src.height));
+      const c = createCanvas(Math.max(1, Math.round(src.width * k)), Math.max(1, Math.round(src.height * k)));
+      const ctx = ctx2d(c, { willReadFrequently: true });
+      ctx.drawImage(src, 0, 0, c.width, c.height);
+      const top = dominantColors(ctx.getImageData(0, 0, c.width, c.height).data, 6).map((d) => '#' + d.rgb.map((v) => v.toString(16).padStart(2, '0')).join(''));
+      const merged = [...brand.colors];
+      for (const col of top) if (!merged.some((x) => x.toLowerCase() === col)) merged.push(col);
+      setBrand({ colors: merged.slice(0, 16) });
+      showToast('Added the image’s main colors to your brand kit.', 'info');
+    } catch {
+      showToast('Couldn’t read that image.', 'error');
+    }
   };
 
   const colorsFromDesign = () => {
@@ -105,6 +125,9 @@ export function BrandPanel() {
         </div>
         <Button onClick={colorsFromDesign}>
           <Wand2 size={12} /> Add colors from this design
+        </Button>
+        <Button onClick={() => pickFiles(false, (f) => f[0] && void colorsFromImage(f[0]))}>
+          <ImageIcon size={12} /> Add colors from an image…
         </Button>
       </section>
 

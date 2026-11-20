@@ -13,6 +13,8 @@ export interface StoreUsage {
 export interface Inventory {
   projects: StoreUsage;
   templates: StoreUsage;
+  /** Canvas version history snapshots. */
+  versions: StoreUsage;
   assets: StoreUsage;
   sessions: StoreUsage;
   sessionImages: StoreUsage;
@@ -104,9 +106,10 @@ async function measureCaches(match: (name: string) => boolean, onlyOnnx = false)
 export async function takeInventory(modelCache: string): Promise<Inventory> {
   const [studio, editor] = await Promise.all([openExisting(STUDIO_DB), openExisting(EDITOR_DB)]);
   try {
-    const [projects, templates, assets, sessions, sessionImages, models, offline] = await Promise.all([
+    const [projects, templates, versions, assets, sessions, sessionImages, models, offline] = await Promise.all([
       measure(studio, 'projects'),
       measure(studio, 'templates'),
+      measure(studio, 'versions'),
       measure(studio, 'assets'),
       measure(editor, 'sessions'),
       measure(editor, 'images'),
@@ -133,7 +136,7 @@ export async function takeInventory(modelCache: string): Promise<Inventory> {
     } catch {
       // unsupported
     }
-    return { projects, templates, assets, sessions, sessionImages, models, offline, localStorage: ls, estimate, persisted };
+    return { projects, templates, versions, assets, sessions, sessionImages, models, offline, localStorage: ls, estimate, persisted };
   } finally {
     studio?.close();
     editor?.close();

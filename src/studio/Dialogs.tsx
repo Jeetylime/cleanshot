@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, Trash2, X } from 'lucide-react';
+import * as db from './persistence';
 import { Button, Toggle } from '../components/ui/controls';
 import { showToast } from '../store/actions';
 import { studio, useStudio } from './store';
@@ -40,6 +41,7 @@ export function StudioDialogs() {
   const close = () => studio.set({ dialog: null });
   if (dialog === 'resize') return <ResizeDialog onClose={close} />;
   if (dialog === 'find') return <FindDialog onClose={close} />;
+  if (dialog === 'history') return <HistoryDialog onClose={close} />;
   return null;
 }
 
@@ -150,6 +152,103 @@ function FindDialog({ onClose }: { onClose: () => void }) {
       >
         Replace all
       </Button>
+    </Modal>
+  );
+}
+
+function relTime(t: number): string {
+  const s = Math.round((Date.now() - t) / 1000);
+  if (s < 60) return 'Just now';
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  return new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function VersionThumb({ blob }: { blob: Blob | null }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!blob) return;
+    const u = URL.createObjectURL(blob);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [blob]);
+  return <span className="flex h-[54px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-line bg-window">{url && <img src={url} alt="" className="max-h-full max-w-full" />}</span>;
+}
+
+function HistoryDialog({ onClose }: { onClose: () => void }) {
+  const doc = useStudio((s) => s.doc);
+  const [list, setList] = useState<db.VersionSummary[] | null>(null);
+  const [label, setLabel] = useState('');
+  const [busy, setBusy] = useState(false);
+  const id = doc?.id;
+  const refresh = () => {
+    if (id) void db.listVersions(id).then(setList).catch(() => setList([]));
+  };
+  useEffect(refresh, [id]);
+  if (!doc) return null;
+  return (
+    <Modal title="Version history" onClose={onClose} width={480}>
+      <p className="text-xs leading-[17px] text-muted">
+        Studiolo keeps a snapshot every 10 minutes while you edit (the last {db.MAX_AUTO_VERSIONS}) plus any version you save by name. Stored in this browser only.
+      </p>
+      <form
+        className="flex gap-1.5"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          await A.saveVersion(label);
+          setLabel('');
+          setBusy(false);
+          refresh();
+        }}
+      >
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Name this version (optional)" aria-label="Version name" maxLength={60} className="h-8 min-w-0 flex-1 rounded-[8px] bg-control px-2.5 text-sm text-fg outline-none ring-accent focus:ring-1" />
+        <Button type="submit" variant="primary" className="h-8" disabled={busy}>
+          Save version
+        </Button>
+      </form>
+      <div className="flex flex-col gap-1.5">
+        {list === null && <p className="text-xs text-subtle">Loading…</p>}
+        {list?.length === 0 && <p className="rounded-[9px] bg-control px-3 py-4 text-center text-xs text-subtle">No earlier versions yet.</p>}
+        {list?.map((v) => (
+          <div key={v.id} className="flex items-center gap-2.5 rounded-[10px] border border-line p-1.5">
+            <VersionThumb blob={v.thumb} />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium text-fg">{v.label ?? 'Automatic snapshot'}</span>
+              <span className="text-2xs text-subtle">{relTime(v.createdAt)}</span>
+            </span>
+            <Button
+              className="h-[26px] text-xs"
+              onClick={async () => {
+                await A.restoreVersion(v.id);
+                onClose();
+              }}
+            >
+              Restore
+            </Button>
+            <Button
+              className="h-[26px] text-xs"
+              onClick={async () => {
+                onClose();
+                await A.openVersionAsCopy(v.id);
+              }}
+            >
+              Open copy
+            </Button>
+            <button
+              type="button"
+              aria-label="Delete this version"
+              onClick={async () => {
+                await db.deleteVersion(v.id);
+                refresh();
+              }}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] text-muted hover:bg-hover hover:text-danger"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        ))}
+      </div>
     </Modal>
   );
 }

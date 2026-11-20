@@ -1,6 +1,7 @@
 import { startTabSync } from './tabSync';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  History,
   AlertTriangle,
   Check,
   ChevronDown,
@@ -299,6 +300,9 @@ function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
           </MenuItem>
           <MenuItem icon={<Search size={14} />} onClick={run(() => studio.set({ dialog: 'find' }))} shortcut={`${modKey}F`}>
             Find and replace…
+          </MenuItem>
+          <MenuItem icon={<History size={14} />} onClick={run(() => studio.set({ dialog: 'history' }))}>
+            Version history…
           </MenuItem>
           <MenuItem icon={<BookmarkPlus size={14} />} onClick={run(() => void A.saveAsTemplate())}>
             Save as template

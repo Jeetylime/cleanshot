@@ -18,6 +18,8 @@ interface Prefs {
   format: Format;
   quality: number;
   selectableText: boolean;
+  /** PDF: bleed and crop marks for professional printing. */
+  print: boolean;
   /** GIF / video: seconds per page, transition and frame rate. */
   hold: number;
   transition: Transition;
@@ -26,7 +28,7 @@ interface Prefs {
 }
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { format: 'png', quality: 90, selectableText: true, hold: 1.5, transition: 'fade', transitionMs: 500, fps: 20 };
+  const d: Prefs = { format: 'png', quality: 90, selectableText: true, print: false, hold: 1.5, transition: 'fade', transitionMs: 500, fps: 20 };
   try {
     return { ...d, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
   } catch {
@@ -105,6 +107,7 @@ export function ExportDialog() {
     selectableText: prefs.selectableText,
     selection,
     name,
+    print: isPdf && prefs.print && !sel,
     animation: { hold: prefs.hold * 1000, transition: prefs.transition, transitionMs: prefs.transitionMs, fps: prefs.fps },
   });
 
@@ -301,6 +304,15 @@ export function ExportDialog() {
                 <span className="text-2xs text-subtle">Copy and search text in the PDF</span>
               </span>
               <Toggle checked={prefs.selectableText} onChange={(v) => setPrefs({ ...prefs, selectableText: v })} label="Selectable text" />
+            </label>
+          )}
+          {isPdf && !sel && (
+            <label className="flex items-center justify-between gap-2 text-xs text-muted">
+              <span className="flex flex-col">
+                Print-ready
+                <span className="text-2xs text-subtle">3 mm bleed and crop marks for print shops</span>
+              </span>
+              <Toggle checked={prefs.print} onChange={(v) => setPrefs({ ...prefs, print: v })} label="Print-ready" />
             </label>
           )}
           {canTransparent && !sel ? (

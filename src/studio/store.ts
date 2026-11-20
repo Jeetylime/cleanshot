@@ -44,7 +44,7 @@ export interface StudioState {
   paintTick: number;
   /** Selected character range in the text being edited. */
   textSel: { start: number; end: number } | null;
-  dialog: 'resize' | 'find' | null;
+  dialog: 'resize' | 'find' | 'history' | null;
   draw: DrawSettings;
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, Download, Pipette, X } from 'lucide-react';
+import { Check, Copy, Download, Palette, Pipette, X } from 'lucide-react';
+import { getBrand, setBrand } from '../../studio/brand';
 import { Button, Slider } from '../../components/ui/controls';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { canvasToBlob, createCanvas, ctx2d } from '../../engine/images';
@@ -333,6 +334,17 @@ export default function ColorPicker() {
               <Copy size={13} /> JSON
             </Button>
           </div>
+          <Button
+            className="h-8"
+            onClick={() => {
+              const b = getBrand();
+              const add = exportColors().map(hex).filter((c) => !b.colors.some((x) => x.toLowerCase() === c.toLowerCase()));
+              setBrand({ colors: [...b.colors, ...add].slice(0, 16) });
+              showToast(add.length ? `Added ${Math.min(add.length, 16 - b.colors.length)} colors to your Canvas brand kit` : 'These colors are already in your brand kit', 'info');
+            }}
+          >
+            <Palette size={13} /> Add to Canvas brand kit
+          </Button>
           <div className="flex gap-2">
             <Button variant="primary" className="h-8 flex-1" onClick={() => void downloadPng()}>
               <Download size={14} /> Swatch PNG

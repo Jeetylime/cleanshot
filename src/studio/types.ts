@@ -193,6 +193,13 @@ export interface PageData {
   elements: StudioElement[];
 }
 
+export interface UserGuide {
+  id: string;
+  /** 'x' = vertical line at x = pos; 'y' = horizontal line at y = pos. */
+  axis: 'x' | 'y';
+  pos: number;
+}
+
 export interface StudioDoc {
   id: string;
   name: string;
@@ -206,6 +213,8 @@ export interface StudioDoc {
   pageIndex: number;
   /** Display names for groups, by group id. */
   groupNames?: Record<string, string>;
+  /** Guides dragged out of the rulers (design px), shared by every page. */
+  userGuides?: UserGuide[];
   createdAt: number;
   updatedAt: number;
 }

@@ -567,17 +567,21 @@ export function drawElement(ctx: CanvasRenderingContext2D, e: StudioElement, sca
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   doc: StudioDoc,
-  opts: { scale: number; skip?: string | null; background?: boolean; placeholders?: boolean; only?: Set<string> },
+  opts: { scale: number; skip?: string | null; background?: boolean; placeholders?: boolean; only?: Set<string>; bleed?: number },
 ) {
   showPlaceholders = opts.placeholders !== false;
+  // Print bleed (design px): the background and anything crossing the page
+  // edge continue past the trim, so trimming leaves no white slivers.
+  const b = opts.bleed ?? 0;
   ctx.save();
   if (opts.background !== false) {
     ctx.save();
-    paintStudioFill(ctx, doc.background, doc.width, doc.height, opts.scale);
+    if (b) ctx.translate(-b, -b);
+    paintStudioFill(ctx, doc.background, doc.width + 2 * b, doc.height + 2 * b, opts.scale);
     ctx.restore();
   }
   ctx.beginPath();
-  ctx.rect(0, 0, doc.width, doc.height);
+  ctx.rect(-b, -b, doc.width + 2 * b, doc.height + 2 * b);
   ctx.clip();
   for (const e of doc.elements) {
     if (e.id === opts.skip || (opts.only && !opts.only.has(e.id))) continue;
@@ -591,8 +595,9 @@ export function renderScene(
  * Render for export: no frame placeholders, optionally only some elements,
  * optionally cropped to `bounds` (design px). `scale` = output px per design px.
  */
-export function renderExport(doc: StudioDoc, opts: { scale: number; background: boolean; matte?: string | null; only?: Set<string>; bounds?: { x: number; y: number; w: number; h: number }; outW?: number; outH?: number }): HTMLCanvasElement {
-  const box = opts.bounds ?? { x: 0, y: 0, w: doc.width, h: doc.height };
+export function renderExport(doc: StudioDoc, opts: { scale: number; background: boolean; matte?: string | null; only?: Set<string>; bounds?: { x: number; y: number; w: number; h: number }; outW?: number; outH?: number; bleed?: number }): HTMLCanvasElement {
+  const bl = opts.bleed ?? 0;
+  const box = opts.bounds ?? { x: -bl, y: -bl, w: doc.width + 2 * bl, h: doc.height + 2 * bl };
   const c = createCanvas(Math.max(1, Math.round(opts.outW ?? box.w * opts.scale)), Math.max(1, Math.round(opts.outH ?? box.h * opts.scale)));
   const ctx = ctx2d(c);
   if (opts.matte) {
@@ -601,7 +606,7 @@ export function renderExport(doc: StudioDoc, opts: { scale: number; background: 
   }
   ctx.scale(c.width / box.w, c.height / box.h);
   ctx.translate(-box.x, -box.y);
-  renderScene(ctx, doc, { scale: c.width / box.w, background: opts.background, placeholders: false, only: opts.only });
+  renderScene(ctx, doc, { scale: c.width / box.w, background: opts.background, placeholders: false, only: opts.only, bleed: bl });
   return c;
 }
 

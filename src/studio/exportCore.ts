@@ -29,6 +29,8 @@ export interface ExportOptions {
   selectableText: boolean;
   selection: string[];
   name: string;
+  /** PDF for print: 3 mm bleed, trim/bleed boxes and crop marks. */
+  print?: boolean;
   /** GIF / video: slideshow through every page. */
   animation?: { hold: number; transition: Transition; transitionMs: number; fps: number };
 }
@@ -102,20 +104,54 @@ async function buildPdf(doc: StudioDoc, o: ExportOptions): Promise<Blob> {
   const font = o.selectableText ? await pdf.embedFont(lib.StandardFonts.Helvetica) : null;
   for (const i of pagesFor(doc, o.scope)) {
     const pd = pageDoc(doc, i);
-    const canvas = rasterPage(doc, i, o);
+    const [pw, ph] = pdfPageSize(pd.width, pd.height);
     const lossless = o.quality >= 100;
+    // Print: bleed beyond the trim, plus a margin for crop marks outside it.
+    const bleedPt = o.print ? BLEED_PT : 0;
+    const marginPt = o.print ? MARKS_PT : 0;
+    const off = bleedPt + marginPt;
+    const canvas = o.print ? renderExport(pd, { scale: o.scale, background: true, matte: '#ffffff', bleed: bleedPt / (pw / pd.width) }) : rasterPage(doc, i, o);
     const bytes = new Uint8Array(await (await canvasToBlob(canvas, lossless ? 'image/png' : 'image/jpeg', lossless ? undefined : o.quality / 100)).arrayBuffer());
     const img = lossless ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
-    const [pw, ph] = pdfPageSize(pd.width, pd.height);
-    const page = pdf.addPage([pw, ph]);
-    page.drawImage(img, { x: 0, y: 0, width: pw, height: ph });
-    if (font) addTextLayer(lib, page, font, pd, pw / pd.width, ph / pd.height, ph);
+    const page = pdf.addPage([pw + 2 * off, ph + 2 * off]);
+    page.drawImage(img, { x: marginPt, y: marginPt, width: pw + 2 * bleedPt, height: ph + 2 * bleedPt });
+    if (o.print) {
+      page.setTrimBox(off, off, pw, ph);
+      page.setBleedBox(marginPt, marginPt, pw + 2 * bleedPt, ph + 2 * bleedPt);
+      drawCropMarks(lib, page, off, pw, ph, bleedPt);
+    }
+    if (font) {
+      if (off) page.pushOperators(lib.pushGraphicsState(), lib.translate(off, off));
+      addTextLayer(lib, page, font, pd, pw / pd.width, ph / pd.height, ph);
+      if (off) page.pushOperators(lib.popGraphicsState());
+    }
     canvas.width = canvas.height = 0;
   }
   return new Blob([(await pdf.save()) as BlobPart], { type: 'application/pdf' });
 }
 
 type PdfLib = typeof import('pdf-lib');
+
+/** 3 mm bleed, the common print-shop requirement. */
+const BLEED_PT = (3 * 72) / 25.4;
+/** Room outside the bleed for crop marks. */
+const MARKS_PT = 18;
+
+/** Crop marks at the four trim corners, kept outside the bleed so they never print on the piece. */
+function drawCropMarks(lib: PdfLib, page: import('pdf-lib').PDFPage, off: number, w: number, h: number, bleed: number) {
+  const len = MARKS_PT - 4;
+  const gap = bleed + 2;
+  const k = lib.cmyk(1, 1, 1, 1); // registration black
+  const line = (x1: number, y1: number, x2: number, y2: number) => page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: 0.25, color: k });
+  for (const x of [off, off + w]) {
+    for (const y of [off, off + h]) {
+      const sx = x === off ? -1 : 1;
+      const sy = y === off ? -1 : 1;
+      line(x + sx * gap, y, x + sx * (gap + len), y);
+      line(x, y + sy * gap, x, y + sy * (gap + len));
+    }
+  }
+}
 
 /**
  * Invisible text over the image (like a scanned document's OCR layer), placed

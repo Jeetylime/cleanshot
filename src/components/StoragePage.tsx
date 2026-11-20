@@ -140,6 +140,7 @@ export default function StoragePage() {
             </Row>
             <Row label="Canvas images" hint="Photos and logos used by designs, templates and the brand kit" usage={inv?.assets} />
             <Row label="Your templates" hint="Designs saved as templates" usage={inv?.templates} />
+            <Row label="Version history" hint="Earlier versions of your designs (deleted with the design)" usage={inv?.versions} />
             <Row label="Edit sessions" hint="Recent screenshots you can reopen" usage={inv ? { count: inv.sessions.count, bytes: inv.sessions.bytes + inv.sessionImages.bytes } : undefined}>
               <Button variant="danger" className="h-7" disabled={!inv?.sessions.count || !!busy} onClick={() => void act('recents', () => clearRecents(), '')}>
                 <Trash2 size={13} /> Clear

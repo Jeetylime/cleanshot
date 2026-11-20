@@ -85,7 +85,21 @@ type Drag =
   | { kind: 'crop-pan'; start: Point; base: ImageElement }
   | { kind: 'crop-resize'; handle: Exclude<Handle, 'rot'>; start: Point; base: ImageElement }
   | { kind: 'draw'; id: string; pts: Point[] }
-  | { kind: 'erase' };
+  | { kind: 'erase' }
+  | { kind: 'guide'; id: string; axis: 'x' | 'y' };
+
+const RULER = 18;
+
+/** The user guide under a screen point (within 4 px), if any. */
+function guideAt(sp: Point): { id: string; axis: 'x' | 'y' } | null {
+  const s = studio.get();
+  const v = s.view;
+  for (const g of s.doc?.userGuides ?? []) {
+    const d = g.axis === 'x' ? Math.abs(v.x + g.pos * v.zoom - sp.x) : Math.abs(v.y + g.pos * v.zoom - sp.y);
+    if (d <= 4) return g;
+  }
+  return null;
+}
 
 function accent() {
   return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0a84ff';
@@ -284,6 +298,27 @@ export function Stage() {
         }
       }
 
+      // User guides (dragged out of the rulers)
+      if (doc.userGuides?.length) {
+        ctx.save();
+        ctx.strokeStyle = '#00c7be';
+        ctx.lineWidth = 1;
+        for (const g of doc.userGuides) {
+          ctx.beginPath();
+          if (g.axis === 'x') {
+            const gx = Math.round(x + g.pos * zoom) + 0.5;
+            ctx.moveTo(gx, 0);
+            ctx.lineTo(gx, H);
+          } else {
+            const gy = Math.round(y + g.pos * zoom) + 0.5;
+            ctx.moveTo(0, gy);
+            ctx.lineTo(W, gy);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       // Guides
       if (s.guides.length) {
         ctx.strokeStyle = '#ff375f';
@@ -438,6 +473,25 @@ export function Stage() {
       return;
     }
 
+    // Rulers: drag out a new guide (top ruler → horizontal, left ruler → vertical).
+    if (e.button === 0 && getViewOptions().rulers && (sp.y < RULER || sp.x < RULER) && !(sp.y < RULER && sp.x < RULER)) {
+      const axis: 'x' | 'y' = sp.y < RULER ? 'y' : 'x';
+      const id = `g${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      beginGesture();
+      commit((doc) => ({ ...doc, userGuides: [...(doc.userGuides ?? []), { id, axis, pos: axis === 'x' ? p.x : p.y }] }));
+      drag.current = { kind: 'guide', id, axis };
+      setCursor(axis === 'x' ? 'col-resize' : 'row-resize');
+      return;
+    }
+    // Existing guides can be moved (or dragged back onto a ruler to remove them).
+    const ga = e.button === 0 && !e.shiftKey ? guideAt(sp) : null;
+    if (ga && !hitHandle(sp)) {
+      beginGesture();
+      drag.current = { kind: 'guide', id: ga.id, axis: ga.axis };
+      setCursor(ga.axis === 'x' ? 'col-resize' : 'row-resize');
+      return;
+    }
+
     // Crop mode
     if (s.cropId) {
       const el = elementById(s.cropId, s);
@@ -520,7 +574,9 @@ export function Stage() {
       // Hover feedback & cursors
       const sp = screenOf(e.clientX, e.clientY);
       const hh = hitHandle(sp);
+      const gh = hh ? null : guideAt(sp);
       if (spaceDown.current) setCursor('grab');
+      else if (gh) setCursor(gh.axis === 'x' ? 'col-resize' : 'row-resize');
       else if (hh) {
         const rot = hh.frame.rotation;
         setCursor(hh.handle === 'rot' ? 'grab' : resizeCursor(hh.handle, rot));
@@ -543,6 +599,14 @@ export function Stage() {
     }
     if (d.kind === 'erase') {
       eraseAt(p);
+      return;
+    }
+    if (d.kind === 'guide') {
+      // Snap to whole pixels, page edges and the center.
+      let pos = Math.round(d.axis === 'x' ? p.x : p.y);
+      const size = d.axis === 'x' ? s.doc.width : s.doc.height;
+      for (const t of [0, size / 2, size]) if (Math.abs(pos - t) * zoom < 6) pos = t;
+      commit((doc) => ({ ...doc, userGuides: (doc.userGuides ?? []).map((g) => (g.id === d.id ? { ...g, pos } : g)) }));
       return;
     }
     switch (d.kind) {
@@ -801,6 +865,16 @@ export function Stage() {
       setCursor(spaceDown.current ? 'grab' : 'default');
       return;
     }
+    if (d.kind === 'guide') {
+      const sp = screenOf(e.clientX, e.clientY);
+      // Dropped back on its ruler (or off the stage): remove it.
+      if ((d.axis === 'x' ? sp.x < RULER : sp.y < RULER) || !getViewOptions().rulers && (d.axis === 'x' ? sp.x < 0 : sp.y < 0)) {
+        commit((doc) => ({ ...doc, userGuides: (doc.userGuides ?? []).filter((g) => g.id !== d.id) }));
+      }
+      endGesture();
+      setCursor('default');
+      return;
+    }
     if (d.kind === 'marquee') {
       studio.set({ marquee: null });
       return;
@@ -959,6 +1033,7 @@ export function Stage() {
 
 function withGrid(t: ReturnType<typeof snapTargets>, w: number, h: number) {
   const o = getViewOptions();
+  for (const g of studio.get().doc?.userGuides ?? []) (g.axis === 'x' ? t.xs : t.ys).push(g.pos);
   if (o.margins) {
     t.xs.push(o.marginSize, w - o.marginSize);
     t.ys.push(o.marginSize, h - o.marginSize);
