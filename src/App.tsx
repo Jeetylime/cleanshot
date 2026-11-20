@@ -1,3 +1,4 @@
+import { useLang } from './i18n';
 import { Suspense, lazy, useEffect } from 'react';
 import { store, useEditor } from './store/store';
 import { refreshRecents, initAutosave } from './store/actions';
@@ -69,6 +70,8 @@ function Editor() {
 
 export default function App() {
   const route = useRoute();
+  // Re-render everything when the language changes.
+  useLang();
   const dragging = usePasteAndDrop();
   useKeyboardShortcuts();
   useThemeSync();

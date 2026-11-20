@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { Component, Suspense, useRef, useState, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react';
 import { Check, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Popover } from '../components/ui/Popover';
@@ -45,7 +46,7 @@ export function ToolSection({ config, tool }: { config: SectionConfig; tool: str
               <ChevronRight size={14} className="shrink-0 text-subtle" />
               <span className="flex min-w-0 items-center gap-1.5 px-1.5 text-sm font-semibold text-fg" aria-current="page">
                 <meta.icon size={14} className="shrink-0 text-muted" />
-                <span className="truncate">{meta.name}</span>
+                <span className="truncate">{tr(meta.name)}</span>
               </span>
             </>
           )}
@@ -55,7 +56,7 @@ export function ToolSection({ config, tool }: { config: SectionConfig; tool: str
       {meta ? (
         // Landmark + page heading for screen readers and the skip link; the breadcrumb shows the name visually.
         <main className="flex min-h-0 flex-1 flex-col">
-          <h1 className="sr-only">{meta.name}</h1>
+          <h1 className="sr-only">{tr(meta.name)}</h1>
         <Suspense
           fallback={
             <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted">
@@ -93,14 +94,14 @@ function SectionMenu({ config, current }: { config: SectionConfig; current: Sect
           current ? 'text-muted hover:text-fg' : 'font-semibold text-fg'
         }`}
       >
-        <span>{config.label}</span>
+        <span>{tr(config.label)}</span>
         <ChevronDown size={13} className={`shrink-0 text-subtle transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
       <Popover open={open} onClose={() => setOpen(false)} anchor={anchor} align="start" width={300} label={`${config.label} menu`}>
         <div className="scroll-thin max-h-[min(70vh,560px)] overflow-y-auto p-1.5" role="menu">
           {config.groups.map((g) => (
             <div key={g.id} className="pb-1">
-              <div className="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">{g.label}</div>
+              <div className="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">{tr(g.label)}</div>
               {config.tools
                 .filter((t) => t.group === g.id)
                 .map((t) => {
@@ -122,8 +123,8 @@ function SectionMenu({ config, current }: { config: SectionConfig; current: Sect
                         <t.icon size={15} />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="text-sm font-medium text-fg">{t.name}</span>
-                        <span className="truncate text-2xs text-subtle">{t.description}</span>
+                        <span className="text-sm font-medium text-fg">{tr(t.name)}</span>
+                        <span className="truncate text-2xs text-subtle">{tr(t.description)}</span>
                       </span>
                       {active && <Check size={14} className="shrink-0 text-accent" />}
                     </button>
@@ -156,7 +157,7 @@ function Landing({ config }: { config: SectionConfig }) {
       <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-7 animate-rise">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-[length:calc(20px*var(--text-scale))] font-semibold tracking-[-0.02em] text-fg">{config.label}</h1>
+            <h1 className="text-[length:calc(20px*var(--text-scale))] font-semibold tracking-[-0.02em] text-fg">{tr(config.label)}</h1>
             <p className="mt-1 text-sm text-muted">{config.subtitle}</p>
           </div>
           <button type="button" onClick={goPrivacy} className="text-xs text-subtle hover:text-fg hover:underline">
@@ -166,7 +167,7 @@ function Landing({ config }: { config: SectionConfig }) {
         {config.groups.map((g) => (
           <section key={g.id} aria-labelledby={`group-${g.id}`} className="flex flex-col gap-2.5">
             <h2 id={`group-${g.id}`} className="px-0.5 text-2xs font-semibold tracking-[0.04em] text-subtle uppercase">
-              {g.label}
+              {tr(g.label)}
             </h2>
             <div className="grid gap-2.5 sm:grid-cols-2">
               {config.tools
@@ -185,9 +186,9 @@ function Landing({ config }: { config: SectionConfig }) {
                     <span className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
                       <span className="flex items-center gap-1.5">
                         <t.icon size={14} className="text-muted" />
-                        <span className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{t.name}</span>
+                        <span className="truncate text-[length:calc(13px*var(--text-scale))] font-semibold text-fg">{tr(t.name)}</span>
                       </span>
-                      <span className="text-xs leading-[16px] text-muted">{t.description}</span>
+                      <span className="text-xs leading-[16px] text-muted">{tr(t.description)}</span>
                       {t.batch && <span className="text-2xs text-subtle">Batch supported</span>}
                     </span>
                   </button>

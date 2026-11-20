@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { MonitorUp, Timer, Video } from 'lucide-react';
 import { captureScreen, recordingSupported, screenCaptureSupported } from '../lib/screenCapture';
 import { startRecording } from './RecordingBar';
@@ -124,8 +125,8 @@ function globalCommands(): Command[] {
     { id: 'backup', label: 'Back up settings, brand kit and templates…', section: 'Settings', keywords: 'export backup restore move browser transfer', icon: <HardDrive size={15} />, run: goStorage },
     { id: 'new-design', label: 'New design', section: 'Create', keywords: 'canvas create blank start template poster', icon: <Plus size={15} />, run: goCanvas },
   ];
-  for (const t of TOOLS) cmds.push({ id: `tool-${t.key}`, label: t.name, section: 'Image Tools', keywords: t.description, icon: <t.icon size={15} />, run: () => goTools(t.key) });
-  for (const t of PDF_TOOLS) cmds.push({ id: `pdf-${t.key}`, label: t.name, section: 'PDF Tools', keywords: `pdf ${t.description}`, icon: <t.icon size={15} />, run: () => goPdf(t.key as PdfToolKey) });
+  for (const t of TOOLS) cmds.push({ id: `tool-${t.key}`, label: tr(t.name), section: 'Image Tools', keywords: `${t.name} ${t.description} ${tr(t.description)}`, icon: <t.icon size={15} />, run: () => goTools(t.key) });
+  for (const t of PDF_TOOLS) cmds.push({ id: `pdf-${t.key}`, label: tr(t.name), section: 'PDF Tools', keywords: `pdf ${t.name} ${t.description} ${tr(t.description)}`, icon: <t.icon size={15} />, run: () => goPdf(t.key as PdfToolKey) });
   cmds.push(
     { id: 'theme-dark', label: 'Theme: Dark', section: 'Settings', keywords: 'appearance mode night', icon: <Moon size={15} />, run: () => setTheme('dark') },
     { id: 'theme-light', label: 'Theme: Light', section: 'Settings', keywords: 'appearance mode day', icon: <Sun size={15} />, run: () => setTheme('light') },

@@ -1,3 +1,4 @@
+import { getLang, getLangPref, LANGUAGES, setLangPref, t as tr, useLang, type LangPref } from '../i18n';
 import { useRef, useState } from 'react';
 import {
   ScanText,
@@ -114,7 +115,7 @@ export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobil
         <div className="p-1.5" role="menu">
           {SECTIONS.map((sec) => {
             const active = route.section === sec.id;
-            const hint = sec.id === 'editor' && docName ? `Continue “${docName}”` : sec.hint;
+            const hint = sec.id === 'editor' && docName ? `Continue “${docName}”` : tr(sec.hint);
             return (
               <button
                 key={sec.id}
@@ -130,7 +131,7 @@ export function HomeLogo({ hideWordmarkOnMobile = false }: { hideWordmarkOnMobil
                   <sec.icon size={15} />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-sm font-medium text-fg">{sec.label}</span>
+                  <span className="text-sm font-medium text-fg">{tr(sec.label)}</span>
                   <span className="truncate text-2xs text-subtle">{hint}</span>
                 </span>
                 {active && <Check size={14} className="shrink-0 text-accent" />}
@@ -195,7 +196,7 @@ function SearchButton() {
         className="mr-1 hidden h-[28px] w-[200px] items-center gap-2 rounded-[8px] bg-control px-2.5 text-left text-xs text-subtle transition-colors hover:bg-hover hover:text-muted lg:flex"
       >
         <Search size={13} className="shrink-0" aria-hidden="true" />
-        <span className="flex-1">Search…</span>
+        <span className="flex-1">{tr('Search…')}</span>
         <kbd className="rounded-[4px] border border-line px-1 text-2xs" aria-hidden="true">
           {modKey === '⌘' ? '⌘K' : 'Ctrl K'}
         </kbd>
@@ -322,6 +323,8 @@ function ZoomControl() {
 export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  useLang();
+  const langPref = getLangPref();
   const { theme, backdrop, a11y, hasDoc, hasRecents } = useEditor(
     (s) => ({ theme: s.theme, backdrop: s.backdrop, a11y: s.a11y, hasDoc: !!s.doc, hasRecents: s.recents.length > 0 }),
     shallowEqual,
@@ -357,14 +360,14 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
   return (
     <div className="flex shrink-0 items-center">
       <SearchButton />
-      <IconButton ref={anchor} label="Settings" onClick={() => setOpen((o) => !o)} active={false} aria-haspopup="menu">
+      <IconButton ref={anchor} label={tr('Settings')} onClick={() => setOpen((o) => !o)} active={false} aria-haspopup="menu">
         <Settings size={16} />
       </IconButton>
-      <Popover open={open} onClose={close} anchor={anchor} width={268} label="Settings">
+      <Popover open={open} onClose={close} anchor={anchor} width={268} label={tr('Settings')}>
         {/* Settings controls first (radio groups and switches), then a menu of actions and links.
             Only the second part is an ARIA menu, which may contain only menu items. */}
         <div className="p-1 pb-0">
-          <MenuLabel id="settings-theme">Appearance</MenuLabel>
+          <MenuLabel id="settings-theme">{tr('Appearance')}</MenuLabel>
           <div className="flex gap-1 px-1 pb-1.5" role="radiogroup" aria-labelledby="settings-theme">
             {themes.map((t) => (
               <button
@@ -378,13 +381,13 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
                 }`}
               >
                 {t.icon}
-                {t.label}
+                {tr(t.label)}
               </button>
             ))}
           </div>
           {editorItems && (
             <>
-          <MenuLabel id="settings-backdrop">Workspace background</MenuLabel>
+          <MenuLabel id="settings-backdrop">{tr('Workspace background')}</MenuLabel>
           <div className="flex gap-1 px-1 pb-1.5" role="radiogroup" aria-labelledby="settings-backdrop">
             {backdrops.map((b) => (
               <button
@@ -399,15 +402,15 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
                 }`}
               >
                 <span className="h-3 w-3 rounded-[3px] ring-1 ring-line-strong" style={{ background: b.swatch }} />
-                {b.label}
+                {tr(b.label)}
               </button>
             ))}
           </div>
             </>
           )}
-          <MenuLabel>Accessibility</MenuLabel>
+          <MenuLabel>{tr('Accessibility')}</MenuLabel>
           <div className="flex flex-col gap-1 px-1 pb-1.5">
-            <div className="flex gap-1" role="radiogroup" aria-label="Text size">
+            <div className="flex gap-1" role="radiogroup" aria-label={tr('Text size')}>
               {textSizes.map((t) => (
                 <button
                   key={t.id}
@@ -420,7 +423,7 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
                   }`}
                 >
                   <span className={`font-semibold ${t.cls}`}>A</span>
-                  <span className="text-xs">{t.label}</span>
+                  <span className="text-xs">{tr(t.label)}</span>
                 </button>
               ))}
             </div>
@@ -428,11 +431,28 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
               <label key={t.key} className="flex min-h-[24px] items-center justify-between gap-2 rounded-[6px] px-1.5 text-sm text-fg hover:bg-hover">
                 <span className="flex items-center gap-2.5">
                   <span className="flex w-4 justify-center text-muted">{t.icon}</span>
-                  {t.label}
+                  {tr(t.label)}
                 </span>
-                <Toggle checked={a11y[t.key]} onChange={(v) => actions.setA11y({ [t.key]: v })} label={t.label} />
+                <Toggle checked={a11y[t.key]} onChange={(v) => actions.setA11y({ [t.key]: v })} label={tr(t.label)} />
               </label>
             ))}
+          </div>
+          <MenuLabel id="settings-lang">{tr('Language')}</MenuLabel>
+          <div className="px-1 pb-1.5">
+            <select
+              aria-labelledby="settings-lang"
+              value={langPref}
+              onChange={(e) => setLangPref(e.target.value as LangPref)}
+              className="h-8 w-full rounded-[7px] bg-control px-2 text-sm text-fg outline-none ring-accent focus:ring-1"
+            >
+              <option value="auto">{tr('Automatic')}</option>
+              {LANGUAGES.map((l) => (
+                <option key={l.id} value={l.id} lang={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+            {getLang() !== 'en' && <p className="px-0.5 pt-1 text-2xs leading-[14px] text-subtle">{tr('Translations cover menus and tool names; tool panels are in English.')}</p>}
           </div>
         </div>
         <div className="p-1 pt-0" role="menu" aria-label="Studiolo">
@@ -484,7 +504,7 @@ export function SettingsMenu({ editorItems = true }: { editorItems?: boolean }) 
             Open Source Licenses
           </MenuItem>
           <MenuSeparator />
-          <MenuLabel>Legal</MenuLabel>
+          <MenuLabel>{tr('Legal')}</MenuLabel>
           <MenuItem icon={<Scale size={14} />} onClick={run(() => goLegal('terms'))}>
             Terms of Service
           </MenuItem>

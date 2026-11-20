@@ -1,3 +1,4 @@
+import { getLang, t as tr } from '../i18n';
 import { Suspense, lazy, type ReactNode } from 'react';
 import { ArrowRight, ImagePlus, LayoutTemplate } from 'lucide-react';
 import { useEditor, shallowEqual } from '../store/store';
@@ -27,8 +28,8 @@ export function StartScreen() {
       <main className="scroll-thin flex flex-1 justify-center overflow-y-auto px-5 py-10 sm:items-center">
         <div className="flex w-full max-w-[1180px] flex-col gap-8 animate-rise">
           <div className="text-center">
-            <h1 className="text-[length:calc(22px*var(--text-scale))] font-semibold tracking-[-0.02em] text-balance text-fg">What are you working on?</h1>
-            <p className="mt-1.5 text-sm text-muted">Edit an image, design something new, or reach for a quick image or PDF utility.</p>
+            <h1 className="text-[length:calc(22px*var(--text-scale))] font-semibold tracking-[-0.02em] text-balance text-fg">{tr('What are you working on?')}</h1>
+            <p className="mt-1.5 text-sm text-muted">{tr('Edit an image, design something new, or reach for a quick image or PDF utility.')}</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -47,10 +48,10 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Edit</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{tr('Edit')}</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
-                  <p className="text-sm text-muted">Annotate, blur and redact a screenshot or photo, frame it on a background and export.</p>
+                  <p className="text-sm text-muted">{tr('Annotate, blur and redact a screenshot or photo, frame it on a background and export.')}</p>
                 </div>
               </button>
               <div className="mt-auto flex flex-wrap items-center gap-2 px-5 pt-4 pb-5">
@@ -92,10 +93,10 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Canvas</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{tr('Canvas')}</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
-                  <p className="text-sm text-muted">Design posts, thumbnails, banners and slides from scratch or a template.</p>
+                  <p className="text-sm text-muted">{tr('Design posts, thumbnails, banners and slides from scratch or a template.')}</p>
                 </div>
               </button>
               <div className="mt-auto flex flex-wrap items-center gap-2 px-5 pt-4 pb-5">
@@ -121,7 +122,7 @@ export function StartScreen() {
               >
                 <div className="flex h-[176px] items-center justify-center bg-window px-8">
                   <div className="grid grid-cols-4 gap-2.5 transition-transform duration-300 group-hover:scale-[1.02]">
-                    {TOOLS.map((t) => (
+                    {TOOLS.slice(0, 12).map((t) => (
                       <span
                         key={t.key}
                         className={`relative flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-line bg-panel shadow-soft ${
@@ -135,10 +136,10 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">Image Tools</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{tr('Image Tools')}</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
-                  <p className="text-sm text-muted">Remove backgrounds, upscale, compress, convert, resize and inspect any image.</p>
+                  <p className="text-sm text-muted">{tr('Remove backgrounds, upscale, compress, convert, resize and inspect any image.')}</p>
                 </div>
               </button>
               <div className="mt-auto flex flex-wrap gap-1.5 px-5 pt-4 pb-5">
@@ -151,7 +152,7 @@ export function StartScreen() {
                     className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-control px-2.5 text-xs font-medium text-muted transition-colors hover:bg-active hover:text-fg"
                   >
                     <t.icon size={13} />
-                    {t.name.replace('Image ', '')}
+                    {getLang() === 'en' ? t.name.replace('Image ', '') : tr(t.name)}
                   </button>
                 ))}
               </div>
@@ -162,7 +163,7 @@ export function StartScreen() {
               <button type="button" onClick={() => goPdf()} className="flex flex-col text-left" data-testid="open-pdf">
                 <div className="flex h-[176px] items-center justify-center bg-window px-8">
                   <div className="grid grid-cols-4 gap-2.5 transition-transform duration-300 group-hover:scale-[1.02]">
-                    {PDF_TOOLS.map((t) => (
+                    {PDF_TOOLS.slice(0, 11).map((t) => (
                       <span key={t.key} className="relative flex h-[46px] w-[46px] items-center justify-center rounded-[12px] border border-line bg-panel text-muted shadow-soft">
                         <t.icon size={19} strokeWidth={1.8} />
                       </span>
@@ -174,10 +175,10 @@ export function StartScreen() {
                 </div>
                 <div className="flex flex-col gap-1.5 px-5 pt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">PDF Tools</h2>
+                    <h2 className="text-[length:calc(15px*var(--text-scale))] font-semibold text-fg">{tr('PDF Tools')}</h2>
                     <ArrowRight size={16} className="text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                   </div>
-                  <p className="text-sm text-muted">Merge, split, organize, sign, compress and convert PDFs without uploading them.</p>
+                  <p className="text-sm text-muted">{tr('Merge, split, organize, sign, compress and convert PDFs without uploading them.')}</p>
                 </div>
               </button>
               <div className="mt-auto flex flex-wrap gap-1.5 px-5 pt-4 pb-5">
@@ -190,7 +191,7 @@ export function StartScreen() {
                     className="inline-flex h-7 items-center gap-1.5 rounded-[7px] bg-control px-2.5 text-xs font-medium text-muted transition-colors hover:bg-active hover:text-fg"
                   >
                     <t.icon size={13} />
-                    {t.name.replace(/ PDFs?$/, '').replace('PDF ', '')}
+                    {getLang() === 'en' ? t.name.replace(/ PDFs?$/, '').replace('PDF ', '') : tr(t.name)}
                   </button>
                 ))}
               </div>
@@ -247,10 +248,10 @@ function ContinueRow() {
   // Wait for the design lookup so the row doesn't appear and then reflow.
   if (!ready || !Object.keys(items).length) return null;
   const empty: Record<RecentKind, string> = {
-    edit: 'Images you edit will appear here.',
-    design: 'Designs you make will appear here.',
-    tool: 'The image tool you use last will appear here.',
-    pdf: 'The PDF tool you use last will appear here.',
+    edit: tr('Images you edit will appear here.'),
+    design: tr('Designs you make will appear here.'),
+    tool: tr('The image tool you use last will appear here.'),
+    pdf: tr('The PDF tool you use last will appear here.'),
   };
   return (
     <section aria-labelledby="continue-heading" className="flex flex-col gap-2.5">
