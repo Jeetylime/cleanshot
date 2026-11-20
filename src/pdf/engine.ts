@@ -77,6 +77,8 @@ export interface PdfFile {
   size: number;
   bytes: ArrayBuffer;
   pageCount: number;
+  /** Set when loaded with `allowEncrypted` and the file is encrypted. */
+  encrypted?: 'password' | 'restricted';
 }
 
 export class PdfError extends Error {}
@@ -92,6 +94,8 @@ export interface LoadPdfOptions {
    * restrictions), which pdf-lib can't modify.
    */
   readOnly?: boolean;
+  /** Accept encrypted files as they are (the Unlock tool asks for the password). */
+  allowEncrypted?: boolean;
 }
 
 /**
@@ -123,12 +127,13 @@ export async function loadPdfFile(file: File, opts: LoadPdfOptions = {}): Promis
   }
   if (doc.isEncrypted) {
     const pages = await opensWithoutPassword(bytes);
+    if (opts.allowEncrypted) return { id: uid('pdf'), name: file.name, size: file.size, bytes, pageCount: pages ?? 0, encrypted: pages === null ? 'password' : 'restricted' };
     if (pages === null) {
-      throw new PdfError(`“${file.name}” is password-protected. Remove the password in your PDF reader, then try again.`);
+      throw new PdfError(`“${file.name}” is password-protected. Use Unlock PDF to remove the password first.`);
     }
     if (opts.readOnly) return { id: uid('pdf'), name: file.name, size: file.size, bytes, pageCount: pages };
     throw new PdfError(
-      `“${file.name}” has editing restrictions set by its author, so it can’t be changed here. PDF to Images and Extract Text can still open it, or use Print → Save as PDF in your reader to make an unrestricted copy.`,
+      `“${file.name}” has editing restrictions set by its author, so it can’t be changed here. PDF to Images and Extract Text can still open it, and Unlock PDF can remove the restriction with the owner password.`,
     );
   }
   return { id: uid('pdf'), name: file.name, size: file.size, bytes, pageCount: doc.getPageCount() };

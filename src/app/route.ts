@@ -51,9 +51,9 @@ export const TOOL_KEYS: ToolKey[] = [
   'image-to-svg',
 ];
 
-export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form';
+export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form' | 'pdf-protect' | 'pdf-unlock' | 'pdf-redact' | 'pdf-compare' | 'pdf-metadata';
 
-export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop', 'pdf-form'];
+export const PDF_TOOL_KEYS: PdfToolKey[] = ['pdf-merge', 'pdf-split', 'pdf-organize', 'pdf-compress', 'images-to-pdf', 'pdf-to-images', 'pdf-sign', 'pdf-stamp', 'pdf-text', 'pdf-crop', 'pdf-form', 'pdf-protect', 'pdf-unlock', 'pdf-redact', 'pdf-compare', 'pdf-metadata'];
 
 export type LegalDoc = 'terms' | 'privacy-policy' | 'accessibility' | 'licenses';
 

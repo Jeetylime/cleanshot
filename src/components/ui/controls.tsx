@@ -430,7 +430,9 @@ export function Button({
   disabled,
   type = 'button',
   title,
+  'aria-label': ariaLabel,
 }: {
+  'aria-label'?: string;
   children: ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -449,6 +451,7 @@ export function Button({
     <button
       type={type}
       title={title}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
       className={`inline-flex h-7 items-center justify-center gap-1.5 rounded-[7px] px-2.5 text-xs font-medium whitespace-nowrap transition-[background-color,transform,color] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 ${styles} ${className}`}

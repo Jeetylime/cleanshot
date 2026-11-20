@@ -11,6 +11,7 @@ export const PDF_ACCEPT = 'application/pdf,.pdf';
 /** A list of loaded PDFs (validated, with page counts). */
 export function usePdfList(multiple: boolean, opts: LoadPdfOptions = {}) {
   const readOnly = !!opts.readOnly;
+  const allowEncrypted = !!opts.allowEncrypted;
   const [items, setItems] = useState<PdfFile[]>([]);
   const [loading, setLoading] = useState(0);
   const add = useCallback(
@@ -20,7 +21,7 @@ export function usePdfList(multiple: boolean, opts: LoadPdfOptions = {}) {
       const loaded: PdfFile[] = [];
       for (const f of list) {
         try {
-          loaded.push(await loadPdfFile(f, { readOnly }));
+          loaded.push(await loadPdfFile(f, { readOnly, allowEncrypted }));
         } catch (err) {
           showToast(errorMessage(err), 'error');
         } finally {
@@ -29,7 +30,7 @@ export function usePdfList(multiple: boolean, opts: LoadPdfOptions = {}) {
       }
       if (loaded.length) setItems((prev) => (multiple ? [...prev, ...loaded] : loaded.slice(0, 1)));
     },
-    [multiple, readOnly],
+    [multiple, readOnly, allowEncrypted],
   );
   const remove = (id: string) => setItems((p) => p.filter((x) => x.id !== id));
   const move = (id: string, dir: -1 | 1) =>
