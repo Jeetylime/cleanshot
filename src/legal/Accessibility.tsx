@@ -1,7 +1,7 @@
 import { ContactBlock, List, Section, Strong } from './blocks';
 
 /** Date of the accessibility evaluation described below. Update it after each re-test. */
-const EVALUATED = 'November 17, 2026';
+const EVALUATED = 'November 20, 2026';
 
 /** Accessibility conformance statement: status, how it was evaluated, features, known gaps and feedback. */
 export function Accessibility() {
@@ -66,10 +66,16 @@ export function Accessibility() {
           <li>
             <Strong>Some edits still need a pointer.</Strong> Cropping an image inside a Canvas frame and the Background Remover’s Erase and Restore brushes are done by
             dragging. Freehand drawing and drawn signatures are exempt because the path itself is the content, and Sign PDF also lets you type a signature instead.
+            Also by dragging: marking areas by hand in Redact PDF (Find and mark, and the email, phone, card and IBAN buttons, work from the keyboard), adding ruler
+            guides in Canvas, and moving a magnifier’s source point in Edit (Enter adds a magnifier in the middle of the image).
           </li>
           <li>
             <Strong>Before-and-after comparison sliders</Strong> can be moved with the arrow keys, but what they compare is visual. The file sizes and results are also
             shown as text.
+          </li>
+          <li>
+            <Strong>Translations are partial.</Strong> In Spanish, French, German and Portuguese, menus, settings and tool names are translated, but tool panels and
+            messages are still in English.
           </li>
           <li>
             <Strong>Images you create don’t get alternative text automatically.</Strong> Add a description wherever you publish them.

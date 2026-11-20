@@ -190,7 +190,7 @@ export function PaddingPanel() {
                 aria-pressed={active}
                 onClick={() => (d.id === 'none' ? actions.updateBackground({ device: 'none' }) : setBg({ device: d.id }))}
                 className={`flex h-[52px] flex-col items-center justify-center gap-1 rounded-[7px] text-2xs font-medium transition-colors ${
-                  active ? 'bg-accent-soft text-accent ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
+                  active ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'
                 }`}
               >
                 <DeviceThumb id={d.id} />

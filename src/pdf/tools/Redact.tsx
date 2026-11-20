@@ -213,7 +213,7 @@ export default function Redact() {
             {boxes.length ? (
               <div className="flex flex-wrap gap-1">
                 {[...pagesWithBoxes].sort((x, y) => x - y).map((p) => (
-                  <button key={p} type="button" onClick={() => setPage(p)} className={`h-[24px] rounded-[6px] px-2 text-xs ${p === page ? 'bg-accent-soft text-accent' : 'bg-control text-fg hover:bg-hover'}`}>
+                  <button key={p} type="button" onClick={() => setPage(p)} className={`h-[24px] rounded-[6px] px-2 text-xs ${p === page ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-fg hover:bg-hover'}`}>
                     p.{p} · {boxes.filter((b) => b.page === p).length}
                   </button>
                 ))}

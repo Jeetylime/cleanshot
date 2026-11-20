@@ -137,7 +137,7 @@ export default function Filters() {
                     setAdj({ ...NEUTRAL, ...p.adj });
                     setPreset(p.id);
                   }}
-                  className={`h-[28px] rounded-[7px] text-xs font-medium transition-colors ${preset === p.id ? 'bg-accent-soft text-accent ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'}`}
+                  className={`h-[28px] rounded-[7px] text-xs font-medium transition-colors ${preset === p.id ? 'bg-accent-soft text-fg ring-1 ring-accent' : 'bg-control text-muted hover:bg-hover hover:text-fg'}`}
                 >
                   {p.name}
                 </button>
