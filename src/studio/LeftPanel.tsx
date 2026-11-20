@@ -690,7 +690,7 @@ function UploadsPanel() {
         onDrop={(e) => {
           e.preventDefault();
           setOver(false);
-          const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'));
+          const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
           if (files.length) void A.addImageFiles(files);
         }}
         className={`flex flex-col items-center justify-center gap-1.5 rounded-[12px] border border-dashed px-3 py-6 text-center transition-colors ${

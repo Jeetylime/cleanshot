@@ -165,7 +165,7 @@ function firstImageFile(dt: DataTransfer | null): File | null {
     }
   }
   for (const f of Array.from(dt.files ?? [])) {
-    if (f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(f.name)) return f;
+    if (f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|avif|heic|heif)$/i.test(f.name)) return f;
   }
   return null;
 }
@@ -174,7 +174,7 @@ export function allImageFiles(dt: DataTransfer | null): File[] {
   if (!dt) return [];
   const out: File[] = [];
   for (const f of Array.from(dt.files ?? [])) {
-    if (f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(f.name)) out.push(f);
+    if (f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|avif|heic|heif)$/i.test(f.name)) out.push(f);
   }
   if (!out.length) {
     for (const item of Array.from(dt.items ?? [])) {

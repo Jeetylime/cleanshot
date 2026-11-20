@@ -1,6 +1,6 @@
 import { lazyTool } from './lazyTool';
 import { type ComponentType, type LazyExoticComponent } from 'react';
-import { AppWindow, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
+import { AppWindow, PenTool, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -80,7 +80,7 @@ export const TOOLS: ToolMeta[] = [
   {
     key: 'converter',
     name: 'Image Converter',
-    description: 'Convert between PNG, JPEG, WebP and AVIF in bulk.',
+    description: 'Convert HEIC, PNG, JPEG, WebP and AVIF in bulk (iPhone photos to JPG).',
     group: 'optimization',
     icon: ArrowLeftRight,
     ai: false,
@@ -186,6 +186,16 @@ export const TOOLS: ToolMeta[] = [
     ai: false,
     batch: false,
     ...lazyTool(() => import('./social/SocialSizes')),
+  },
+  {
+    key: 'image-to-svg',
+    name: 'Image to SVG',
+    description: 'Trace logos and flat art into scalable vector shapes.',
+    group: 'optimization',
+    icon: PenTool,
+    ai: false,
+    batch: false,
+    ...lazyTool(() => import('./trace/ImageToSvg')),
   },
   {
     key: 'sprite-sheet',

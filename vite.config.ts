@@ -74,6 +74,7 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
-    chunkSizeWarningLimit: 1500,
+    // The lazily loaded HEIC decoder (libheif WebAssembly) is ~2 MB.
+    chunkSizeWarningLimit: 2100,
   },
 });

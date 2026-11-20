@@ -39,7 +39,7 @@ launchQueue?.setConsumer(async (params) => {
   const files = await Promise.all(params.files.map((h) => h.getFile()));
   const pdfs = files.filter(isPdf);
   if (pdfs.length) return openFilesIn({ section: 'pdf', tool: pdfs.length > 1 ? 'pdf-merge' : 'pdf-organize' }, pdfs);
-  const images = files.filter((f) => f.type.startsWith('image/'));
+  const images = files.filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
   if (images.length > 1) return openFilesIn({ section: 'tools', tool: 'compressor' }, images);
   if (images[0]) {
     goEditor();

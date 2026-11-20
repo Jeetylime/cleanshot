@@ -909,7 +909,7 @@ export function Stage() {
       dropPayload(data, p);
       return;
     }
-    const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'));
+    const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
     if (files.length) {
       e.preventDefault();
       // Dropping onto an image while it's selected replaces it

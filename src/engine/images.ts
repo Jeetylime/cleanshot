@@ -177,7 +177,15 @@ export async function decodeImage(blob: Blob): Promise<ImageSource> {
   try {
     src = await createImageBitmap(blob);
   } catch {
-    src = await decodeWithElement(blob);
+    // HEIC (iPhone photos): native in Safari, WebAssembly decoder elsewhere.
+    const heic = await import('../lib/heic');
+    if (heic.isHeic(blob as Blob & { name?: string })) {
+      try {
+        src = await decodeWithElement(blob);
+      } catch {
+        src = await heic.decodeHeic(blob);
+      }
+    } else src = await decodeWithElement(blob);
   }
   if (!src.width || !src.height) throw new Error('Image has no pixels');
   return src;

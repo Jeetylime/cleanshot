@@ -25,7 +25,8 @@ export type ToolKey =
   | 'social-sizes'
   | 'image-diff'
   | 'photo-filters'
-  | 'animation';
+  | 'animation'
+  | 'image-to-svg';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -47,6 +48,7 @@ export const TOOL_KEYS: ToolKey[] = [
   'image-diff',
   'photo-filters',
   'animation',
+  'image-to-svg',
 ];
 
 export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form';

@@ -6,8 +6,8 @@ import { uid } from '../../lib/utils';
  * URL bookkeeping and memory release.
  */
 
-export const ACCEPT = 'image/png,image/jpeg,image/webp,image/avif,image/gif,image/bmp';
-const EXT_RE = /\.(png|jpe?g|webp|avif|gif|bmp)$/i;
+export const ACCEPT = 'image/png,image/jpeg,image/webp,image/avif,image/gif,image/bmp,image/heic,image/heif,.heic,.heif';
+const EXT_RE = /\.(png|jpe?g|webp|avif|gif|bmp|heic|heif)$/i;
 export const MAX_FILE_BYTES = 150 * 1024 * 1024;
 
 export interface LoadedImage {
@@ -39,14 +39,14 @@ function inferType(file: Blob & { name?: string }): string {
 
 export function isSupportedFile(file: Blob & { name?: string }): boolean {
   const t = inferType(file);
-  return /^image\/(png|jpeg|webp|avif|gif|bmp)$/.test(t) || (!!file.name && EXT_RE.test(file.name));
+  return /^image\/(png|jpeg|webp|avif|gif|bmp|heic|heif)$/.test(t) || (!!file.name && EXT_RE.test(file.name));
 }
 
 /** Validate and decode an image file. Throws ImageLoadError with a readable message. */
 export async function loadImage(file: Blob & { name?: string; lastModified?: number }): Promise<LoadedImage> {
   const name = file.name || 'image.png';
   if (!isSupportedFile(file)) {
-    throw new ImageLoadError(`“${name}” isn’t a supported image. Use PNG, JPEG, WebP, AVIF, GIF or BMP.`);
+    throw new ImageLoadError(`“${name}” isn’t a supported image. Use PNG, JPEG, WebP, AVIF, GIF, BMP or HEIC.`);
   }
   if (file.size > MAX_FILE_BYTES) {
     throw new ImageLoadError(`“${name}” is larger than 150 MB.`);

@@ -1,6 +1,6 @@
 import { openImageBlob } from '../store/actions';
 
-export const ACCEPTED_TYPES = 'image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif';
+export const ACCEPTED_TYPES = 'image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif';
 
 /** Open the system file picker and load the chosen image. */
 export function openFilePicker() {

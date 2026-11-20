@@ -160,6 +160,14 @@ const PREVIEWS: Record<ToolKey, React.ReactNode> = {
       ))}
     </g>
   ),
+  'image-to-svg': (
+    <g>
+      <path d="M10 46 C 18 14, 34 14, 38 30 S 58 46, 66 14" fill="none" stroke="#0a84ff" strokeWidth="2.5" />
+      {[[10, 46], [38, 30], [66, 14]].map(([x, y]) => (
+        <rect key={x} x={x - 3} y={y - 3} width="6" height="6" fill="#fff" stroke="#0a84ff" strokeWidth="1.5" />
+      ))}
+    </g>
+  ),
   splitter: (
     <g>
       {mountains(8, 14, 60, 32)}
