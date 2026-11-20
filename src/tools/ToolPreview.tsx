@@ -149,6 +149,17 @@ const PREVIEWS: Record<ToolKey, React.ReactNode> = {
       <line x1="38" y1="8" x2="38" y2="52" stroke="#fff" strokeWidth="1.5" />
     </g>
   ),
+  animation: (
+    <g>
+      <rect x="6" y="12" width="64" height="36" rx="3" fill="#1d1d1f" />
+      {[0, 1, 2].map((i) => (
+        <rect key={i} x={10 + i * 20} y="18" width="16" height="22" rx="2" fill={['#ff9f0a', '#30d158', '#0a84ff'][i]} opacity={1 - i * 0.25} />
+      ))}
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <rect key={i} x={9 + i * 8} y="43" width="4" height="3" rx="0.5" fill="#fff" opacity="0.6" />
+      ))}
+    </g>
+  ),
   splitter: (
     <g>
       {mountains(8, 14, 60, 32)}

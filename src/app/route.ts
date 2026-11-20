@@ -24,7 +24,8 @@ export type ToolKey =
   | 'batch-rename'
   | 'social-sizes'
   | 'image-diff'
-  | 'photo-filters';
+  | 'photo-filters'
+  | 'animation';
 
 export const TOOL_KEYS: ToolKey[] = [
   'background-remover',
@@ -45,6 +46,7 @@ export const TOOL_KEYS: ToolKey[] = [
   'social-sizes',
   'image-diff',
   'photo-filters',
+  'animation',
 ];
 
 export type PdfToolKey = 'pdf-merge' | 'pdf-split' | 'pdf-organize' | 'pdf-compress' | 'images-to-pdf' | 'pdf-to-images' | 'pdf-sign' | 'pdf-stamp' | 'pdf-text' | 'pdf-crop' | 'pdf-form';

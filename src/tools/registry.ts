@@ -1,6 +1,6 @@
 import { lazyTool } from './lazyTool';
 import { type ComponentType, type LazyExoticComponent } from 'react';
-import { AppWindow, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
+import { AppWindow, Clapperboard, Film, ArrowLeftRight, Crop, Droplet, Eraser, Expand, FileSearch, FileText, GitCompareArrows, Grid2x2, LayoutDashboard, LayoutGrid, Pipette, Scaling, Share2, Shrink, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import type { ToolKey } from '../app/route';
 
 export type ToolGroupId = 'ai' | 'editing' | 'optimization' | 'utilities';
@@ -156,6 +156,16 @@ export const TOOLS: ToolMeta[] = [
     ai: false,
     batch: true,
     ...lazyTool(() => import('./filters/Filters')),
+  },
+  {
+    key: 'animation',
+    name: 'GIF & Video Maker',
+    description: 'Turn images into an animated GIF or video slideshow with transitions.',
+    group: 'editing',
+    icon: Clapperboard,
+    ai: false,
+    batch: true,
+    ...lazyTool(() => import('./animation/AnimationMaker')),
   },
   {
     key: 'splitter',

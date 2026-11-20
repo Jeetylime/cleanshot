@@ -8,7 +8,8 @@ import { formatBytes } from '../lib/utils';
 import { showToast } from '../store/actions';
 import { studio, useStudio, shallowEqual } from './store';
 import { allPages, pageDoc } from './pages';
-import { produce, outputSize, prepare, selectionBounds, type Format, type Scope } from './exportCore';
+import { isAnimated, produce, outputSize, prepare, selectionBounds, type Format, type Scope } from './exportCore';
+import { videoType, type Transition } from '../lib/animate';
 import { renderExport } from './render';
 
 const PREFS_KEY = 'cleanshot:studio-export';
@@ -17,10 +18,15 @@ interface Prefs {
   format: Format;
   quality: number;
   selectableText: boolean;
+  /** GIF / video: seconds per page, transition and frame rate. */
+  hold: number;
+  transition: Transition;
+  transitionMs: number;
+  fps: number;
 }
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { format: 'png', quality: 90, selectableText: true };
+  const d: Prefs = { format: 'png', quality: 90, selectableText: true, hold: 1.5, transition: 'fade', transitionMs: 500, fps: 20 };
   try {
     return { ...d, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
   } catch {
@@ -28,7 +34,7 @@ function loadPrefs(): Prefs {
   }
 }
 
-const EXT: Record<Format, string> = { png: 'png', jpeg: 'jpg', webp: 'webp', pdf: 'pdf', svg: 'svg' };
+const EXT: Record<Format, string> = { png: 'png', jpeg: 'jpg', webp: 'webp', pdf: 'pdf', svg: 'svg', gif: 'gif', video: 'webm' };
 
 export function ExportDialog() {
   const { doc, open, selection } = useStudio((s) => ({ doc: s.doc, open: s.exportOpen, selection: s.selection }), shallowEqual);
@@ -66,12 +72,15 @@ export function ExportDialog() {
     }
   }, [prefs]);
 
-  const fmt = prefs.format;
+  // GIF / video need several pages; a one-page design falls back to PNG.
+  const fmt: Format = isAnimated(prefs.format) && (pages < 2 || (prefs.format === 'video' && !videoType())) ? 'png' : prefs.format;
   const isPdf = fmt === 'pdf';
   const isSvg = fmt === 'svg';
+  const animated = isAnimated(fmt);
   const canTransparent = fmt === 'png' || fmt === 'webp' || fmt === 'svg';
   const bgIsTransparent = doc?.background.kind === 'transparent';
-  const sel = scope === 'selection';
+  // GIF / video always animate whole pages.
+  const sel = scope === 'selection' && !animated;
 
   const base = useMemo(() => {
     if (!doc) return { w: 1, h: 1 };
@@ -87,7 +96,7 @@ export function ExportDialog() {
 
   const options = () => ({
     format: fmt,
-    scope,
+    scope: animated ? ('all' as Scope) : scope,
     scale: out.width / base.w,
     width: out.width,
     height: out.height,
@@ -96,6 +105,7 @@ export function ExportDialog() {
     selectableText: prefs.selectableText,
     selection,
     name,
+    animation: { hold: prefs.hold * 1000, transition: prefs.transition, transitionMs: prefs.transitionMs, fps: prefs.fps },
   });
 
   // Live preview of the first page (debounced); file size for single files.
@@ -106,7 +116,7 @@ export function ExportDialog() {
       try {
         let res: { preview: Blob; bytes: number | null };
         const multi = scope === 'all' && pages > 1;
-        if (isPdf || multi) {
+        if (isPdf || multi || animated) {
           // Building a whole PDF/ZIP for a preview is slow; show the first page only.
           await prepare(doc);
           const o = options();
@@ -140,7 +150,7 @@ export function ExportDialog() {
   if (!open || !doc) return null;
   const close = () => studio.set({ exportOpen: false });
   const multi = scope === 'all' && pages > 1;
-  const zipped = multi && !isPdf;
+  const zipped = multi && !isPdf && !isAnimated(fmt);
 
   const download = async () => {
     setBusy(true);
@@ -256,8 +266,27 @@ export function ExportDialog() {
                 { value: 'webp', label: 'WebP' },
                 { value: 'pdf', label: 'PDF' },
                 { value: 'svg', label: 'SVG' },
+                ...(pages > 1 ? [{ value: 'gif' as Format, label: 'GIF' }, ...(videoType() ? [{ value: 'video' as Format, label: 'Video' }] : [])] : []),
               ]}
             />
+            {animated && (
+              <div className="flex flex-col gap-2 pt-1">
+                <p className="text-2xs leading-[14px] text-subtle">Plays every page in order{fmt === 'video' ? `, recorded as ${videoType()?.ext.toUpperCase()} in real time` : ''}. GIFs are best at 1× or smaller.</p>
+                <Slider label="Show each page" value={prefs.hold} min={0.3} max={6} step={0.1} unit="s" onChange={(v) => setPrefs({ ...prefs, hold: Math.round(v * 10) / 10 })} />
+                <Segmented<Transition>
+                  ariaLabel="Transition"
+                  value={prefs.transition}
+                  onChange={(transition) => setPrefs({ ...prefs, transition })}
+                  options={[
+                    { value: 'cut', label: 'Cut' },
+                    { value: 'fade', label: 'Fade' },
+                    { value: 'slide', label: 'Slide' },
+                    { value: 'push', label: 'Push' },
+                    { value: 'zoom', label: 'Zoom' },
+                  ]}
+                />
+              </div>
+            )}
             {zipped && <p className="text-2xs leading-[14px] text-subtle">Each page is saved as its own file, together in a ZIP.</p>}
             {isPdf && <p className="text-2xs leading-[14px] text-subtle">{multi ? `One PDF with ${pages} pages.` : 'A one-page PDF.'} Use 2× or more for sharp printing.</p>}
             {isSvg && <p className="text-2xs leading-[14px] text-subtle">Shapes, icons, charts and text stay sharp at any size; photos are embedded.</p>}
@@ -316,7 +345,7 @@ export function ExportDialog() {
           </p>
           <div className="mt-auto flex flex-col gap-1.5 pt-1">
             <Button variant="primary" className="h-9 text-[length:calc(13px*var(--text-scale))]" onClick={() => void download()} disabled={busy}>
-              <Download size={15} /> {busy ? 'Preparing…' : `Download ${zipped ? 'ZIP' : fmt === 'jpeg' ? 'JPG' : fmt.toUpperCase()}`}
+              <Download size={15} /> {busy ? 'Preparing…' : `Download ${zipped ? 'ZIP' : fmt === 'jpeg' ? 'JPG' : fmt === 'video' ? 'video' : fmt.toUpperCase()}`}
             </Button>
             {canShare && (
               <Button onClick={() => void share()} disabled={busy}>

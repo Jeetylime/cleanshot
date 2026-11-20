@@ -8,9 +8,10 @@ import { allPages, pageDoc } from './pages';
 import { rotatePoint, unionBounds } from './geometry';
 import { layoutText } from './textEngine';
 import { buildSvg } from './svgExport';
+import type { Transition } from '../lib/animate';
 import type { StudioDoc, TextElement } from './types';
 
-export type Format = ExportFormat | 'pdf' | 'svg';
+export type Format = ExportFormat | 'pdf' | 'svg' | 'gif' | 'video';
 export type Scope = 'page' | 'all' | 'selection';
 
 export interface ExportOptions {
@@ -28,7 +29,11 @@ export interface ExportOptions {
   selectableText: boolean;
   selection: string[];
   name: string;
+  /** GIF / video: slideshow through every page. */
+  animation?: { hold: number; transition: Transition; transitionMs: number; fps: number };
 }
+
+export const isAnimated = (f: Format) => f === 'gif' || f === 'video';
 
 const safeName = (s: string) => s.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design';
 
@@ -63,7 +68,7 @@ function rasterPage(doc: StudioDoc, i: number, o: ExportOptions) {
   const sel = o.scope === 'selection';
   const bounds = sel ? selectionBounds(pd, o.selection) ?? undefined : undefined;
   const size = outputSize(pd, o);
-  const lossyNoAlpha = o.format === 'jpeg' || o.format === 'pdf';
+  const lossyNoAlpha = o.format === 'jpeg' || o.format === 'pdf' || isAnimated(o.format);
   const dropBg = sel || (o.transparent && !lossyNoAlpha);
   const matte = lossyNoAlpha && (dropBg || pd.background.kind === 'transparent') ? '#ffffff' : null;
   return renderExport(pd, {
@@ -189,6 +194,19 @@ export async function produce(doc: StudioDoc, o: ExportOptions): Promise<ExportR
   const previewCanvas = rasterPage(doc, pages[0], { ...o, format: o.format === 'jpeg' || o.format === 'pdf' ? o.format : 'png' });
   const preview = await canvasToBlob(previewCanvas, 'image/png');
   if (o.format === 'pdf') return { blob: await buildPdf(doc, o), filename: `${base}.pdf`, preview };
+  if (isAnimated(o.format)) {
+    const all = allPages(doc).map((_, i) => i);
+    const canvases = all.map((i) => (i === pages[0] ? previewCanvas : rasterPage(doc, i, o)));
+    const slides = canvases.map((c) => ({ source: c, width: c.width, height: c.height }));
+    const a = o.animation ?? { hold: 1500, transition: 'fade' as Transition, transitionMs: 500, fps: 20 };
+    const w = canvases[0].width - (canvases[0].width % 2);
+    const h = canvases[0].height - (canvases[0].height % 2);
+    const anim = await import('../lib/animate');
+    const opts = { width: w, height: h, hold: a.hold, transition: a.transition, transitionMs: a.transitionMs, fps: a.fps, background: '#ffffff', fit: 'contain' as const, loopBack: true };
+    if (o.format === 'gif') return { blob: await anim.renderGif(slides, opts), filename: `${base}.gif`, preview };
+    const vt = anim.videoType();
+    return { blob: await anim.renderVideo(slides, opts), filename: `${base}.${vt?.ext ?? 'webm'}`, preview };
+  }
 
   const ext = o.format === 'jpeg' ? 'jpg' : o.format;
   const one = async (i: number): Promise<Blob> => {
