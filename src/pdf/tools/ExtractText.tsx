@@ -28,7 +28,7 @@ export function itemsToText(items: TextItemLike[]): string {
 }
 
 export default function ExtractText() {
-  const list = usePdfList(false);
+  const list = usePdfList(false, { readOnly: true });
   useFileSink(list.add);
   const file = list.items[0] ?? null;
   const [pages, setPages] = useState<string[]>([]);

@@ -4,12 +4,13 @@ import { showToast } from '../store/actions';
 import { formatBytes } from '../lib/utils';
 import { Tooltip } from '../components/ui/Tooltip';
 import { errorMessage } from '../tools/shared/batch';
-import { loadPdfFile, renderThumbnails, type PdfFile } from './engine';
+import { loadPdfFile, renderThumbnails, type LoadPdfOptions, type PdfFile } from './engine';
 
 export const PDF_ACCEPT = 'application/pdf,.pdf';
 
 /** A list of loaded PDFs (validated, with page counts). */
-export function usePdfList(multiple: boolean) {
+export function usePdfList(multiple: boolean, opts: LoadPdfOptions = {}) {
+  const readOnly = !!opts.readOnly;
   const [items, setItems] = useState<PdfFile[]>([]);
   const [loading, setLoading] = useState(0);
   const add = useCallback(
@@ -19,7 +20,7 @@ export function usePdfList(multiple: boolean) {
       const loaded: PdfFile[] = [];
       for (const f of list) {
         try {
-          loaded.push(await loadPdfFile(f));
+          loaded.push(await loadPdfFile(f, { readOnly }));
         } catch (err) {
           showToast(errorMessage(err), 'error');
         } finally {
@@ -28,7 +29,7 @@ export function usePdfList(multiple: boolean) {
       }
       if (loaded.length) setItems((prev) => (multiple ? [...prev, ...loaded] : loaded.slice(0, 1)));
     },
-    [multiple],
+    [multiple, readOnly],
   );
   const remove = (id: string) => setItems((p) => p.filter((x) => x.id !== id));
   const move = (id: string, dir: -1 | 1) =>

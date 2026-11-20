@@ -35,6 +35,8 @@ export interface StudioState {
   exportOpen: boolean;
   saveState: 'idle' | 'saving' | 'saved' | 'error';
   storageWarning: string | null;
+  /** The open design is also open, or was saved, in another tab (see tabSync.ts). */
+  tabConflict: 'open' | 'changed' | null;
   /** True while a pointer gesture is in progress on the stage. */
   gesturing: boolean;
   fullscreen: boolean;
@@ -81,6 +83,7 @@ export const studio = createStore({
   exportOpen: false,
   saveState: 'idle',
   storageWarning: null,
+  tabConflict: null,
   gesturing: false,
   fullscreen: false,
   paintTick: 0,

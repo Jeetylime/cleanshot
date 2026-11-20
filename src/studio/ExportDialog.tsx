@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, Download, Lock, Unlock, X } from 'lucide-react';
+import { Copy, Download, Lock, Share, Unlock, X } from 'lucide-react';
+import { shareExport, shareSupported } from '../lib/fileSave';
 import { Button, Segmented, Slider, Toggle, NumberInput } from '../components/ui/controls';
 import { clampExportSize, downloadBlob, clipboardSupported, writeImageToClipboard } from '../engine/export';
 import { canvasToBlob } from '../engine/images';
@@ -158,6 +159,26 @@ export function ExportDialog() {
     }
   };
 
+  const shareMime = isPdf ? 'application/pdf' : isSvg ? 'image/svg+xml' : `image/${fmt}`;
+  const canShare = !zipped && shareSupported({ name: `design.${fmt === 'jpeg' ? 'jpg' : fmt}`, type: shareMime });
+  const share = async () => {
+    setBusy(true);
+    try {
+      const o = options();
+      const outcome = await shareExport([doc, JSON.stringify(o)], async () => {
+        const r = await produce(doc, o);
+        return { blob: r.blob, filename: r.filename };
+      });
+      if (outcome === 'shared') close();
+      else if (outcome === 'retry') showToast('Your file is ready. Tap Share again to send it.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Couldn’t share from this browser. Download instead.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const copy = async () => {
     setBusy(true);
     try {
@@ -297,6 +318,11 @@ export function ExportDialog() {
             <Button variant="primary" className="h-9 text-[length:calc(13px*var(--text-scale))]" onClick={() => void download()} disabled={busy}>
               <Download size={15} /> {busy ? 'Preparing…' : `Download ${zipped ? 'ZIP' : fmt === 'jpeg' ? 'JPG' : fmt.toUpperCase()}`}
             </Button>
+            {canShare && (
+              <Button onClick={() => void share()} disabled={busy}>
+                <Share size={13} /> Share
+              </Button>
+            )}
             {clipboardSupported() && !isPdf && !isSvg && (
               <Button onClick={() => void copy()} disabled={busy}>
                 <Copy size={13} /> Copy as PNG

@@ -1,4 +1,7 @@
-import { uid, clamp } from '../lib/utils';
+import { announceSaved, savePaused } from './tabSync';
+import * as fs from '../lib/fileSave';
+import type { SaveHandle } from '../lib/fileSave';
+import { uid, clamp, modKey } from '../lib/utils';
 import { canvasToBlob, constrainSource, decodeImage, getImage, registerImage, resample } from '../engine/images';
 import { showToast } from '../store/actions';
 import { aabb, center, rotatePoint, unionBounds } from './geometry';
@@ -542,7 +545,11 @@ export function resizeCanvas(width: number, height: number, scaleContent: boolea
 /** Re-measure text once web fonts arrive (no undo entry). */
 export function refreshFonts() {
   resetTextMetrics();
-  replaceLive((doc) => ({ ...doc, elements: doc.elements.map((e) => (e.type === 'text' ? fitText(e) : e)) }));
+  replaceLive((doc) => {
+    const elements = doc.elements.map((e) => (e.type === 'text' ? fitText(e) : e));
+    // Keep the same document when no box changed, so it isn't saved again for nothing.
+    return elements.every((e, i) => e === doc.elements[i]) ? doc : { ...doc, elements };
+  });
   studio.set((s) => ({ paintTick: s.paintTick + 1 }));
 }
 
@@ -622,9 +629,15 @@ export function setPanel(panel: LeftPanel | null) {
 // ---------------------------------------------------------------------------
 // Projects
 
-export async function openDoc(raw: StudioDoc, opts: { save?: boolean } = {}) {
+/**
+ * Open a design. `stored`: it was just read from IndexedDB, so it counts as
+ * saved (flushing it unchanged would rewrite it and, through tabSync, tell
+ * other tabs it changed).
+ */
+export async function openDoc(raw: StudioDoc, opts: { save?: boolean; stored?: boolean } = {}) {
   const doc = migrateDoc(raw);
   resetHistory(doc);
+  if (opts.stored) lastSaved = studio.get().doc;
   // Open with the canvas front and center; panels open on demand.
   studio.set({ saveState: 'idle', view: { ...studio.get().view, mode: 'fit' }, panel: null });
   requestFit();
@@ -676,7 +689,7 @@ export async function openProject(id: string) {
   try {
     const rec = await db.loadProject(id);
     if (!rec) throw new Error('missing');
-    await openDoc(rec.doc);
+    await openDoc(rec.doc, { stored: true });
   } catch {
     showToast('Couldn’t open that design.', 'error');
   }
@@ -724,11 +737,12 @@ async function makeThumb(doc: StudioDoc): Promise<Blob | null> {
 }
 
 let saving: Promise<void> | null = null;
+let reloading = false;
 let lastSaved: StudioDoc | null = null;
 
 export async function saveNow() {
   const doc = studio.get().doc;
-  if (!doc || doc === lastSaved) return;
+  if (!doc || doc === lastSaved || savePaused() || reloading) return;
   if (saving) await saving;
   lastSaved = doc;
   studio.set({ saveState: 'saving' });
@@ -736,6 +750,7 @@ export async function saveNow() {
     try {
       await db.saveProject(syncPages(doc), await makeThumb(doc));
       if (studio.get().doc?.id === doc.id) studio.set({ saveState: 'saved', storageWarning: null });
+      announceSaved(doc.id);
       void db.requestPersistence();
       const est = await db.storageEstimate();
       if (est && est.usage / est.quota > 0.9) studio.set({ storageWarning: 'Browser storage is almost full. Delete old designs or download project files to keep your work safe.' });
@@ -747,6 +762,35 @@ export async function saveNow() {
     }
   })();
   return saving;
+}
+
+/** Another tab saved this design: load its version, dropping this tab's unsaved edits. */
+export async function reloadFromOtherTab() {
+  const doc = studio.get().doc;
+  if (!doc) return;
+  clearTimeout(saveTimer);
+  const rec = await db.loadProject(doc.id).catch(() => null);
+  if (!rec) {
+    showToast('Couldn’t load the other tab’s version.', 'error');
+    return;
+  }
+  studio.set({ tabConflict: null });
+  // Don't save the reloaded copy back (it would tell the other tab it changed).
+  reloading = true;
+  try {
+    await openDoc(rec.doc, { stored: true });
+  } finally {
+    clearTimeout(saveTimer);
+    reloading = false;
+  }
+  showToast('Loaded the latest version');
+}
+
+/** Another tab saved this design: overwrite it with this tab's version. */
+export async function keepThisTabVersion() {
+  studio.set({ tabConflict: null });
+  lastSaved = null;
+  await saveNow();
 }
 
 let saveTimer = 0;
@@ -761,9 +805,9 @@ studio.subscribe(() => {
   saveTimer = window.setTimeout(() => void saveNow(), 900);
 });
 
-export async function downloadProjectFile() {
+async function currentProjectFile(): Promise<{ blob: Blob; filename: string } | null> {
   const doc = studio.get().doc;
-  if (!doc) return;
+  if (!doc) return null;
   const ids = docAssetIds(doc);
   const assets: db.AssetRecord[] = [];
   for (const id of ids) {
@@ -776,8 +820,50 @@ export async function downloadProjectFile() {
     }
   }
   const blob = await db.buildProjectFile(syncPages(doc), assets);
+  return { blob, filename: `${doc.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.studiolo` };
+}
+
+export async function downloadProjectFile() {
+  const file = await currentProjectFile();
+  if (!file) return;
   const { downloadBlob } = await import('../engine/export');
-  await downloadBlob(blob, `${doc.name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'design'}.studiolo`);
+  await downloadBlob(file.blob, file.filename);
+}
+
+/** Files on disk that designs were saved to this session (File System Access API), by design id. */
+const projectFiles = new Map<string, SaveHandle>();
+
+export function linkedProjectFile(docId: string | undefined): string | null {
+  return (docId && projectFiles.get(docId)?.name) || null;
+}
+
+/**
+ * Save the design as a .studiolo file. Where the browser supports it, the
+ * first save asks where to put the file and later saves write back to it
+ * (`as` asks again). Elsewhere this downloads a copy.
+ */
+export async function saveProjectFile(opts: { as?: boolean } = {}) {
+  const doc = studio.get().doc;
+  if (!doc) return;
+  if (!fs.saveFileSupported()) return downloadProjectFile();
+  const file = await currentProjectFile();
+  if (!file) return;
+  const linked = opts.as ? undefined : projectFiles.get(doc.id);
+  try {
+    if (linked) {
+      await fs.writeToHandle(linked, file.blob);
+      showToast(`Saved to ${linked.name}`, 'success');
+      return;
+    }
+    const handle = await fs.saveWithPicker(file.blob, file.filename, { description: 'Studiolo design', mime: 'application/json', ext: '.studiolo' });
+    if (!handle) return;
+    projectFiles.set(doc.id, handle);
+    showToast(`Saved to ${handle.name}. ${modKey === '⌘' ? '⌘' : 'Ctrl+'}S saves to it again.`, 'success');
+  } catch (err) {
+    console.error(err);
+    if (linked) projectFiles.delete(doc.id);
+    showToast('Couldn’t save the file. Try Download project file instead.', 'error');
+  }
 }
 
 /** Download a saved design (from "Your designs") as a .studiolo file without opening it. */

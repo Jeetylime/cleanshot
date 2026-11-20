@@ -33,6 +33,7 @@ import { clearPrivacyCaches } from '../engine/privacy';
 import { createSampleScreenshot } from '../engine/sample';
 import { clamp, defaultScreenshotName, intersectRects, rectsIntersect, uid } from '../lib/utils';
 import { readPngDpi } from '../lib/png';
+import { shareExport } from '../lib/fileSave';
 import * as sessions from '../persistence/sessions';
 
 // ---------------------------------------------------------------------------
@@ -804,6 +805,27 @@ export async function exportAndDownload(opts: { format: ExportFormat; quality: n
   } catch (err) {
     console.error(err);
     showToast('Export failed.', 'error');
+  } finally {
+    store.set({ busy: null });
+  }
+}
+
+/** Export and open the system share sheet (phones, and desktops that support it). */
+export async function exportAndShare(opts: { format: ExportFormat; quality: number; width: number; height: number }) {
+  const doc = store.get().doc;
+  if (!doc) return;
+  commitTextEdit();
+  store.set({ busy: 'Exporting…' });
+  try {
+    const current = store.get().doc!;
+    const outcome = await shareExport([current, opts.format, opts.quality, opts.width, opts.height], async () => {
+      const result = await exportDocument(current, opts);
+      return { blob: result.blob, filename: exportFileName(current, result.format) };
+    });
+    if (outcome === 'retry') showToast('Your image is ready. Tap Share again to send it.', 'info');
+  } catch (err) {
+    console.error(err);
+    showToast('Couldn’t share from this browser. Use Download instead.', 'error');
   } finally {
     store.set({ busy: null });
   }

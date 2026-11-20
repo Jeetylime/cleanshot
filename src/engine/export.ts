@@ -2,6 +2,7 @@ import type { EditorDoc, ExportFormat } from '../types';
 import { canvasToBlob } from './images';
 import { computeLayout, renderDocument } from './render';
 import { stripExtension } from '../lib/utils';
+import { setPngDpi } from '../lib/png';
 
 export const MIME: Record<ExportFormat, string> = {
   png: 'image/png',
@@ -32,6 +33,15 @@ export function clampExportSize(w: number, h: number): { width: number; height: 
   return { width: Math.max(1, Math.floor(w * k)), height: Math.max(1, Math.floor(h * k)), clamped: true };
 }
 
+/**
+ * Pixel density of an export: 72 DPI per logical point, so a Retina document
+ * (unit 2) exported at 100% is 144 DPI, like the screenshot it came from.
+ */
+export function exportDpi(doc: EditorDoc, outWidth: number): number {
+  const logicalW = computeLayout(doc).outW / (doc.unit || 1);
+  return logicalW > 0 ? (72 * outWidth) / logicalW : 72;
+}
+
 export interface ExportRequest {
   format: ExportFormat;
   /** 1–100, used by lossy formats. */
@@ -55,7 +65,10 @@ export async function exportDocument(doc: EditorDoc, req: ExportRequest): Promis
     height,
     matte: req.format === 'jpeg' ? '#ffffff' : null,
   });
-  const blob = await canvasToBlob(canvas, MIME[req.format], req.format === 'png' ? undefined : req.quality / 100);
+  let blob = await canvasToBlob(canvas, MIME[req.format], req.format === 'png' ? undefined : req.quality / 100);
+  // Record the pixel density so a 2× screenshot reopens at its point size elsewhere.
+  const dpi = exportDpi(doc, width);
+  if (blob.type === 'image/png' && Math.abs(dpi - 72) >= 1) blob = await setPngDpi(blob, dpi);
   const actual = (Object.keys(MIME) as ExportFormat[]).find((f) => MIME[f] === blob.type) ?? 'png';
   // Release the backing store promptly; large exports can be hundreds of MB.
   canvas.width = canvas.height = 0;

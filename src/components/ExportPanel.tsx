@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, Download, Link2, Loader2, Unlink } from 'lucide-react';
+import { Copy, Download, Link2, Loader2, Share, Unlink } from 'lucide-react';
+import { shareSupported } from '../lib/fileSave';
 import { store, useEditor, shallowEqual } from '../store/store';
 import * as actions from '../store/actions';
 import { clampExportSize, exportDocument, outputSize, EXTENSION } from '../engine/export';
@@ -88,6 +89,8 @@ export function ExportPanel() {
   const commitName = () => {
     if (name.trim() && name.trim() !== doc.name) actions.renameDoc(name.trim());
   };
+
+  const canShare = shareSupported({ name: `image.${prefs.format === 'jpeg' ? 'jpg' : prefs.format}`, type: `image/${prefs.format}` });
 
   const save = () => {
     commitName();
@@ -206,6 +209,18 @@ export function ExportPanel() {
           <Copy size={13} />
           Copy
         </Button>
+        {canShare && (
+          <Button
+            className="flex-1"
+            onClick={() => {
+              commitName();
+              void actions.exportAndShare({ format: prefs.format, quality: prefs.quality, width: clamped.width, height: clamped.height });
+            }}
+          >
+            <Share size={13} />
+            Share
+          </Button>
+        )}
         <Button variant="primary" className="flex-1" onClick={save}>
           <Download size={13} strokeWidth={2.25} />
           Save {prefs.format === 'jpeg' ? 'JPEG' : prefs.format.toUpperCase()}

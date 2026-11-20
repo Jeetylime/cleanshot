@@ -85,8 +85,33 @@ export function isPdfFile(f: File): boolean {
   return f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 }
 
+export interface LoadPdfOptions {
+  /**
+   * The tool only reads the PDF through pdf.js (rendering, text). Such tools
+   * can open PDFs that are encrypted with only an owner password (editing
+   * restrictions), which pdf-lib can't modify.
+   */
+  readOnly?: boolean;
+}
+
+/**
+ * Does pdf.js open this encrypted PDF without a password? True for PDFs with
+ * only an owner password ("restricted" files such as many statements and
+ * forms); false when a password is needed to open it.
+ */
+async function opensWithoutPassword(bytes: ArrayBuffer): Promise<number | null> {
+  try {
+    const { doc, close } = await openForRender(bytes);
+    const n = doc.numPages;
+    close();
+    return n;
+  } catch {
+    return null;
+  }
+}
+
 /** Read and validate a PDF. Throws PdfError with a readable message. */
-export async function loadPdfFile(file: File): Promise<PdfFile> {
+export async function loadPdfFile(file: File, opts: LoadPdfOptions = {}): Promise<PdfFile> {
   if (!isPdfFile(file)) throw new PdfError(`“${file.name}” isn’t a PDF.`);
   const bytes = await file.arrayBuffer();
   const { PDFDocument } = await loadPdfLib();
@@ -97,7 +122,14 @@ export async function loadPdfFile(file: File): Promise<PdfFile> {
     throw new PdfError(`“${file.name}” couldn’t be read. The file may be damaged.`);
   }
   if (doc.isEncrypted) {
-    throw new PdfError(`“${file.name}” is password-protected. Remove the password in your PDF reader, then try again.`);
+    const pages = await opensWithoutPassword(bytes);
+    if (pages === null) {
+      throw new PdfError(`“${file.name}” is password-protected. Remove the password in your PDF reader, then try again.`);
+    }
+    if (opts.readOnly) return { id: uid('pdf'), name: file.name, size: file.size, bytes, pageCount: pages };
+    throw new PdfError(
+      `“${file.name}” has editing restrictions set by its author, so it can’t be changed here. PDF to Images and Extract Text can still open it, or use Print → Save as PDF in your reader to make an unrestricted copy.`,
+    );
   }
   return { id: uid('pdf'), name: file.name, size: file.size, bytes, pageCount: doc.getPageCount() };
 }

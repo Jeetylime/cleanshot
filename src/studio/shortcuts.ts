@@ -64,7 +64,10 @@ export function useStudioShortcuts(openShortcuts: () => void) {
             A.reorder(e.shiftKey ? 'back' : 'backward');
             break;
           case 's':
+            // Designs autosave in the browser; ⌘S also writes the linked file on disk, ⇧⌘S picks a new one.
             void A.saveNow();
+            if (e.shiftKey) void A.saveProjectFile({ as: true });
+            else if (A.linkedProjectFile(s.doc.id)) void A.saveProjectFile();
             break;
           case 'f':
             studio.set({ dialog: 'find' });
@@ -181,6 +184,8 @@ export const STUDIO_SHORTCUTS: { group: string; items: [string, string][] }[] = 
       ['Previous / next page', 'PgUp / PgDn'],
       ['Pan', 'Space + drag'],
       ['Export', '⌘E'],
+      ['Save now / to linked project file', '⌘S'],
+      ['Save project file as…', '⇧⌘S'],
       ['Find and replace', '⌘F'],
       ['Keep proportions / free resize', '⇧ while resizing'],
       ['Turn off snapping', 'Alt while dragging'],

@@ -1,3 +1,4 @@
+import { startTabSync } from './tabSync';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -34,6 +35,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { Popover, MenuItem, MenuSeparator } from '../components/ui/Popover';
 import { Tooltip } from '../components/ui/Tooltip';
 import { modKey } from '../lib/utils';
+import { saveFileSupported } from '../lib/fileSave';
 import { pickFiles, useFileSink } from '../tools/shared/ui';
 import { setPasteFallback } from '../app/route';
 import { studio, useStudio, shallowEqual, undo, redo } from './store';
@@ -55,7 +57,11 @@ export function CanvasEditor() {
   const openShortcuts = useCallback(() => setShortcuts(true), []);
   useStudioShortcuts(openShortcuts);
   useCanvasCommands(openShortcuts);
-  const { fullscreen, warning, hasSelection } = useStudio((s) => ({ fullscreen: s.fullscreen, warning: s.storageWarning, hasSelection: s.selection.length > 0 }), shallowEqual);
+  const { fullscreen, warning, hasSelection, tabConflict } = useStudio(
+    (s) => ({ fullscreen: s.fullscreen, warning: s.storageWarning, hasSelection: s.selection.length > 0, tabConflict: s.tabConflict }),
+    shallowEqual,
+  );
+  useEffect(() => startTabSync(), []);
 
   // Files pasted or dropped anywhere go onto the canvas; plain paste pastes copied elements.
   useFileSink((files) => void A.addImageFiles(files));
@@ -104,6 +110,30 @@ export function CanvasEditor() {
           <button type="button" aria-label="Dismiss" onClick={() => studio.set({ storageWarning: null })} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] text-muted hover:bg-hover">
             <X size={13} />
           </button>
+        </div>
+      )}
+      {tabConflict && !fullscreen && (
+        <div role={tabConflict === 'changed' ? 'alert' : 'status'} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-panel px-3 py-1.5 text-xs text-fg">
+          <AlertTriangle size={14} className="shrink-0 text-[#ff9f0a]" />
+          <span className="min-w-0 flex-1">
+            {tabConflict === 'changed'
+              ? 'This design was changed in another tab. Saving is paused here so neither version is lost.'
+              : 'This design is also open in another tab. Edits in one tab can overwrite the other.'}
+          </span>
+          {tabConflict === 'changed' ? (
+            <>
+              <button type="button" onClick={() => void A.reloadFromOtherTab()} className="h-[24px] shrink-0 font-medium text-accent hover:underline">
+                Load latest version
+              </button>
+              <button type="button" onClick={() => void A.keepThisTabVersion()} className="h-[24px] shrink-0 font-medium text-accent hover:underline">
+                Keep this tab’s version
+              </button>
+            </>
+          ) : (
+            <button type="button" aria-label="Dismiss" onClick={() => studio.set({ tabConflict: null })} className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-muted hover:bg-hover">
+              <X size={13} />
+            </button>
+          )}
         </div>
       )}
       <div className="relative flex min-h-0 flex-1 max-md:flex-col">
@@ -167,6 +197,15 @@ function EditorTopBar({ onShortcuts }: { onShortcuts: () => void }) {
 
 function SaveState() {
   const state = useStudio((s) => s.saveState);
+  const paused = useStudio((s) => s.tabConflict === 'changed');
+  if (paused)
+    return (
+      <Tooltip label="Saving is paused because another tab changed this design.">
+        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-danger">
+          <CloudOff size={12} /> <span className="max-lg:hidden">Paused</span>
+        </span>
+      </Tooltip>
+    );
   if (state === 'saving')
     return (
       <span className="flex shrink-0 items-center gap-1 text-xs text-muted">
@@ -265,9 +304,20 @@ function DesignNameMenu({ onShortcuts }: { onShortcuts: () => void }) {
             Save as template
           </MenuItem>
           <MenuSeparator />
-          <MenuItem icon={<FileDown size={14} />} onClick={run(() => void A.downloadProjectFile())}>
-            Download project file
-          </MenuItem>
+          {saveFileSupported() ? (
+            <>
+              <MenuItem icon={<FileDown size={14} />} onClick={run(() => void A.saveProjectFile())}>
+                Save project file…
+              </MenuItem>
+              <MenuItem icon={<FileDown size={14} />} onClick={run(() => void A.saveProjectFile({ as: true }))} shortcut={`⇧${modKey}S`}>
+                Save project file as…
+              </MenuItem>
+            </>
+          ) : (
+            <MenuItem icon={<FileDown size={14} />} onClick={run(() => void A.downloadProjectFile())}>
+              Download project file
+            </MenuItem>
+          )}
           <MenuItem icon={<FileUp size={14} />} onClick={run(() => pickFiles(false, (f) => f[0] && void A.importProjectFile(f[0]), '.studiolo,.cleanshot,application/json'))}>
             Open project file…
           </MenuItem>

@@ -131,7 +131,8 @@ export function useKeyboardShortcuts() {
         case 'ArrowDown': {
           if (!s.selection.length) return;
           e.preventDefault();
-          const d = e.shiftKey ? 10 : 1;
+          // Logical points, like Alt+arrow resizing: 1 pt is `unit` image pixels on Retina shots.
+          const d = (e.shiftKey ? 10 : 1) * s.doc.unit;
           const dx = e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0;
           const dy = e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0;
           actions.nudgeSelection(dx, dy);

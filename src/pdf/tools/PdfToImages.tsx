@@ -13,7 +13,7 @@ import { PDF_ACCEPT, PageTile, PdfRow, usePageThumbs, usePdfList } from '../ui';
 type Fmt = 'png' | 'jpeg';
 
 export default function PdfToImages() {
-  const list = usePdfList(false);
+  const list = usePdfList(false, { readOnly: true });
   useFileSink(list.add);
   const file = list.items[0] ?? null;
   const thumbs = usePageThumbs(file, 160);

@@ -1,3 +1,4 @@
+import { saveFileSupported } from '../lib/fileSave';
 import { useEffect } from 'react';
 import {
   AlignCenterHorizontal,
@@ -182,6 +183,12 @@ function canvasCommands(openShortcuts: () => void): Command[] {
     { id: 'cv-find', label: 'Find and replace…', section: 'Design', keywords: 'search text replace', icon: <Search size={15} />, shortcut: shortcutLabel('F'), run: () => studio.set({ dialog: 'find' }) },
     { id: 'cv-save-template', label: 'Save as template', section: 'Design', keywords: 'reuse my templates', icon: <BookmarkPlus size={15} />, run: () => void A.saveAsTemplate() },
     { id: 'cv-project-file', label: 'Download project file', section: 'Design', keywords: 'backup .studiolo save editable', icon: <FileDown size={15} />, run: () => void A.downloadProjectFile() },
+    ...(saveFileSupported()
+      ? [
+          { id: 'cv-project-save', label: 'Save project file…', section: 'Design', keywords: 'disk .studiolo save editable file system', icon: <FileDown size={15} />, run: () => void A.saveProjectFile() },
+          { id: 'cv-project-save-as', label: 'Save project file as…', section: 'Design', keywords: 'disk .studiolo save copy file system', icon: <FileDown size={15} />, run: () => void A.saveProjectFile({ as: true }) },
+        ]
+      : []),
     { id: 'cv-shortcuts', label: 'Keyboard shortcuts', section: 'Design', keywords: 'help keys hotkeys', icon: <Keyboard size={15} />, shortcut: '?', run: openShortcuts },
     { id: 'cv-close', label: 'Close design', section: 'Design', keywords: 'new design start screen back', icon: <X size={15} />, run: A.closeProject },
   );
